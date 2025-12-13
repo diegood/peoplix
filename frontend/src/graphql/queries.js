@@ -104,6 +104,36 @@ export const GET_PROJECTS = gql`
             level
           }
         }
+        supervisors {
+          id
+          hierarchyType {
+            id
+            name
+            color
+          }
+          supervisor {
+            id
+            collaborator {
+              id
+              name
+            }
+          }
+        }
+        subordinates {
+          id
+          hierarchyType {
+            id
+            name
+            color
+          }
+          subordinate {
+            id
+            collaborator {
+              id
+              name
+            }
+          }
+        }
       }
     }
   }
@@ -187,6 +217,25 @@ export const UPDATE_MILESTONE_TYPE = gql`
 export const DELETE_MILESTONE_TYPE = gql`
   mutation DeleteMilestoneType($id: ID!) {
     deleteMilestoneType(id: $id)
+  }
+`
+
+export const ADD_ALLOCATION_HIERARCHY = gql`
+  mutation AddAllocationHierarchy($subordinateAllocId: ID!, $supervisorAllocId: ID!, $typeId: ID!) {
+    addAllocationHierarchy(subordinateAllocId: $subordinateAllocId, supervisorAllocId: $supervisorAllocId, typeId: $typeId) {
+      id
+      hierarchyType {
+        id
+        name
+        color
+      }
+    }
+  }
+`
+
+export const REMOVE_ALLOCATION_HIERARCHY = gql`
+  mutation RemoveAllocationHierarchy($hierarchyId: ID!) {
+    removeAllocationHierarchy(hierarchyId: $hierarchyId)
   }
 `
 

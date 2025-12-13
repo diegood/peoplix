@@ -3,15 +3,25 @@ import { computed, ref, watch } from 'vue'
 import draggable from 'vuedraggable'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_PROJECTS, GET_COLLABORATORS, CREATE_ALLOCATION, UPDATE_ALLOCATION, DELETE_ALLOCATION, ADD_ALLOCATION_ROLE, REMOVE_ALLOCATION_ROLE } from '@/graphql/queries'
-import { GripVertical, AlertCircle, CheckCircle, Trash2, X, Plus, Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { GripVertical, AlertCircle, CheckCircle, Trash2, X, Plus, Calendar, ChevronLeft, ChevronRight, Settings2 } from 'lucide-vue-next'
 import { dayjs } from '@/config'
 import ProjectMilestones from './ProjectMilestones.vue'
 import MilestoneManager from './MilestoneManager.vue'
-import { Settings2 } from 'lucide-vue-next'
+import HierarchyManager from './HierarchyManager.vue'
+import { Network } from 'lucide-vue-next'
 
-// ... existing code ...
-
+const hierarchyModalOpen = ref(false)
 const managerOpen = ref(false)
+const selectedHierarchyProjectId = ref(null)
+
+const activeProjectForHierarchy = computed(() => {
+    return localProjects.value.find(p => p.id === selectedHierarchyProjectId.value)
+})
+
+const openHierarchy = (project) => {
+    selectedHierarchyProjectId.value = project.id
+    hierarchyModalOpen.value = true
+}
 
 // ... existing code ...
 
@@ -480,6 +490,10 @@ const isToday = (dateObj) => {
     <div v-if="managerOpen" class="z-[60] relative">
         <MilestoneManager @close="managerOpen = false" />
     </div>
+
+    <div v-if="hierarchyModalOpen && activeProjectForHierarchy" class="z-[60] relative">
+        <HierarchyManager :project="activeProjectForHierarchy" :isOpen="hierarchyModalOpen" @close="hierarchyModalOpen = false" />
+    </div>
     
     <!-- Modal for New Assignment (ONLY WEEKLY) -->
     <div v-if="assignmentModalOpen && viewMode === 'weekly'" class="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -564,7 +578,12 @@ const isToday = (dateObj) => {
           <!-- Project Header -->
           <div class="p-4 border-b border-gray-100 bg-gray-50/50 rounded-t-xl">
              <div class="flex justify-between items-start mb-2">
-               <h3 class="font-bold text-lg text-gray-800">{{ project.name }}</h3>
+               <div class="flex items-center gap-2">
+                   <h3 class="font-bold text-lg text-gray-800">{{ project.name }}</h3>
+                   <button @click="openHierarchy(project)" class="p-1 px-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition" title="Jerarquía">
+                       <Network size="16"/>
+                   </button>
+               </div>
                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">{{ project.contractedHours }} h</span>
              </div>
               <div class="flex flex-wrap gap-1">
@@ -696,8 +715,11 @@ const isToday = (dateObj) => {
              <div class="flex flex-col min-w-max">
                   <div v-for="project in localProjects" :key="project.id" class="flex hover:bg-gray-50 h-16 relative group border-b border-gray-100">
                        <!-- Project Info (Sticky Left) -->
-                       <div class="w-64 p-4 border-r border-gray-200 shrink-0 flex items-center font-medium text-gray-800 text-sm sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] group-hover:bg-gray-50 transition-colors">
-                           {{ project.name }}
+                       <div class="w-64 p-4 border-r border-gray-200 shrink-0 flex items-center justify-between font-medium text-gray-800 text-sm sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] group-hover:bg-gray-50 transition-colors">
+                           <span>{{ project.name }}</span>
+                           <button @click="openHierarchy(project)" class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition" title="Jerarquía">
+                               <Network size="16"/>
+                           </button>
                        </div>
                        
                        <!-- Timeline Cells -->
