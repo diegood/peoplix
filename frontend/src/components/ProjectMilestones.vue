@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import { useMutation } from '@vue/apollo-composable'
 import { CREATE_MILESTONE, DELETE_MILESTONE } from '@/graphql/queries'
 import { Flag, Trash2, Plus } from 'lucide-vue-next'
+import VueMultiselect from 'vue-multiselect'
+import 'vue-multiselect/dist/vue-multiselect.css'
 
 const props = defineProps({
   project: { type: Object, required: true },
@@ -12,6 +14,13 @@ const props = defineProps({
 const isExpanded = ref(false)
 const showForm = ref(false)
 const newMilestone = ref({ name: '', date: '', type: 'Delivery' })
+
+// Options for the multiselect
+const typeOptions = ref([
+    'Delivery',
+    'Meeting',
+    'DevOps'
+])
 
 const { mutate: createMilestone } = useMutation(CREATE_MILESTONE, { refetchQueries: ['GetProjects'] })
 const { mutate: deleteMilestone } = useMutation(DELETE_MILESTONE, { refetchQueries: ['GetProjects'] })
@@ -51,6 +60,20 @@ const upcomingMilestones = computed(() => {
         .sort((a, b) => a.date.localeCompare(b.date))
 })
 
+const getTypeColor = (type) => {
+    switch (type) {
+        case 'Delivery': return 'bg-red-400'
+        case 'Meeting': return 'bg-blue-400'
+        case 'DevOps': return 'bg-green-400'
+        default: return 'bg-purple-400' // Default fallback
+    }
+}
+
+const addTag = (newTag) => {
+    typeOptions.value.push(newTag)
+    newMilestone.value.type = newTag
+}
+
 const handleCreate = async () => {
     if (!newMilestone.value.name || !newMilestone.value.date) return
     await createMilestone({
@@ -82,15 +105,23 @@ const handleDelete = async (id) => {
       </div>
 
       <!-- Add Form -->
-      <div v-if="showForm" class="bg-white p-2 rounded shadow mb-3 border border-purple-100">
+      <div v-if="showForm" class="bg-white p-2 rounded shadow mb-3 border border-purple-100 relative">
           <input v-model="newMilestone.name" placeholder="Nombre (ej. Entrega Fase 1)" class="w-full text-xs border rounded p-1 mb-1" />
-          <div class="flex gap-1">
-              <input v-model="newMilestone.date" type="date" class="flex-1 text-xs border rounded p-1" />
-              <select v-model="newMilestone.type" class="text-xs border rounded p-1">
-                  <option value="Delivery">Entrega</option>
-                  <option value="Meeting">Reunión</option>
-                  <option value="DevOps">Despliegue</option>
-              </select>
+          <div class="flex gap-1 mb-1">
+              <input v-model="newMilestone.date" type="date" class="flex-1 text-xs border rounded p-1 w-1/2" />
+               <!-- Vue Multiselect for Type -->
+               <div class="w-1/2">
+                   <VueMultiselect
+                        v-model="newMilestone.type"
+                        :options="typeOptions"
+                        :taggable="true"
+                        @tag="addTag"
+                        placeholder="Tipo"
+                        select-label=""
+                        deselect-label=""
+                        class="text-xs"
+                    />
+               </div>
           </div>
           <button @click="handleCreate" class="w-full mt-1 bg-purple-600 text-white text-xs py-1 rounded hover:bg-purple-700">Guardar</button>
       </div>
@@ -107,12 +138,8 @@ const handleDelete = async (id) => {
               <div class="flex flex-col gap-0.5 mt-1 w-full">
                   <div v-for="m in weekMilestones.filter(x => x.date === day.date)" :key="m.id"
                        class="h-1.5 w-full rounded-full"
-                       :class="{
-                           'bg-red-400': m.type === 'Delivery',
-                           'bg-blue-400': m.type === 'Meeting',
-                           'bg-green-400': m.type === 'DevOps'
-                       }"
-                       :title="m.name">
+                       :class="getTypeColor(m.type)"
+                       :title="m.name + ' (' + m.type + ')'">
                   </div>
               </div>
           </div>
@@ -124,7 +151,7 @@ const handleDelete = async (id) => {
           <div v-for="m in upcomingMilestones.slice(0, 3)" :key="m.id" class="flex items-center justify-between group">
               <div class="flex items-center gap-2">
                    <div class="w-2 h-2 rounded-full" 
-                        :class="{ 'bg-red-400': m.type === 'Delivery', 'bg-blue-400': m.type === 'Meeting', 'bg-green-400': m.type === 'DevOps' }"></div>
+                        :class="getTypeColor(m.type)"></div>
                    <span class="text-xs text-gray-600 truncate max-w-[120px]" :title="m.name">{{ m.name }}</span>
               </div>
               <div class="flex items-center gap-2">
@@ -136,3 +163,29 @@ const handleDelete = async (id) => {
       </div>
   </div>
 </template>
+
+<style>
+/* Override Multiselect small size */
+.multiselect {
+    min-height: 28px !important;
+}
+.multiselect__tags {
+    min-height: 28px !important;
+    padding: 2px 40px 0 2px !important;
+    font-size: 0.75rem !important;
+}
+.multiselect__select {
+    height: 26px !important;
+    width: 20px !important;
+    padding: 0 !important;
+}
+.multiselect__single {
+    font-size: 0.75rem !important;
+    margin-bottom: 0 !important;
+    margin-top: 1px !important;
+}
+.multiselect__input {
+     font-size: 0.75rem !important;
+     margin-bottom: 0 !important;
+}
+</style>

@@ -263,6 +263,46 @@ const gotToWeek = (direction) => {
     const d = dayjs().year(y).isoWeek(w).startOf('isoWeek')[operation](1, 'week')
     selectedWeek.value = `${d.year()}-W${d.isoWeek().toString().padStart(2, '0')}`
 }
+const globalWeekMilestones = computed(() => {
+    if (!localProjects.value) return []
+    
+    // Calculate start and end of selected week
+    const [y, w] = selectedWeek.value.split('-W').map(Number)
+    const startOfWeek = dayjs().year(y).isoWeek(w).startOf('isoWeek')
+    const endOfWeek = dayjs().year(y).isoWeek(w).endOf('isoWeek')
+    
+    // Group by project
+    const groups = []
+    
+    localProjects.value.forEach(p => {
+        if (p.milestones && p.milestones.length) {
+            const milestonesInWeek = p.milestones.filter(m => {
+                const mDate = dayjs(m.date)
+                return mDate.isAfter(startOfWeek.subtract(1, 'day')) && mDate.isBefore(endOfWeek.add(1, 'day'))
+            }).sort((a,b) => a.date.localeCompare(b.date))
+            
+            if (milestonesInWeek.length > 0) {
+                 groups.push({
+                     projectId: p.id,
+                     projectName: p.name,
+                     milestones: milestonesInWeek,
+                     count: milestonesInWeek.length
+                 })
+            }
+        }
+    })
+    
+    return groups
+})
+
+const getTypeColor = (type) => {
+    switch (type) {
+        case 'Delivery': return 'bg-red-400'
+        case 'Meeting': return 'bg-blue-400'
+        case 'DevOps': return 'bg-green-400'
+        default: return 'bg-purple-400' // Default fallback
+    }
+}
 </script>
 
 <template>
@@ -270,10 +310,32 @@ const gotToWeek = (direction) => {
     
     <!-- Week Selector Header -->
     <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm z-20">
-        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <Calendar class="text-blue-600" />
-            Planificación Semanal
-        </h2>
+        <div class="flex flex-col">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <Calendar class="text-blue-600" />
+                Planificación Semanal
+            </h2>
+            <!-- Global Milestones Summary -->
+            <div v-if="globalWeekMilestones.length > 0" class="flex items-center gap-2 mt-1 text-xs text-gray-500 overflow-x-auto max-w-lg">
+                <span class="font-semibold text-gray-700">Hitos de la semana:</span>
+                <div v-for="g in globalWeekMilestones" :key="g.projectId" class="flex items-center gap-2 bg-gray-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+                    <!-- Dots for each milestone in the group -->
+                    <div class="flex -space-x-1">
+                         <div v-for="m in g.milestones" :key="m.id" 
+                              class="w-2.5 h-2.5 rounded-full border border-white" 
+                              :class="getTypeColor(m.type)" 
+                              :title="m.name + ' (' + m.date + ')'">
+                         </div>
+                    </div>
+                    <span class="text-gray-700 font-medium">
+                        <span v-if="g.count > 1" class="font-bold">({{ g.count }})</span>
+                        {{ g.projectName }}
+                    </span>
+                </div>
+            </div>
+            <div v-else class="text-xs text-gray-400 mt-1 italic">Sin hitos esta semana</div>
+        </div>
+
         <div class="flex items-center gap-3">
             <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center" @click="gotToWeek('prev')">
                 <ChevronLeft size="16" />
