@@ -40,10 +40,14 @@ export const resolvers = {
     collaborators: () => prisma.collaborator.findMany({
       include: {
         skills: { include: { skill: true } },
-        allocations: true
-        // roles? If modeled
+        allocations: { include: { project: true } },
+        roles: { include: { role: true } },
+        hardware: true,
+        holidayCalendar: true,
+        customFieldValues: { include: { fieldDefinition: true } }
       }
     }),
+    customFieldDefinitions: () => prisma.customFieldDefinition.findMany({ orderBy: { order: 'asc' } }),
     project: (_, { id }) => prisma.project.findUnique({
       where: { id },
       include: {
@@ -58,8 +62,10 @@ export const resolvers = {
       }
     }),
     technologies: () => prisma.technology.findMany(),
+    skills: () => prisma.skill.findMany(),
     milestoneTypes: () => prisma.milestoneType.findMany({ orderBy: { name: 'asc' }})
   },
+  
   
   Mutation: {
     createTechnology: (_, { name }) => prisma.technology.create({ data: { name } }),
@@ -93,37 +99,181 @@ export const resolvers = {
       data: { name, contractedHours }
     }),
     
-    createCollaborator: (_, { name, contractedHours }) => prisma.collaborator.create({
-      data: { name, contractedHours }
-    }),
-    
-    addCollaboratorSkill: async (_, { collaboratorId, skillName, level }) => {
-        // Upsert skill (find or create)
-        let skill = await prisma.skill.findUnique({ where: { name: skillName } })
-        if (!skill) {
-            skill = await prisma.skill.create({ data: { name: skillName } }) // level on skill is default/stub, level is on relation
+    createCollaborator: async (_, { userName, firstName, lastName, contractedHours, joinDate }) => {
+      return await prisma.collaborator.create({
+        data: {
+          userName,
+          firstName,
+          lastName,
+          contractedHours,
+          joinDate: joinDate ? new Date(joinDate) : new Date()
+        },
+        include: {
+          skills: { include: { skill: true } },
+          hardware: true,
+          holidayCalendar: true,
+          customFieldValues: { include: { fieldDefinition: true } }
         }
-        
+      })
+    },
+    
+    updateCollaborator: async (_, { id, userName, firstName, lastName, contractedHours, joinDate, isActive }) => {
+      const data = {}
+      if (userName !== undefined) data.userName = userName
+      if (firstName !== undefined) data.firstName = firstName
+      if (lastName !== undefined) data.lastName = lastName
+      if (contractedHours !== undefined) data.contractedHours = contractedHours
+      if (joinDate !== undefined) data.joinDate = new Date(joinDate)
+      if (isActive !== undefined) data.isActive = isActive
+      
+      return await prisma.collaborator.update({
+        where: { id },
+        data,
+        include: {
+          skills: { include: { skill: true } },
+          hardware: true,
+          holidayCalendar: true,
+          customFieldValues: { include: { fieldDefinition: true } }
+        }
+      })
+    },
+
+    deleteCollaborator: async (_, { id }) => {
+      await prisma.collaborator.delete({ where: { id } })
+      return true
+    },
+    
+    // Hardware Management
+    addHardware: async (_, { collaboratorId, name, type, serialNumber }) => {
+      return await prisma.hardware.create({
+        data: {
+          collaboratorId,
+          name,
+          type,
+          serialNumber
+        }
+      })
+    },
+    
+    removeHardware: async (_, { id }) => {
+      await prisma.hardware.delete({ where: { id } })
+      return true
+    },
+    
+    // Holiday Calendar Management
+    updateHolidayCalendar: async (_, { collaboratorId, year, holidays }) => {
+      const currentYear = new Date().getFullYear()
+      
+      // Check if calendar exists for this year
+      const existing = await prisma.holidayCalendar.findFirst({
+        where: { collaboratorId, year }
+      })
+      
+      if (existing) {
+        // Check if it was modified this year
+        const lastModifiedYear = new Date(existing.lastModified).getFullYear()
+        if (lastModifiedYear === currentYear && year === currentYear) {
+          throw new Error('El calendario de festivos solo puede modificarse una vez al año')
+        }
+      }
+      
+      return await prisma.holidayCalendar.upsert({
+        where: {
+          collaboratorId_year: { collaboratorId, year }
+        },
+        update: {
+          holidays: JSON.stringify(holidays)
+        },
+        create: {
+          collaboratorId,
+          year,
+          holidays: JSON.stringify(holidays)
+        }
+      })
+    },
+    
+    // Custom Field Definitions
+    createCustomFieldDefinition: async (_, { fieldName, fieldLabel, fieldType, fieldConfig, isRequired, order }) => {
+      return await prisma.customFieldDefinition.create({
+        data: {
+          fieldName,
+          fieldLabel,
+          fieldType,
+          fieldConfig: fieldConfig || '{}',
+          isRequired: isRequired || false,
+          order: order || 0
+        }
+      })
+    },
+    
+    updateCustomFieldDefinition: async (_, { id, fieldName, fieldLabel, fieldType, fieldConfig, isRequired, order }) => {
+      const data = {}
+      if (fieldName !== undefined) data.fieldName = fieldName
+      if (fieldLabel !== undefined) data.fieldLabel = fieldLabel
+      if (fieldType !== undefined) data.fieldType = fieldType
+      if (fieldConfig !== undefined) data.fieldConfig = fieldConfig
+      if (isRequired !== undefined) data.isRequired = isRequired
+      if (order !== undefined) data.order = order
+      
+      return await prisma.customFieldDefinition.update({
+        where: { id },
+        data
+      })
+    },
+    
+    deleteCustomFieldDefinition: async (_, { id }) => {
+      await prisma.customFieldDefinition.delete({ where: { id } })
+      return true
+    },
+    
+    // Custom Field Values
+    setCustomFieldValue: async (_, { collaboratorId, fieldDefinitionId, value }) => {
+      return await prisma.customFieldValue.upsert({
+        where: {
+          collaboratorId_fieldDefinitionId: { collaboratorId, fieldDefinitionId }
+        },
+        update: { value },
+        create: {
+          collaboratorId,
+          fieldDefinitionId,
+          value
+        },
+        include: {
+          fieldDefinition: true
+        }
+      })
+    },
+    
+    addCollaboratorSkill: async (_, { collaboratorId, skillId, level }) => {
         // Upsert relation
         await prisma.collaboratorSkill.upsert({
             where: {
                 collaboratorId_skillId: {
                     collaboratorId,
-                    skillId: skill.id
+                    skillId
                 }
             },
             update: { level },
             create: {
                 collaboratorId,
-                skillId: skill.id,
+                skillId,
                 level
-            }
+            },
+            include: { skill: true }
         })
         
-        return { ...skill, level } // Return skill with the level specific to this relation (?) 
-        // Schema says returns Skill. Skill type has 'level'. 
-        // In our robust model, Skill is generic name, and CollaboratorSkill has level.
-        // But for MVP front compatibility, we might be returning the Relation's level overlaid on Skill.
+        // Return collaborator to match Schema return type "Collaborator!"
+        return await prisma.collaborator.findUnique({
+             where: { id: collaboratorId },
+             include: {
+                skills: { include: { skill: true } },
+                allocations: true,
+                roles: { include: { role: true } },
+                hardware: true,
+                holidayCalendar: true,
+                customFieldValues: { include: { fieldDefinition: true } }
+             }
+        })
     },
     
     removeCollaboratorSkill: async (_, { collaboratorId, skillId }) => {
@@ -299,58 +449,120 @@ export const resolvers = {
     },
   },
   
-  // Field Resolvers to flatten structure
-  Allocation: {
-      hours: (parent) => (parent.dedicationPercentage / 100) * 160,
-      roles: async (parent) => {
-          // If we already loaded roles via include, map them
-          if (parent.roles && parent.roles[0] && parent.roles[0].role) {
-               return parent.roles.map(ar => ar.role)
-          } 
-          // Otherwise fetch
-           const rs = await prisma.allocationRole.findMany({
-               where: { allocationId: parent.id },
-               include: { role: true }
-           })
-           return rs.map(ar => ar.role)
-      }
-  },
-  
   Collaborator: {
+      joinDate: (parent) => parent.joinDate?.toISOString(),
       skills: async (parent) => {
           if (parent.skills && parent.skills[0] && parent.skills[0].skill) {
-               return parent.skills.map(cs => ({ ...cs.skill, level: cs.level }))
+               return parent.skills
           }
-           const cs = await prisma.collaboratorSkill.findMany({
+           return await prisma.collaboratorSkill.findMany({
                where: { collaboratorId: parent.id },
                include: { skill: true }
            })
-           return cs.map(c => ({ ...c.skill, level: c.level }))
       },
       roles: async (parent) => {
           if (parent.roles && parent.roles[0] && parent.roles[0].role) {
                return parent.roles.map(cr => cr.role)
           } 
-          // If fetched but simple relation object (unlikely for many-to-many explicit)
-          // or if not fetched
            const cr = await prisma.collaboratorRole.findMany({
                where: { collaboratorId: parent.id },
                include: { role: true }
            })
            return cr.map(c => c.role)
+      },
+      hardware: async (parent) => {
+          if (parent.hardware) return parent.hardware
+          return await prisma.hardware.findMany({
+              where: { collaboratorId: parent.id }
+          })
+      },
+      holidayCalendar: async (parent) => {
+          if (parent.holidayCalendar !== undefined) return parent.holidayCalendar
+          return await prisma.holidayCalendar.findUnique({
+              where: { collaboratorId: parent.id }
+          })
+      },
+      customFields: async (parent) => {
+          if (parent.customFieldValues) return parent.customFieldValues
+          return await prisma.customFieldValue.findMany({
+              where: { collaboratorId: parent.id },
+              include: { fieldDefinition: true }
+          })
+      },
+      isActive: (parent) => parent.isActive ?? true
+  },
+  
+  Allocation: {
+      hours: (parent) => (parent.dedicationPercentage / 100) * 160,
+      roles: async (parent) => {
+          if (parent.roles && parent.roles[0] && parent.roles[0].role) {
+               return parent.roles.map(ar => ar.role)
+          } 
+           const rs = await prisma.allocationRole.findMany({
+               where: { allocationId: parent.id },
+               include: { role: true }
+           })
+           return rs.map(ar => ar.role)
+      },
+      supervisors: async (parent) => {
+          return await prisma.allocationHierarchy.findMany({
+              where: { subordinateId: parent.id },
+              include: { 
+                  hierarchyType: true,
+                  supervisor: {
+                      include: {
+                          collaborator: true
+                      }
+                  }
+              }
+          })
+      },
+      subordinates: async (parent) => {
+          return await prisma.allocationHierarchy.findMany({
+              where: { supervisorId: parent.id },
+              include: { 
+                  hierarchyType: true,
+                  subordinate: {
+                      include: {
+                          collaborator: true
+                      }
+                  }
+              }
+          })
       }
+  },
+  
+  HolidayCalendar: {
+      holidays: (parent) => {
+          try {
+              return JSON.parse(parent.holidays)
+          } catch {
+              return []
+          }
+      },
+      lastModified: (parent) => parent.lastModified?.toISOString()
   },
   
   ProjectRequirement: {
       skills: async (parent) => {
           if (parent.skills && parent.skills[0] && parent.skills[0].skill) {
-             return parent.skills.map(rs => ({ ...rs.skill, level: rs.level }))
+             return parent.skills.map(rs => ({ 
+                 id: rs.id,
+                 skill: rs.skill,
+                 name: rs.skill.name,
+                 level: rs.level 
+             }))
           }
           const rs = await prisma.requirementSkill.findMany({
                where: { requirementId: parent.id },
                include: { skill: true }
            })
-           return rs.map(r => ({ ...r.skill, level: r.level }))
+           return rs.map(r => ({ 
+               id: r.id, 
+               skill: r.skill,
+               name: r.skill.name,
+               level: r.level 
+           }))
       }
   }
 }

@@ -10,14 +10,62 @@ type Skill {
   level: Int! # 0-4
 }
 
-type Collaborator {
+type Hardware {
   id: ID!
   name: String!
+  type: String!
+  serialNumber: String
+  assignedDate: String!
+  collaboratorId: String!
+}
+
+type HolidayCalendar {
+  id: ID!
+  year: Int!
+  holidays: [String!]!
+  lastModified: String!
+  collaboratorId: String!
+}
+
+type CustomFieldDefinition {
+  id: ID!
+  fieldName: String!
+  fieldLabel: String!
+  fieldType: String!
+  fieldConfig: String!
+  isRequired: Boolean!
+  order: Int!
+}
+
+type CustomFieldValue {
+  id: ID!
+  fieldDefinitionId: String!
+  fieldDefinition: CustomFieldDefinition!
+  value: String!
+}
+
+type CollaboratorSkill {
+  id: ID!
+  skill: Skill!
+  level: Int!
+}
+
+type Collaborator {
+  id: ID!
+  userName: String
+  firstName: String!
+  lastName: String!
+  name: String # Deprecated
   avatar: String
   roles: [Role!]!
-  skills: [Skill!]!
+  skills: [CollaboratorSkill!]!
   contractedHours: Int!
+  joinDate: String!
+  isActive: Boolean!
   allocations: [Allocation!]!
+  hardware: [Hardware!]!
+  holidayCalendar: HolidayCalendar
+  customFields: [CustomFieldValue!]!
 }
 
 type Project {
@@ -37,6 +85,20 @@ type Sprint {
   endDate: String!
 }
 
+type AllocationHierarchy {
+  id: ID!
+  hierarchyType: HierarchyType!
+  supervisor: Allocation
+  subordinate: Allocation
+}
+
+type HierarchyType {
+  id: ID!
+  name: String!
+  color: String!
+  rank: Int!
+}
+
 type Allocation {
   id: ID!
   collaborator: Collaborator!
@@ -46,22 +108,8 @@ type Allocation {
   hours: Int!
   startWeek: String!
   endWeek: String
-  supervisors: [AllocationHierarchy!]!
-  subordinates: [AllocationHierarchy!]!
-}
-
-type AllocationHierarchy {
-  id: ID!
-  subordinate: Allocation!
-  supervisor: Allocation!
-  hierarchyType: HierarchyType!
-}
-
-type HierarchyType {
-  id: ID!
-  name: String!
-  color: String
-  rank: Int
+  supervisors: [AllocationHierarchy!]
+  subordinates: [AllocationHierarchy!]
 }
 
 type MilestoneType {
@@ -72,11 +120,11 @@ type MilestoneType {
 
 type Milestone {
   id: ID!
-  project: Project!
   name: String!
   date: String!
   type: String
   milestoneType: MilestoneType
+  projectId: String!
 }
 
 type ProjectRequirement {
@@ -84,60 +132,83 @@ type ProjectRequirement {
   role: Role!
   resourceCount: Int!
   monthlyHours: Int!
-  skills: [Skill!]!
+  skills: [ProjectRequirementSkill!]!
+}
+
+type ProjectRequirementSkill {
+  id: ID!
+  skill: Skill!
+  name: String
+  level: Int!
 }
 
 type Query {
   projects: [Project!]!
-  project(id: ID!): Project
   collaborators: [Collaborator!]!
   roles: [Role!]!
+  skills: [Skill!]!
   technologies: [Technology!]!
   milestoneTypes: [MilestoneType!]!
-  hierarchyTypes: [HierarchyType!]!
+  customFieldDefinitions: [CustomFieldDefinition!]!
+  project(id: ID!): Project
 }
 
 type Mutation {
-  createRole(name: String!): Role
-  deleteRole(id: ID!): ID
-  createProject(name: String!, contractedHours: Int!): Project
+  createProject(name: String!, contractedHours: Int!): Project!
+  deleteProject(id: ID!): Boolean
   
-  # Allocation Management
+  createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String): Collaborator!
+  updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean): Collaborator!
+  deleteCollaborator(id: ID!): Boolean
+  
+  # Hardware Management
+  addHardware(collaboratorId: ID!, name: String!, type: String!, serialNumber: String): Hardware!
+  removeHardware(id: ID!): Boolean
+  
+  # Holiday Calendar Management
+  updateHolidayCalendar(collaboratorId: ID!, year: Int!, holidays: [String!]!): HolidayCalendar!
+  
+  # Custom Field Definitions
+  createCustomFieldDefinition(fieldName: String!, fieldLabel: String!, fieldType: String!, fieldConfig: String, isRequired: Boolean, order: Int): CustomFieldDefinition!
+  updateCustomFieldDefinition(id: ID!, fieldName: String, fieldLabel: String, fieldType: String, fieldConfig: String, isRequired: Boolean, order: Int): CustomFieldDefinition!
+  deleteCustomFieldDefinition(id: ID!): Boolean
+  
+  # Custom Field Values
+  setCustomFieldValue(collaboratorId: ID!, fieldDefinitionId: ID!, value: String!): CustomFieldValue!
+  
+  createRole(name: String!): Role!
+  deleteRole(id: ID!): Boolean
+
+  createSkill(name: String!): Skill!
+  deleteSkill(id: ID!): Boolean
+  
+  createTechnology(name: String!): Technology!
+  deleteTechnology(id: ID!): Boolean
+  
+  createMilestoneType(name: String!, color: String!): MilestoneType!
+  updateMilestoneType(id: ID!, name: String, color: String): MilestoneType!
+  deleteMilestoneType(id: ID!): Boolean
+
   createAllocation(projectId: ID!, collaboratorId: ID!, roleId: ID!, percentage: Int!, startWeek: String!): Allocation!
-  updateAllocation(allocationId: ID!, percentage: Int, endWeek: String): Allocation! 
-  deleteAllocation(allocationId: ID!): ID
-  addAllocationRole(allocationId: ID!, roleId: ID!): Role!
-  removeAllocationRole(allocationId: ID!, roleId: ID!): ID
+  updateAllocation(allocationId: ID!, percentage: Int, startWeek: String, endWeek: String): Allocation!
+  deleteAllocation(allocationId: ID!): Boolean
   
-  # Hierarchies
-  addAllocationHierarchy(subordinateAllocId: ID!, supervisorAllocId: ID!, typeId: ID!): AllocationHierarchy
-  removeAllocationHierarchy(hierarchyId: ID!): Boolean
-  
-  # Milestones
+  addAllocationRole(allocationId: ID!, roleId: ID!): Allocation!
+  removeAllocationRole(allocationId: ID!, roleId: ID!): Allocation!
+
+  addCollaboratorSkill(collaboratorId: ID!, skillId: ID!, level: Int!): Collaborator!
+  removeCollaboratorSkill(collaboratorId: ID!, skillId: ID!): Collaborator!
+
   createMilestone(projectId: ID!, name: String!, date: String!, type: String, milestoneTypeId: ID): Milestone!
-  deleteMilestone(id: ID!): ID
+  deleteMilestone(id: ID!): Boolean
   
   # Requirements Management
   addProjectRequirement(projectId: ID!, roleId: ID!, resourceCount: Int, monthlyHours: Int): ProjectRequirement!
   removeProjectRequirement(projectId: ID!, requirementId: ID!): Boolean
   addRequirementSkill(projectId: ID!, requirementId: ID!, skillName: String!, level: Int!): Skill!
   removeRequirementSkill(projectId: ID!, requirementId: ID!, skillId: ID!): Boolean
-  
-  createCollaborator(name: String!, contractedHours: Int!): Collaborator!
-  addCollaboratorSkill(collaboratorId: ID!, skillName: String!, level: Int!): Skill!
-  removeCollaboratorSkill(collaboratorId: ID!, skillId: ID!): Boolean
-  
-  createTechnology(name: String!): Technology!
-  deleteTechnology(id: ID!): ID
-
-  createMilestoneType(name: String!, color: String!): MilestoneType!
-  updateMilestoneType(id: ID!, name: String, color: String): MilestoneType!
-  deleteMilestoneType(id: ID!): Boolean
-
-  createHierarchyType(name: String!, color: String, rank: Int): HierarchyType!
-  updateHierarchyType(id: ID!, name: String, color: String, rank: Int): HierarchyType!
-  deleteHierarchyType(id: ID!): Boolean
 }
+
 
 type Technology {
   id: ID!

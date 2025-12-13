@@ -10,14 +10,62 @@ type Skill {
   level: Int! # 0-4
 }
 
-type Collaborator {
+type Hardware {
   id: ID!
   name: String!
+  type: String!
+  serialNumber: String
+  assignedDate: String!
+  collaboratorId: String!
+}
+
+type HolidayCalendar {
+  id: ID!
+  year: Int!
+  holidays: [String!]!
+  lastModified: String!
+  collaboratorId: String!
+}
+
+type CustomFieldDefinition {
+  id: ID!
+  fieldName: String!
+  fieldLabel: String!
+  fieldType: String!
+  fieldConfig: String!
+  isRequired: Boolean!
+  order: Int!
+}
+
+type CustomFieldValue {
+  id: ID!
+  fieldDefinitionId: String!
+  fieldDefinition: CustomFieldDefinition!
+  value: String!
+}
+
+type CollaboratorSkill {
+  id: ID!
+  skill: Skill!
+  level: Int!
+}
+
+type Collaborator {
+  id: ID!
+  userName: String
+  firstName: String!
+  lastName: String!
+  name: String # Deprecated
   avatar: String
   roles: [Role!]!
-  skills: [Skill!]!
+  skills: [CollaboratorSkill!]!
   contractedHours: Int!
+  joinDate: String!
+  isActive: Boolean!
   allocations: [Allocation!]!
+  hardware: [Hardware!]!
+  holidayCalendar: HolidayCalendar
+  customFields: [CustomFieldValue!]!
 }
 
 type Project {
@@ -37,6 +85,20 @@ type Sprint {
   endDate: String!
 }
 
+type AllocationHierarchy {
+  id: ID!
+  hierarchyType: HierarchyType!
+  supervisor: Allocation
+  subordinate: Allocation
+}
+
+type HierarchyType {
+  id: ID!
+  name: String!
+  color: String!
+  rank: Int!
+}
+
 type Allocation {
   id: ID!
   collaborator: Collaborator!
@@ -46,6 +108,8 @@ type Allocation {
   hours: Int!
   startWeek: String!
   endWeek: String
+  supervisors: [AllocationHierarchy!]
+  subordinates: [AllocationHierarchy!]
 }
 
 type MilestoneType {
@@ -74,6 +138,7 @@ type ProjectRequirement {
 type ProjectRequirementSkill {
   id: ID!
   skill: Skill!
+  name: String
   level: Int!
 }
 
@@ -84,6 +149,7 @@ type Query {
   skills: [Skill!]!
   technologies: [Technology!]!
   milestoneTypes: [MilestoneType!]!
+  customFieldDefinitions: [CustomFieldDefinition!]!
   project(id: ID!): Project
 }
 
@@ -91,8 +157,24 @@ type Mutation {
   createProject(name: String!, contractedHours: Int!): Project!
   deleteProject(id: ID!): Boolean
   
-  createCollaborator(name: String!, contractedHours: Int!): Collaborator!
+  createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String): Collaborator!
+  updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean): Collaborator!
   deleteCollaborator(id: ID!): Boolean
+  
+  # Hardware Management
+  addHardware(collaboratorId: ID!, name: String!, type: String!, serialNumber: String): Hardware!
+  removeHardware(id: ID!): Boolean
+  
+  # Holiday Calendar Management
+  updateHolidayCalendar(collaboratorId: ID!, year: Int!, holidays: [String!]!): HolidayCalendar!
+  
+  # Custom Field Definitions
+  createCustomFieldDefinition(fieldName: String!, fieldLabel: String!, fieldType: String!, fieldConfig: String, isRequired: Boolean, order: Int): CustomFieldDefinition!
+  updateCustomFieldDefinition(id: ID!, fieldName: String, fieldLabel: String, fieldType: String, fieldConfig: String, isRequired: Boolean, order: Int): CustomFieldDefinition!
+  deleteCustomFieldDefinition(id: ID!): Boolean
+  
+  # Custom Field Values
+  setCustomFieldValue(collaboratorId: ID!, fieldDefinitionId: ID!, value: String!): CustomFieldValue!
   
   createRole(name: String!): Role!
   deleteRole(id: ID!): Boolean
@@ -125,14 +207,8 @@ type Mutation {
   removeProjectRequirement(projectId: ID!, requirementId: ID!): Boolean
   addRequirementSkill(projectId: ID!, requirementId: ID!, skillName: String!, level: Int!): Skill!
   removeRequirementSkill(projectId: ID!, requirementId: ID!, skillId: ID!): Boolean
-  
-  createCollaborator(name: String!, contractedHours: Int!): Collaborator!
-  addCollaboratorSkill(collaboratorId: ID!, skillName: String!, level: Int!): Skill!
-  removeCollaboratorSkill(collaboratorId: ID!, skillId: ID!): Boolean
-  
-  createTechnology(name: String!): Technology!
-  deleteTechnology(id: ID!): ID
 }
+
 
 type Technology {
   id: ID!

@@ -1,37 +1,84 @@
-import { ProjectService } from '../../application/services/ProjectService.js';
-import { CollaboratorService } from '../../application/services/CollaboratorService.js';
-import { AllocationService } from '../../application/services/AllocationService.js';
-import { prisma } from '../../infrastructure/database/prisma.js'; // For aux models
+import 'dotenv/config'
+import pkg from '@prisma/client'
+import pg from 'pg'
+import { PrismaPg } from '@prisma/adapter-pg'
 
-const projectService = new ProjectService();
-const collaboratorService = new CollaboratorService();
-const allocationService = new AllocationService();
+const { PrismaClient } = pkg
+const { Pool } = pg
+
+const connectionString = process.env.DATABASE_URL
+const pool = new Pool({ connectionString })
+const adapter = new PrismaPg(pool)
+
+const prisma = new PrismaClient({ adapter })
+
+// Debug available models
+console.log('Prisma Models:', Object.keys(prisma)) // Should show project, technology, etc.
+if (!prisma.technology) console.error('CRITICAL: prisma.technology is missing!')
 
 export const resolvers = {
   Query: {
     roles: () => prisma.role.findMany(),
+    projects: () => prisma.project.findMany({
+      include: {
+        allocations: {
+          include: {
+            collaborator: { include: { skills: { include: { skill: true } } } },
+            roles: { include: { role: true } }
+          }
+        },
+        milestones: { include: { milestoneType: true } },
+        sprints: true,
+        requiredRoles: {
+          include: {
+            role: true,
+            skills: { include: { skill: true } }
+          }
+        }
+      }
+    }),
+    collaborators: () => prisma.collaborator.findMany({
+      include: {
+        skills: { include: { skill: true } },
+        allocations: { include: { project: true } },
+        roles: { include: { role: true } },
+        hardware: true,
+        holidayCalendar: true,
+        customFieldValues: { include: { fieldDefinition: true } }
+      }
+    }),
+    customFieldDefinitions: () => prisma.customFieldDefinition.findMany({ orderBy: { order: 'asc' } }),
+    project: (_, { id }) => prisma.project.findUnique({
+      where: { id },
+      include: {
+        allocations: {
+           include: { 
+             collaborator: true, 
+             roles: { include: { role: true } } 
+           }
+        },
+        milestones: { include: { milestoneType: true } },
+        requiredRoles: { include: { role: true, skills: { include: { skill: true } } } }
+      }
+    }),
     technologies: () => prisma.technology.findMany(),
-    milestoneTypes: () => prisma.milestoneType.findMany({ orderBy: { name: 'asc' } }),
-    hierarchyTypes: () => prisma.hierarchyType.findMany({ orderBy: { rank: 'asc' } }),
-    
-    projects: () => projectService.getAll(),
-    project: (_, { id }) => projectService.getById(id),
-    
-    collaborators: () => collaboratorService.getAll()
+    skills: () => prisma.skill.findMany(),
+    milestoneTypes: () => prisma.milestoneType.findMany({ orderBy: { name: 'asc' }})
   },
   
+  
   Mutation: {
-    createRole: (_, { name }) => prisma.role.create({ data: { name } }),
-    deleteRole: async (_, { id }) => {
-       await prisma.role.delete({ where: { id } })
-       return id
-    },
     createTechnology: (_, { name }) => prisma.technology.create({ data: { name } }),
     deleteTechnology: async (_, { id }) => {
         await prisma.technology.delete({ where: { id } })
         return id
     },
-
+    createRole: (_, { name }) => prisma.role.create({ data: { name } }),
+    deleteRole: async (_, { id }) => {
+       await prisma.role.delete({ where: { id } })
+       return true
+    },
+    
     createMilestoneType: async (_, { name, color }) => {
       return await prisma.milestoneType.create({ data: { name, color }})
     },
@@ -48,90 +95,474 @@ export const resolvers = {
        return true
     },
     
-    createHierarchyType: (_, { name, color, rank }) => prisma.hierarchyType.create({ data: { name, color, rank } }),
-    updateHierarchyType: (_, { id, name, color, rank }) => prisma.hierarchyType.update({ where: { id }, data: { name, color, rank } }),
-    deleteHierarchyType: async (_, { id }) => {
-        const used = await prisma.allocationHierarchy.count({ where: { hierarchyTypeId: id } })
-        if (used > 0) throw new Error("No se puede eliminar un tipo de jerarquía en uso.")
-        await prisma.hierarchyType.delete({ where: { id } })
-        return true
+    createProject: (_, { name, contractedHours }) => prisma.project.create({
+      data: { name, contractedHours }
+    }),
+    
+    createCollaborator: async (_, { userName, firstName, lastName, contractedHours, joinDate }) => {
+      return await prisma.collaborator.create({
+        data: {
+          userName,
+          firstName,
+          lastName,
+          contractedHours,
+          joinDate: joinDate ? new Date(joinDate) : new Date()
+        },
+        include: {
+          skills: { include: { skill: true } },
+          hardware: true,
+          holidayCalendar: true,
+          customFieldValues: { include: { fieldDefinition: true } }
+        }
+      })
     },
     
-    createProject: (_, { name, contractedHours }) => projectService.create({ name, contractedHours }),
+    updateCollaborator: async (_, { id, userName, firstName, lastName, contractedHours, joinDate, isActive }) => {
+      const data = {}
+      if (userName !== undefined) data.userName = userName
+      if (firstName !== undefined) data.firstName = firstName
+      if (lastName !== undefined) data.lastName = lastName
+      if (contractedHours !== undefined) data.contractedHours = contractedHours
+      if (joinDate !== undefined) data.joinDate = new Date(joinDate)
+      if (isActive !== undefined) data.isActive = isActive
+      
+      return await prisma.collaborator.update({
+        where: { id },
+        data,
+        include: {
+          skills: { include: { skill: true } },
+          hardware: true,
+          holidayCalendar: true,
+          customFieldValues: { include: { fieldDefinition: true } }
+        }
+      })
+    },
+
+    deleteCollaborator: async (_, { id }) => {
+      await prisma.collaborator.delete({ where: { id } })
+      return true
+    },
     
-    createCollaborator: (_, { name, contractedHours }) => collaboratorService.create({ name, contractedHours }),
+    // Hardware Management
+    addHardware: async (_, { collaboratorId, name, type, serialNumber }) => {
+      return await prisma.hardware.create({
+        data: {
+          collaboratorId,
+          name,
+          type,
+          serialNumber
+        }
+      })
+    },
     
-    createAllocation: (_, args) => allocationService.create(args),
-    updateAllocation: (_, { allocationId, percentage, endWeek }) => allocationService.update(allocationId, { percentage, endWeek }),
-    deleteAllocation: (_, { allocationId }) => allocationService.delete(allocationId),
-    addAllocationRole: (_, { allocationId, roleId }) => allocationService.addRole(allocationId, roleId),
-    removeAllocationRole: (_, { allocationId, roleId }) => allocationService.removeRole(allocationId, roleId),
+    removeHardware: async (_, { id }) => {
+      await prisma.hardware.delete({ where: { id } })
+      return true
+    },
     
-    addAllocationHierarchy: async (_, { subordinateAllocId, supervisorAllocId, typeId }) => {
-        return prisma.allocationHierarchy.upsert({
+    // Holiday Calendar Management
+    updateHolidayCalendar: async (_, { collaboratorId, year, holidays }) => {
+      const currentYear = new Date().getFullYear()
+      
+      // Check if calendar exists for this year
+      const existing = await prisma.holidayCalendar.findFirst({
+        where: { collaboratorId, year }
+      })
+      
+      if (existing) {
+        // Check if it was modified this year
+        const lastModifiedYear = new Date(existing.lastModified).getFullYear()
+        if (lastModifiedYear === currentYear && year === currentYear) {
+          throw new Error('El calendario de festivos solo puede modificarse una vez al año')
+        }
+      }
+      
+      return await prisma.holidayCalendar.upsert({
+        where: {
+          collaboratorId_year: { collaboratorId, year }
+        },
+        update: {
+          holidays: JSON.stringify(holidays)
+        },
+        create: {
+          collaboratorId,
+          year,
+          holidays: JSON.stringify(holidays)
+        }
+      })
+    },
+    
+    // Custom Field Definitions
+    createCustomFieldDefinition: async (_, { fieldName, fieldLabel, fieldType, fieldConfig, isRequired, order }) => {
+      return await prisma.customFieldDefinition.create({
+        data: {
+          fieldName,
+          fieldLabel,
+          fieldType,
+          fieldConfig: fieldConfig || '{}',
+          isRequired: isRequired || false,
+          order: order || 0
+        }
+      })
+    },
+    
+    updateCustomFieldDefinition: async (_, { id, fieldName, fieldLabel, fieldType, fieldConfig, isRequired, order }) => {
+      const data = {}
+      if (fieldName !== undefined) data.fieldName = fieldName
+      if (fieldLabel !== undefined) data.fieldLabel = fieldLabel
+      if (fieldType !== undefined) data.fieldType = fieldType
+      if (fieldConfig !== undefined) data.fieldConfig = fieldConfig
+      if (isRequired !== undefined) data.isRequired = isRequired
+      if (order !== undefined) data.order = order
+      
+      return await prisma.customFieldDefinition.update({
+        where: { id },
+        data
+      })
+    },
+    
+    deleteCustomFieldDefinition: async (_, { id }) => {
+      await prisma.customFieldDefinition.delete({ where: { id } })
+      return true
+    },
+    
+    // Custom Field Values
+    setCustomFieldValue: async (_, { collaboratorId, fieldDefinitionId, value }) => {
+      return await prisma.customFieldValue.upsert({
+        where: {
+          collaboratorId_fieldDefinitionId: { collaboratorId, fieldDefinitionId }
+        },
+        update: { value },
+        create: {
+          collaboratorId,
+          fieldDefinitionId,
+          value
+        },
+        include: {
+          fieldDefinition: true
+        }
+      })
+    },
+    
+    addCollaboratorSkill: async (_, { collaboratorId, skillId, level }) => {
+        // Upsert relation
+        await prisma.collaboratorSkill.upsert({
             where: {
-                subordinateId_hierarchyTypeId: {
-                    subordinateId: subordinateAllocId,
-                    hierarchyTypeId: typeId
+                collaboratorId_skillId: {
+                    collaboratorId,
+                    skillId
                 }
             },
-            update: {
-                supervisorId: supervisorAllocId
-            },
+            update: { level },
             create: {
-                subordinateId: subordinateAllocId,
-                supervisorId: supervisorAllocId,
-                hierarchyTypeId: typeId
+                collaboratorId,
+                skillId,
+                level
             },
-            include: { subordinate: true, supervisor: true, hierarchyType: true }
+            include: { skill: true }
+        })
+        
+        // Return collaborator to match Schema return type "Collaborator!"
+        return await prisma.collaborator.findUnique({
+             where: { id: collaboratorId },
+             include: {
+                skills: { include: { skill: true } },
+                allocations: true,
+                roles: { include: { role: true } },
+                hardware: true,
+                holidayCalendar: true,
+                customFieldValues: { include: { fieldDefinition: true } }
+             }
         })
     },
-    removeAllocationHierarchy: async (_, { hierarchyId }) => {
-        await prisma.allocationHierarchy.delete({ where: { id: hierarchyId } })
-        return true
+    
+    removeCollaboratorSkill: async (_, { collaboratorId, skillId }) => {
+         await prisma.collaboratorSkill.delete({
+             where: {
+                 collaboratorId_skillId: {
+                     collaboratorId,
+                     skillId
+                 }
+             }
+         })
+         return true
     },
     
+    // Allocations
+    createAllocation: async (_, { projectId, collaboratorId, roleId, percentage, startWeek }) => {
+        // Create Allocation
+        const allocation = await prisma.allocation.create({
+            data: {
+                projectId,
+                collaboratorId,
+                dedicationPercentage: percentage,
+                startWeek,
+                endWeek: null,
+                roles: {
+                    create: {
+                        roleId: roleId
+                    }
+                }
+            },
+            include: {
+                roles: { include: { role: true } },
+                collaborator: true,
+                project: true
+            }
+        })
+        return {
+            ...allocation,
+            hours: (allocation.dedicationPercentage / 100) * 160,
+            roles: allocation.roles.map(ar => ar.role)
+        }
+    },
+    
+    updateAllocation: async (_, { allocationId, percentage, endWeek }) => {
+        const data = {}
+        if (percentage !== undefined) data.dedicationPercentage = percentage
+        if (endWeek !== undefined) data.endWeek = endWeek
+        
+        const updated = await prisma.allocation.update({
+            where: { id: allocationId },
+            data,
+            include: { roles: { include: { role: true } } }
+        })
+        return {
+             ...updated,
+             hours: (updated.dedicationPercentage / 100) * 160,
+             roles: updated.roles.map(ar => ar.role)
+        }
+    },
+    
+    deleteAllocation: async (_, { allocationId }) => {
+        await prisma.allocation.delete({ where: { id: allocationId } })
+        return allocationId
+    },
+    
+    addAllocationRole: async (_, { allocationId, roleId }) => {
+        await prisma.allocationRole.create({
+            data: { allocationId, roleId }
+        })
+        const role = await prisma.role.findUnique({ where: { id: roleId } })
+        return role
+    },
+    
+    removeAllocationRole: async (_, { allocationId, roleId }) => {
+        // Needs to find the ID of AllocationRole entry
+        // Usually schema requires specific ID, but here we query by unique compound
+        // Prisma allows deleting by compound ID if defined in schema?
+        // Yes @@unique([allocationId, roleId])
+        await prisma.allocationRole.delete({
+            where: {
+                allocationId_roleId: {
+                    allocationId,
+                    roleId
+                }
+            }
+        })
+        return roleId
+    },
+    
+    // Milestones
+    createMilestone: async (_, { projectId, name, date, type, milestoneTypeId }) => {
+      let finalTypeId = milestoneTypeId
+      
+      // If type name provided but no ID, try to find or create
+      if (!finalTypeId && type) {
+          const formattedName = type // Keep casing?
+          const existing = await prisma.milestoneType.findUnique({ where: { name: formattedName }})
+          if (existing) {
+              finalTypeId = existing.id
+          } else {
+              // Create default
+              const created = await prisma.milestoneType.create({
+                  data: { 
+                      name: formattedName,
+                      color: 'bg-purple-400'
+                  }
+              })
+              finalTypeId = created.id
+          }
+      }
+
+      return await prisma.milestone.create({
+        data: {
+          projectId,
+          name,
+          date,
+          type, 
+          milestoneTypeId: finalTypeId
+        },
+        include: { milestoneType: true }
+      })
+    },
+    
+    deleteMilestone: async (_, { id }) => {
+        await prisma.milestone.delete({ where: { id } })
+        return id
+    },
+    
+    // Requirements (Partial impl for MVP)
+    addProjectRequirement: async (_, { projectId, roleId, resourceCount, monthlyHours }) => {
+        return prisma.projectRequirement.create({
+            data: { projectId, roleId, resourceCount, monthlyHours },
+            include: { role: true, skills: true }
+        })
+    },
+    
+    removeProjectRequirement: async (_, { projectId, requirementId }) => {
+        await prisma.projectRequirement.delete({ where: { id: requirementId } })
+        return true
+    },
+
+    addRequirementSkill: async (_, { projectId, requirementId, skillName, level }) => {
+        // Upsert skill
+        let skill = await prisma.skill.findUnique({ where: { name: skillName } })
+        if (!skill) {
+            skill = await prisma.skill.create({ data: { name: skillName } })
+        }
+        
+        // Check if relation exists (since we missed @@unique in schema)
+        const existing = await prisma.requirementSkill.findFirst({
+            where: { requirementId, skillId: skill.id }
+        })
+        
+        if (existing) {
+            await prisma.requirementSkill.update({
+                where: { id: existing.id },
+                data: { level }
+            })
+        } else {
+            await prisma.requirementSkill.create({
+                data: { requirementId, skillId: skill.id, level }
+            })
+        }
+        
+        return { ...skill, level }
+    },
+    
+    removeRequirementSkill: async (_, { projectId, requirementId, skillId }) => {
+        await prisma.requirementSkill.deleteMany({
+            where: { requirementId, skillId } // deleteMany is searching by non-unique, which is fine
+        })
+        return true
+    },
   },
   
-  ProjectRequirement: {
-    skills: async (parent) => {
-        if (parent.skills) {
-            if (parent.skills.length > 0 && parent.skills[0].skill !== undefined) {
-                 return parent.skills
-                    .filter(rs => rs.skill) 
-                    .map(rs => ({ ...rs.skill, level: rs.level }));
-            }
-        }
-        return [] 
-    }
+  Collaborator: {
+      joinDate: (parent) => parent.joinDate?.toISOString(),
+      skills: async (parent) => {
+          if (parent.skills && parent.skills[0] && parent.skills[0].skill) {
+               return parent.skills
+          }
+           return await prisma.collaboratorSkill.findMany({
+               where: { collaboratorId: parent.id },
+               include: { skill: true }
+           })
+      },
+      roles: async (parent) => {
+          if (parent.roles && parent.roles[0] && parent.roles[0].role) {
+               return parent.roles.map(cr => cr.role)
+          } 
+           const cr = await prisma.collaboratorRole.findMany({
+               where: { collaboratorId: parent.id },
+               include: { role: true }
+           })
+           return cr.map(c => c.role)
+      },
+      hardware: async (parent) => {
+          if (parent.hardware) return parent.hardware
+          return await prisma.hardware.findMany({
+              where: { collaboratorId: parent.id }
+          })
+      },
+      holidayCalendar: async (parent) => {
+          if (parent.holidayCalendar !== undefined) return parent.holidayCalendar
+          return await prisma.holidayCalendar.findUnique({
+              where: { collaboratorId: parent.id }
+          })
+      },
+      customFields: async (parent) => {
+          if (parent.customFieldValues) return parent.customFieldValues
+          return await prisma.customFieldValue.findMany({
+              where: { collaboratorId: parent.id },
+              include: { fieldDefinition: true }
+          })
+      },
+      isActive: (parent) => parent.isActive ?? true
   },
-
+  
   Allocation: {
+      hours: (parent) => (parent.dedicationPercentage / 100) * 160,
+      roles: async (parent) => {
+          if (parent.roles && parent.roles[0] && parent.roles[0].role) {
+               return parent.roles.map(ar => ar.role)
+          } 
+           const rs = await prisma.allocationRole.findMany({
+               where: { allocationId: parent.id },
+               include: { role: true }
+           })
+           return rs.map(ar => ar.role)
+      },
       supervisors: async (parent) => {
-          return prisma.allocationHierarchy.findMany({
+          return await prisma.allocationHierarchy.findMany({
               where: { subordinateId: parent.id },
               include: { 
-                  supervisor: { include: { collaborator: true } }, 
-                  subordinate: { include: { collaborator: true } },
-                  hierarchyType: true
+                  hierarchyType: true,
+                  supervisor: {
+                      include: {
+                          collaborator: true
+                      }
+                  }
               }
           })
       },
       subordinates: async (parent) => {
-          return prisma.allocationHierarchy.findMany({
+          return await prisma.allocationHierarchy.findMany({
               where: { supervisorId: parent.id },
               include: { 
-                  supervisor: { include: { collaborator: true } }, 
-                  subordinate: { include: { collaborator: true } },
-                  hierarchyType: true
+                  hierarchyType: true,
+                  subordinate: {
+                      include: {
+                          collaborator: true
+                      }
+                  }
               }
           })
       }
   },
   
-  AllocationHierarchy: {
-      subordinate: (parent) => parent.subordinate || prisma.allocation.findUnique({ where: { id: parent.subordinateId }}),
-      supervisor: (parent) => parent.supervisor || prisma.allocation.findUnique({ where: { id: parent.supervisorId }}),
-      hierarchyType: (parent) => parent.hierarchyType || prisma.hierarchyType.findUnique({ where: { id: parent.hierarchyTypeId } })
+  HolidayCalendar: {
+      holidays: (parent) => {
+          try {
+              return JSON.parse(parent.holidays)
+          } catch {
+              return []
+          }
+      },
+      lastModified: (parent) => parent.lastModified?.toISOString()
+  },
+  
+  ProjectRequirement: {
+      skills: async (parent) => {
+          if (parent.skills && parent.skills[0] && parent.skills[0].skill) {
+             return parent.skills.map(rs => ({ 
+                 id: rs.id,
+                 skill: rs.skill,
+                 name: rs.skill.name,
+                 level: rs.level 
+             }))
+          }
+          const rs = await prisma.requirementSkill.findMany({
+               where: { requirementId: parent.id },
+               include: { skill: true }
+           })
+           return rs.map(r => ({ 
+               id: r.id, 
+               skill: r.skill,
+               name: r.skill.name,
+               level: r.level 
+           }))
+      }
   }
 }
