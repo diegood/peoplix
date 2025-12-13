@@ -79,6 +79,11 @@ export const GET_PROJECTS = gql`
         name
         date
         type
+        milestoneType {
+          id
+          name
+          color
+        }
       }
       allocations {
         id
@@ -149,12 +154,53 @@ export const REMOVE_ALLOCATION_ROLE = gql`
   }
 `
 
+export const GET_MILESTONE_TYPES = gql`
+  query GetMilestoneTypes {
+    milestoneTypes {
+      id
+      name
+      color
+    }
+  }
+`
+
+export const CREATE_MILESTONE_TYPE = gql`
+  mutation CreateMilestoneType($name: String!, $color: String!) {
+    createMilestoneType(name: $name, color: $color) {
+      id
+      name
+      color
+    }
+  }
+`
+
+export const UPDATE_MILESTONE_TYPE = gql`
+  mutation UpdateMilestoneType($id: ID!, $name: String, $color: String) {
+    updateMilestoneType(id: $id, name: $name, color: $color) {
+      id
+      name
+      color
+    }
+  }
+`
+
+export const DELETE_MILESTONE_TYPE = gql`
+  mutation DeleteMilestoneType($id: ID!) {
+    deleteMilestoneType(id: $id)
+  }
+`
+
 export const CREATE_MILESTONE = gql`
-  mutation CreateMilestone($projectId: ID!, $name: String!, $date: String!, $type: String) {
-    createMilestone(projectId: $projectId, name: $name, date: $date, type: $type) {
+  mutation CreateMilestone($projectId: ID!, $name: String!, $date: String!, $type: String, $milestoneTypeId: ID) {
+    createMilestone(projectId: $projectId, name: $name, date: $date, type: $type, milestoneTypeId: $milestoneTypeId) {
       id
       name
       date
+      milestoneType {
+        id
+        name
+        color
+      }
     }
   }
 `

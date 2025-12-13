@@ -6,8 +6,17 @@ import { GET_PROJECTS, GET_COLLABORATORS, CREATE_ALLOCATION, UPDATE_ALLOCATION, 
 import { GripVertical, AlertCircle, CheckCircle, Trash2, X, Plus, Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { dayjs } from '@/config'
 import ProjectMilestones from './ProjectMilestones.vue'
+import MilestoneManager from './MilestoneManager.vue'
+import { Settings2 } from 'lucide-vue-next'
 
-// Query all data
+// ... existing code ...
+
+const managerOpen = ref(false)
+
+// ... existing code ...
+
+
+// ... template ...
 const { result: projectResult, loading: projectsLoading } = useQuery(GET_PROJECTS)
 const { result: collabResult, loading: collabsLoading } = useQuery(GET_COLLABORATORS)
 
@@ -21,6 +30,12 @@ const { mutate: removeAllocationRole } = useMutation(REMOVE_ALLOCATION_ROLE, { r
 // Local state
 const dragging = ref(false)
 const localProjects = ref([])
+const viewMode = ref('weekly') // 'weekly' or 'monthly'
+const zoomLevel = ref('month') // 'month' or 'day'
+const monthlyRange = ref({
+    start: dayjs().format('YYYY-MM'),
+    end: dayjs().add(2, 'month').format('YYYY-MM')
+})
 
 // Week Selector
 const getISOWeek = (d = new Date()) => {
@@ -93,24 +108,15 @@ const onDrop = (evt, projectId) => {
     const project = filteredProjects.value.find(p => p.id === projectId)
     
     // Check for Duplicates in current week
-    // We check against localProjects (source of truth) to avoid finding the just-dropped (transient) item
-    // which vuedraggable might have already added to the 'project.allocations' array locally.
     const sourceProject = localProjects.value.find(p => p.id === projectId)
     const existingActiveAllocation = sourceProject?.allocations?.find(a => {
-        // Check temporal overlap
         const isActive = a.startWeek <= selectedWeek.value && (!a.endWeek || a.endWeek >= selectedWeek.value)
         if (!isActive) return false
-        
-        // Check collaborator ID
         return a.collaborator?.id === collaborator.id
     })
     
     if (existingActiveAllocation) {
         alert("Este colaborador ya está asignado a este proyecto en esta semana.")
-        // Revert visually? Since filteredProjects is computed, we might need to force update or rely on upcoming refetch.
-        // Usually returning false or relying on the key change handles it, but here we just block the modal.
-        // We really should remove the item from the list if possible, but simpler is to just return.
-        // The list will reset on next render/refetch.
         return
     }
 
@@ -148,9 +154,6 @@ const confirmAssignment = async () => {
     assignmentModalOpen.value = false
 }
 
-// Logic for changes:
-// If allocation startWeek == selectedWeek -> Update directly
-// If startWeek < selectedWeek -> Split (Close old at selectedWeek-1, Create new at selectedWeek)
 const handleDedicationChange = async (allocation, newPercentage) => {
     const newPerc = Number(newPercentage)
     if (allocation.dedicationPercentage === newPerc) return
@@ -161,39 +164,18 @@ const handleDedicationChange = async (allocation, newPercentage) => {
     } else {
         // Split!
         if (confirm("Cambiar dedicación implica crear un nuevo registro desde esta semana. ¿Continuar?")) {
-            // Simple string logic for previous week is tricky (W01 -> prev year W52). 
-            // For MVP let's assume valid ISO string passed to backend or simple mock logic?
-            // Actually, let's just use the current week as split point.
-            // Backend updateAllocation({ endWeek: ... }) closes it exclusively or inclusively?
-            // Schema comment said "Inclusive". So we set endWeek to PREVIOUS week.
-            
-            // To properly calculate previous week string, we need a helper.
-            // For now, let's just ask backend to terminate at selectedWeek (exclusive? no).
-            // Let's adopt a strategy: UPDATE modifies the current allocation. To SPLIT we need distinct calls.
-            
-            // NOTE: Implementing full week math here is heavy.
-            // I'll update the allocation directly for now to keep it functional, 
-            // but add a comment that this should be splitting.
-            // Re-reading user request: "si hay cambio es un nuevo registro".
-            // I will try to implement a basic split. 
-            
-            // Hack for Previous Week: simple check if W > 1
-             let w = parseInt(selectedWeek.value.split('-W')[1])
-             let y = parseInt(selectedWeek.value.split('-W')[0])
-             let prevWeek = ''
-             if (w > 1) {
-                 prevWeek = `${y}-W${(w-1).toString().padStart(2,'0')}`
-             } else {
-                 prevWeek = `${y-1}-W52` // approx
-             }
+            let w = parseInt(selectedWeek.value.split('-W')[1])
+            let y = parseInt(selectedWeek.value.split('-W')[0])
+            let prevWeek = ''
+            if (w > 1) {
+                prevWeek = `${y}-W${(w-1).toString().padStart(2,'0')}`
+            } else {
+                prevWeek = `${y-1}-W52` // approx
+            }
             
             await updateAllocation({ allocationId: allocation.id, percentage: Number(allocation.dedicationPercentage) || 0, endWeek: prevWeek })
             
             // 2. Create new one
-            // We need to re-add all roles.
-            // Current API creates with 1 role. We need to loop add others?
-            // Or createAllocation could take role list? No, takes 1.
-            // We pick the first role as primary.
             const primaryRole = allocation.roles[0]
             if (primaryRole) {
                 const res = await createAllocation({
@@ -215,9 +197,6 @@ const handleDedicationChange = async (allocation, newPercentage) => {
 }
 
 const handleAddRoleAction = async (allocation, roleId) => {
-    // If splitting logic applies here too (Role change = new record), same complexity.
-    // For MVP, lets assume role additions are retroactive/current context only if we don't split.
-    // Given complexity, I'll allow adding roles to current allocation directly for now.
     if (!roleId) return
     await addAllocationRole({ allocationId: allocation.id, roleId })
     addingRoleToAllocId.value = null
@@ -230,14 +209,11 @@ const handleRemoveRole = async (allocation, roleId) => {
 }
 
 const handleDelete = async (allocationId) => {
-    // Delete completely vs Terminate
     if (confirm("¿Eliminar registro completo? (Para finalizar asignación, edita el porcentaje)")) {
         await deleteAllocation({ allocationId })
     }
 }
 
-// Compute available collaborators - Filter out those already allocated in this week?
-// Actually simpler to leave them available but show they are busy (Dedication sum).
 const availableCollaborators = computed(() => {
     const collabs = JSON.parse(JSON.stringify(collabResult.value?.collaborators || []))
     // Could compute remaining availability here based on filteredProjects
@@ -263,6 +239,7 @@ const gotToWeek = (direction) => {
     const d = dayjs().year(y).isoWeek(w).startOf('isoWeek')[operation](1, 'week')
     selectedWeek.value = `${d.year()}-W${d.isoWeek().toString().padStart(2, '0')}`
 }
+
 const globalWeekMilestones = computed(() => {
     if (!localProjects.value) return []
     
@@ -295,14 +272,106 @@ const globalWeekMilestones = computed(() => {
     return groups
 })
 
-const getTypeColor = (type) => {
-    switch (type) {
-        case 'Delivery': return 'bg-red-400'
-        case 'Meeting': return 'bg-blue-400'
-        case 'DevOps': return 'bg-green-400'
-        default: return 'bg-purple-400' // Default fallback
+const getTypeColor = (milestoneOrType) => {
+    // If it's a full milestone object with nested type
+    if (typeof milestoneOrType === 'object' && milestoneOrType.milestoneType) {
+        return milestoneOrType.milestoneType.color
     }
+    // Fallback for legacy string types (just in case)
+    if (typeof milestoneOrType === 'string') {
+        // Try to find in loaded types? For now keep legacy static map or default
+        switch (milestoneOrType) {
+            case 'Delivery': return 'bg-red-400'
+            case 'Meeting': return 'bg-blue-400'
+            case 'DevOps': return 'bg-green-400'
+             default: return 'bg-purple-400'
+        }
+    }
+    return milestoneOrType?.color || 'bg-gray-400'
 }
+
+const availableMilestoneTypes = computed(() => {
+    if (!localProjects.value) return []
+    const typesMap = new Map()
+    localProjects.value.forEach(p => {
+        if (p.milestones) {
+            p.milestones.forEach(m => {
+                if (m.milestoneType) {
+                    typesMap.set(m.milestoneType.name, m.milestoneType)
+                } else if (m.type) {
+                     // Legacy support
+                     typesMap.set(m.type, { name: m.type, color: getTypeColor(m.type) })
+                }
+            })
+        }
+    })
+    return Array.from(typesMap.values()).sort((a,b) => a.name.localeCompare(b.name))
+})
+
+// MONTHLY VIEW LOGIC
+const monthlyTimeline = computed(() => {
+    const start = dayjs(monthlyRange.value.start).startOf('month')
+    const end = dayjs(monthlyRange.value.end).endOf('month')
+    
+    const items = []
+    
+    if (zoomLevel.value === 'month') {
+        // Generate array of months
+        let current = start
+        while (current.isBefore(end) || current.isSame(end, 'month')) {
+            items.push({
+                label: current.format('MMM'), // 'Ene'
+                sublabel: current.format('YYYY'),
+                date: current.toDate(),
+                key: current.format('YYYY-MM'),
+                isWeekend: false
+            })
+            current = current.add(1, 'month')
+        }
+    } else {
+        // Generate array of days, SKIPPING weekends
+        let current = start
+        while (current.isBefore(end) || current.isSame(end, 'day')) {
+            const dayOfWeek = current.day()
+            // 0 = Sunday, 6 = Saturday
+            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                items.push({
+                    label: current.date(),
+                    sublabel: current.format('dd'),
+                    date: current.toDate(),
+                    key: current.format('YYYY-MM-DD'),
+                    isWeekend: false // Always false now
+                })
+            }
+            current = current.add(1, 'day')
+        }
+    }
+    return items
+})
+
+const getMilestonesForKey = (project, key) => {
+    if (!project.milestones || !project.milestones.length) return []
+    
+    return project.milestones.filter(m => {
+        if (zoomLevel.value === 'month') {
+             // Month key is YYYY-MM
+             return dayjs(m.date).format('YYYY-MM') === key
+        } else {
+             // Day key is YYYY-MM-DD
+             let mKey = dayjs(m.date).format('YYYY-MM-DD')
+             // Handle weekend milestones snapping to Friday if needed, 
+             // but for now, since we filter weekends visually, we might miss them.
+             // Best approach: If strict day view, show exact matches. 
+             // Weekend milestones simply won't appear if the column isn't there.
+             return mKey === key
+        }
+    })
+}
+
+const isToday = (dateObj) => {
+    return dayjs(dateObj).isSame(dayjs(), 'day')
+}
+
 </script>
 
 <template>
@@ -310,45 +379,110 @@ const getTypeColor = (type) => {
     
     <!-- Week Selector Header -->
     <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm z-20">
-        <div class="flex flex-col">
-            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <Calendar class="text-blue-600" />
-                Planificación Semanal
-            </h2>
-            <!-- Global Milestones Summary -->
-            <div v-if="globalWeekMilestones.length > 0" class="flex items-center gap-2 mt-1 text-xs text-gray-500 overflow-x-auto max-w-lg">
-                <span class="font-semibold text-gray-700">Hitos de la semana:</span>
-                <div v-for="g in globalWeekMilestones" :key="g.projectId" class="flex items-center gap-2 bg-gray-100 px-2 py-0.5 rounded-full whitespace-nowrap">
-                    <!-- Dots for each milestone in the group -->
-                    <div class="flex -space-x-1">
-                         <div v-for="m in g.milestones" :key="m.id" 
-                              class="w-2.5 h-2.5 rounded-full border border-white" 
-                              :class="getTypeColor(m.type)" 
-                              :title="m.name + ' (' + m.date + ')'">
-                         </div>
-                    </div>
-                    <span class="text-gray-700 font-medium">
-                        <span v-if="g.count > 1" class="font-bold">({{ g.count }})</span>
-                        {{ g.projectName }}
-                    </span>
+        <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-4">
+                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <Calendar class="text-blue-600" />
+                    Planificación
+                </h2>
+                <!-- View Toggler -->
+                <div class="flex bg-gray-100 p-1 rounded-lg">
+                    <button @click="viewMode = 'weekly'" 
+                            class="px-3 py-1 text-sm rounded-md transition-all"
+                            :class="viewMode === 'weekly' ? 'bg-white shadow text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-700'">
+                        Semanal
+                    </button>
+                    <button @click="viewMode = 'monthly'" 
+                            class="px-3 py-1 text-sm rounded-md transition-all"
+                            :class="viewMode === 'monthly' ? 'bg-white shadow text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-700'">
+                        Mensual
+                    </button>
                 </div>
             </div>
-            <div v-else class="text-xs text-gray-400 mt-1 italic">Sin hitos esta semana</div>
+
+            <!-- Global Milestones Summary (Weekly Mode) -->
+            <div v-if="viewMode === 'weekly'">
+                <div v-if="globalWeekMilestones.length > 0" class="flex items-center gap-2 mt-1 text-xs text-gray-500 overflow-x-auto max-w-lg">
+                    <span class="font-semibold text-gray-700">Hitos de la semana:</span>
+                    <div v-for="g in globalWeekMilestones" :key="g.projectId" class="flex items-center gap-2 bg-gray-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+                        <!-- Dots for each milestone in the group -->
+                        <div class="flex -space-x-1">
+                             <div v-for="m in g.milestones" :key="m.id" 
+                                  class="w-2.5 h-2.5 rounded-full border border-white" 
+                                  :class="getTypeColor(m.type)" 
+                                  :title="m.name + ' (' + m.date + ')'">
+                             </div>
+                        </div>
+                        <span class="text-gray-700 font-medium">
+                            <span v-if="g.count > 1" class="font-bold">({{ g.count }})</span>
+                            {{ g.projectName }}
+                        </span>
+                    </div>
+                </div>
+                <div v-else class="text-xs text-gray-400 mt-1 italic">Sin hitos esta semana</div>
+            </div>
+             <!-- Monthly Mode Summary/Legend -->
+            <div v-if="viewMode === 'monthly'" class="text-xs text-gray-500 mt-1 flex items-center gap-3">
+                 <span v-for="typeObj in availableMilestoneTypes" :key="typeObj.name" class="flex items-center gap-1">
+                    <div class="w-2 h-2 rounded-full" :class="getTypeColor(typeObj)"></div> 
+                    {{ typeObj.name }}
+                 </span>
+                 
+                 <div class="h-4 w-px bg-gray-300 mx-2"></div>
+                 
+                 <!-- Zoom Controls -->
+                 <div class="flex bg-gray-100 p-0.5 rounded-lg">
+                    <button @click="zoomLevel = 'month'" 
+                            class="px-2 py-0.5 text-xs rounded transition-all"
+                            :class="zoomLevel === 'month' ? 'bg-white shadow text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-700'">
+                        Mes
+                    </button>
+                    <button @click="zoomLevel = 'day'" 
+                            class="px-2 py-0.5 text-xs rounded transition-all"
+                            :class="zoomLevel === 'day' ? 'bg-white shadow text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-700'">
+                        Día
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="flex items-center gap-3">
-            <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center" @click="gotToWeek('prev')">
-                <ChevronLeft size="16" />
-            </button>
-             <input type="week" v-model="selectedWeek" class="border border-gray-300 rounded px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" />
-            <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center" @click="gotToWeek('next')">
-                <ChevronRight size="16" />
-            </button>
+            <!-- Weekly Controls -->
+            <template v-if="viewMode === 'weekly'">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center" @click="gotToWeek('prev')">
+                    <ChevronLeft size="16" />
+                </button>
+                 <input type="week" v-model="selectedWeek" class="border border-gray-300 rounded px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" />
+                <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center" @click="gotToWeek('next')">
+                    <ChevronRight size="16" />
+                </button>
+            </template>
+            <!-- Monthly Controls -->
+             <template v-else>
+                 <div class="flex items-center gap-2 text-sm">
+                     <span class="text-gray-500">Desde:</span>
+                     <input type="month" v-model="monthlyRange.start" class="border border-gray-300 rounded px-2 py-1.5 outline-none focus:border-blue-500" />
+                     <span class="text-gray-500">Hasta:</span>
+                     <input type="month" v-model="monthlyRange.end" class="border border-gray-300 rounded px-2 py-1.5 outline-none focus:border-blue-500" />
+                     
+                     <div class="h-6 w-px bg-gray-300 mx-2"></div>
+                     
+                     <button @click="managerOpen = true" class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm transition">
+                        <Settings2 size="14" />
+                        Gestionar Hitos
+                     </button>
+                 </div>
+            </template>
         </div>
     </div>
     
-    <!-- Modal for New Assignment -->
-    <div v-if="assignmentModalOpen" class="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <!-- Modals -->
+    <div v-if="managerOpen" class="z-[60] relative">
+        <MilestoneManager @close="managerOpen = false" />
+    </div>
+    
+    <!-- Modal for New Assignment (ONLY WEEKLY) -->
+    <div v-if="assignmentModalOpen && viewMode === 'weekly'" class="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
         <div class="bg-white p-6 rounded-xl shadow-xl w-96">
             <h3 class="font-bold text-lg mb-4 text-gray-800">Asignar Colaborador</h3>
              <div class="bg-blue-50 text-blue-700 px-3 py-2 rounded mb-4 text-sm flex items-center gap-2">
@@ -389,8 +523,8 @@ const getTypeColor = (type) => {
         </div>
     </div>
 
-    <!-- Top: Unallocated / Source Pool -->
-    <div class="bg-white p-4 border-b border-gray-200 shadow-sm relative z-10">
+    <!-- Top: Unallocated / Source Pool (ONLY WEEKLY) -->
+    <div v-if="viewMode === 'weekly'" class="bg-white p-4 border-b border-gray-200 shadow-sm relative z-10">
       <h3 class="font-bold text-gray-700 mb-2">Colaboradores (Arrastrar para asignar en {{selectedWeek}})</h3>
       <div v-if="collabsLoading">Cargando...</div>
       <draggable 
@@ -418,10 +552,12 @@ const getTypeColor = (type) => {
       </draggable>
     </div>
 
-    <!-- Main Workspace: Projects -->
+    <!-- Main Workspace -->
     <div class="flex-1 overflow-auto p-6">
       <div v-if="projectsLoading">Cargando proyectos...</div>
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      
+      <!-- WEEKLY VIEW: GRID -->
+      <div v-else-if="viewMode === 'weekly'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         
         <div v-for="project in filteredProjects" :key="project.id" 
              class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full min-h-[300px]">
@@ -534,8 +670,63 @@ const getTypeColor = (type) => {
             </draggable>
           </div>
         </div>
-
       </div>
+      
+      <!-- MONTHLY VIEW: GANTT / TIMELINE -->
+      <div v-else class="bg-white rounded-lg border border-gray-200 shadow-sm flex-1 min-h-0 overflow-auto relative">
+             <!-- Timeline Header Row -->
+             <div class="flex border-b border-gray-200 text-sm font-bold text-gray-700 bg-gray-50 sticky top-0 z-30 min-w-max">
+                  <div class="w-64 p-4 border-r border-gray-200 shrink-0 uppercase tracking-wider text-xs sticky left-0 bg-gray-50 z-40 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                      Proyecto
+                  </div>
+                  <div class="flex">
+                      <div v-for="item in monthlyTimeline" :key="item.key" 
+                           class="shrink-0 border-r border-gray-200 text-center flex flex-col justify-center text-xs h-12 box-border"
+                           :class="[
+                               item.isWeekend ? 'bg-gray-100' : 'bg-gray-50',
+                               zoomLevel === 'day' ? 'w-10' : 'min-w-[80px] w-auto'
+                           ]">
+                          <span class="uppercase tracking-wider">{{ item.label }}</span>
+                          <span v-if="item.sublabel" class="text-[10px] text-gray-400 font-normal">{{ item.sublabel }}</span>
+                      </div>
+                  </div>
+             </div>
+             
+             <!-- Body Rows -->
+             <div class="flex flex-col min-w-max">
+                  <div v-for="project in localProjects" :key="project.id" class="flex hover:bg-gray-50 h-16 relative group border-b border-gray-100">
+                       <!-- Project Info (Sticky Left) -->
+                       <div class="w-64 p-4 border-r border-gray-200 shrink-0 flex items-center font-medium text-gray-800 text-sm sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] group-hover:bg-gray-50 transition-colors">
+                           {{ project.name }}
+                       </div>
+                       
+                       <!-- Timeline Cells -->
+                       <div class="flex">
+                            <div v-for="item in monthlyTimeline" :key="item.key" 
+                                 class="shrink-0 border-r border-gray-100 relative flex items-center justify-center transition-colors box-border"
+                                 :class="[
+                                     item.isWeekend ? 'bg-gray-100/50' : '',
+                                     zoomLevel === 'day' ? 'w-10' : 'min-w-[80px] w-auto',
+                                     isToday(item.date) ? 'bg-blue-50/50 border-b-2 border-b-blue-400' : ''
+                                 ]">
+                                 
+                                 <!-- Milestones in this Cell -->
+                                 <template v-for="m in getMilestonesForKey(project, item.key)" :key="m.id">
+                                     <div class="w-4 h-4 rounded-full border-2 border-white shadow cursor-help transform hover:scale-125 z-20 relative"
+                                          :class="getTypeColor(m)"
+                                          :title="m.name + ' (' + m.date + ')'">
+                                     </div>
+                                 </template>
+                            </div>
+                       </div>
+                  </div>
+                  
+                  <div v-if="localProjects.length === 0" class="p-8 text-center text-gray-400 sticky left-0">
+                      No hay proyectos
+                  </div>
+             </div>
+      </div>
+
     </div>
   </div>
 </template>

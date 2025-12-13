@@ -33,7 +33,7 @@ import { LayoutDashboard, Users, FolderKanban, UserCog, BarChart3, Settings } fr
             <span>Roles</span>
           </RouterLink>
 
-          <RouterLink to="/technologies" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-colors" exact-active-class="bg-purple-50 text-purple-600 font-medium">
+          <RouterLink to="/settings" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-colors" exact-active-class="bg-purple-50 text-purple-600 font-medium">
             <Settings size="20" />
             <span>Configuración</span>
           </RouterLink>
