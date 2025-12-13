@@ -1,10 +1,14 @@
+```vue
 <script setup>
 import { computed, ref } from 'vue'
 import { useMutation } from '@vue/apollo-composable'
 import { CREATE_MILESTONE, DELETE_MILESTONE } from '@/graphql/queries'
-import { Flag, Trash2, Plus } from 'lucide-vue-next'
+import { Plus, Trash2, Flag} from 'lucide-vue-next'
+import { useNotificationStore } from '@/stores/notificationStore'
 import VueMultiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
+
+const notificationStore = useNotificationStore()
 
 const props = defineProps({
   project: { type: Object, required: true },
@@ -87,7 +91,7 @@ const handleCreate = async () => {
 }
 
 const handleDelete = async (id) => {
-    if(confirm('¿Borrar hito?')) await deleteMilestone({ id })
+    if(await notificationStore.showDialog('¿Borrar hito?')) await deleteMilestone({ id })
 }
 </script>
 

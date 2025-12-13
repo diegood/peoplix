@@ -3,6 +3,9 @@ import { ref, computed } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_MILESTONE_TYPES, CREATE_MILESTONE_TYPE, UPDATE_MILESTONE_TYPE, DELETE_MILESTONE_TYPE, GET_PROJECTS } from '@/graphql/queries'
 import { Plus, Trash2, Edit2, CheckCircle, X, Hexagon } from 'lucide-vue-next'
+import { useNotificationStore } from '@/stores/notificationStore'
+
+const notificationStore = useNotificationStore()
 
 // Data
 const { result: typesResult } = useQuery(GET_MILESTONE_TYPES)
@@ -57,17 +60,18 @@ const handleUpdate = async () => {
 
 const handleDelete = async (id) => {
     if (typeUsage.value[id] > 0) {
-        alert("No se puede eliminar un tipo que está en uso.")
+        notificationStore.showToast("No se puede eliminar un tipo que está en uso.", 'error')
         return
     }
-    if (confirm("¿Eliminar este tipo de hito?")) {
+    if (await notificationStore.showDialog("¿Eliminar este tipo de hito?")) {
         try {
             await deleteType({ id })
         } catch (e) {
-            alert(e.message)
+            notificationStore.showToast(e.message, 'error')
         }
     }
 }
+
 
 // Color Palette
 const colors = [

@@ -1,6 +1,8 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
 import { LayoutDashboard, Users, FolderKanban, UserCog, BarChart3, Settings } from 'lucide-vue-next'
+import ToastNotification from './components/ToastNotification.vue'
+import ConfirmDialog from './components/ConfirmDialog.vue'
 </script>
 
 <template>
@@ -59,6 +61,10 @@ import { LayoutDashboard, Users, FolderKanban, UserCog, BarChart3, Settings } fr
     <main class="flex-1 overflow-auto">
       <RouterView />
     </main>
+
+    <!-- Global Notification Components -->
+    <ToastNotification />
+    <ConfirmDialog />
   </div>
 </template>
 

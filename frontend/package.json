@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@apollo/client": "^3.8.0",
+    "@formkit/themes": "^1.6.9",
+    "@formkit/vue": "^1.6.9",
     "dayjs": "^1.11.19",
     "pinia": "^3.0.4",
     "vue": "^3.5.25",

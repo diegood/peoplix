@@ -6,6 +6,9 @@ import { gql } from 'graphql-tag'
 import { Shield, Network, Trash2, Plus, X, List, GitGraph, Settings } from 'lucide-vue-next'
 import HierarchyTreeNode from './HierarchyTreeNode.vue'
 import HierarchyTypeManager from './HierarchyTypeManager.vue'
+import { useNotificationStore } from '@/stores/notificationStore'
+
+const notificationStore = useNotificationStore()
 
 const props = defineProps({
   project: {
@@ -15,7 +18,6 @@ const props = defineProps({
   isOpen: Boolean
 })
 
-const emit = defineEmits(['close'])
 
 const editingAllocationId = ref(null)
 const selectedSupervisorId = ref('')
@@ -120,16 +122,16 @@ const handleAdd = async () => {
         selectedSupervisorId.value = ''
         selectedTypeId.value = ''
     } catch (e) {
-        alert("Error al asignar supervisor: " + e.message)
+        notificationStore.showToast("Error al asignar supervisor: " + e.message, 'error')
     }
 }
 
 const handleRemove = async (hierarchyId) => {
-    if (!confirm("¿Eliminar esta relación?")) return
+    if (!await notificationStore.showDialog("¿Eliminar esta relación?")) return
     try {
         await removeHierarchy({ hierarchyId })
     } catch (e) {
-        alert(e.message)
+        notificationStore.showToast(e.message, 'error')
     }
 }
 

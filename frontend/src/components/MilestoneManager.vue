@@ -3,11 +3,13 @@ import { ref, computed } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_MILESTONE_TYPES, CREATE_MILESTONE_TYPE, UPDATE_MILESTONE_TYPE, DELETE_MILESTONE_TYPE, GET_PROJECTS } from '@/graphql/queries'
 import { X, Plus, Trash2, Edit2, Hexagon } from 'lucide-vue-next'
+import { useNotificationStore } from '@/stores/notificationStore'
 
-const emit = defineEmits(['close'])
+const notificationStore = useNotificationStore()
+
 
 // Data
-const { result: typesResult, refetch: refetchTypes } = useQuery(GET_MILESTONE_TYPES)
+const { result: typesResult} = useQuery(GET_MILESTONE_TYPES)
 const { result: projectsResult } = useQuery(GET_PROJECTS)
 const { mutate: createType } = useMutation(CREATE_MILESTONE_TYPE, { refetchQueries: ['GetMilestoneTypes'] })
 const { mutate: updateType } = useMutation(UPDATE_MILESTONE_TYPE, { refetchQueries: ['GetMilestoneTypes', 'GetProjects'] })
@@ -59,14 +61,14 @@ const handleUpdate = async () => {
 
 const handleDelete = async (id) => {
     if (typeUsage.value[id] > 0) {
-        alert("No se puede eliminar un tipo que está en uso.")
+        notificationStore.showToast("No se puede eliminar un tipo que está en uso.", 'error')
         return
     }
-    if (confirm("¿Eliminar este tipo de hito?")) {
+    if (await notificationStore.showDialog("¿Eliminar este tipo de hito?")) {
         try {
             await deleteType({ id })
         } catch (e) {
-            alert(e.message)
+            notificationStore.showToast(e.message, 'error')
         }
     }
 }

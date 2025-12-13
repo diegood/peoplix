@@ -9,6 +9,9 @@ import ProjectMilestones from './ProjectMilestones.vue'
 import MilestoneManager from './MilestoneManager.vue'
 import HierarchyManager from './HierarchyManager.vue'
 import { Network } from 'lucide-vue-next'
+import { useNotificationStore } from '@/stores/notificationStore'
+
+const notificationStore = useNotificationStore()
 
 const hierarchyModalOpen = ref(false)
 const managerOpen = ref(false)
@@ -106,7 +109,7 @@ const getSkillMatch = (collab, project) => {
   const requiredSkills = project.requiredRoles?.flatMap(r => r.skills || []) || []
   if (!requiredSkills.length) return { score: 100, status: 'good' }
   const hasSkill = requiredSkills.some(req => 
-    collab.skills?.some(s => s.name === req.name && s.level >= req.level)
+    collab.skills?.some(s => s.skill.name === req.name && s.level >= req.level)
   )
   return hasSkill ? { score: 100, status: 'good' } : { score: 0, status: 'bad' }
 }
@@ -126,7 +129,7 @@ const onDrop = (evt, projectId) => {
     })
     
     if (existingActiveAllocation) {
-        alert("Este colaborador ya está asignado a este proyecto en esta semana.")
+        notificationStore.showToast("Este colaborador ya está asignado a este proyecto en esta semana.", 'error')
         return
     }
 
@@ -149,7 +152,7 @@ const onDrop = (evt, projectId) => {
 
 const confirmAssignment = async () => {
     if (!assignmentForm.value.roleId) {
-        alert("Debes seleccionar un Rol")
+        notificationStore.showToast("Debes seleccionar un Rol", 'error')
         return
     }
     
@@ -173,7 +176,7 @@ const handleDedicationChange = async (allocation, newPercentage) => {
         await updateAllocation({ allocationId: allocation.id, percentage: newPerc })
     } else {
         // Split!
-        if (confirm("Cambiar dedicación implica crear un nuevo registro desde esta semana. ¿Continuar?")) {
+        if (await notificationStore.showDialog("Cambiar dedicación implica crear un nuevo registro desde esta semana. ¿Continuar?")) {
             let w = parseInt(selectedWeek.value.split('-W')[1])
             let y = parseInt(selectedWeek.value.split('-W')[0])
             let prevWeek = ''
@@ -213,13 +216,13 @@ const handleAddRoleAction = async (allocation, roleId) => {
 }
 
 const handleRemoveRole = async (allocation, roleId) => {
-     if (confirm("¿Desasignar este rol?")) {
+     if (await notificationStore.showDialog("¿Desasignar este rol?")) {
          await removeAllocationRole({ allocationId: allocation.id, roleId })
      }
 }
 
 const handleDelete = async (allocationId) => {
-    if (confirm("¿Eliminar registro completo? (Para finalizar asignación, edita el porcentaje)")) {
+    if (await notificationStore.showDialog("¿Eliminar registro completo? (Para finalizar asignación, edita el porcentaje)")) {
         await deleteAllocation({ allocationId })
     }
 }
@@ -506,7 +509,7 @@ const isToday = (dateObj) => {
             <div class="mb-4">
                 <p class="text-sm text-gray-500 mb-1">Colaborador</p>
                 <div class="font-medium bg-gray-50 p-2 rounded border border-gray-200">
-                    {{ assignmentForm.collaborator?.name }}
+                    {{ assignmentForm.collaborator?.firstName }} {{ assignmentForm.collaborator?.lastName }}
                 </div>
             </div>
             
@@ -554,10 +557,10 @@ const isToday = (dateObj) => {
           <div class="flex-shrink-0 w-48 bg-gray-50 p-3 rounded-lg border border-gray-200 cursor-move hover:shadow-md transition-shadow select-none">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                 {{ element.name.charAt(0) }}
+                 {{ (element.firstName || element.name || '?').charAt(0) }}
               </div>
               <div>
-                <div class="font-semibold text-sm truncate">{{ element.name }}</div>
+                <div class="font-semibold text-sm truncate">{{ element.firstName || element.name }} {{ element.lastName }}</div>
                 <div class="text-xs text-gray-400">{{ element.contractedHours }} hrs</div>
               </div>
             </div>
@@ -615,10 +618,10 @@ const isToday = (dateObj) => {
                     <div class="flex items-center gap-3">
                       <GripVertical class="text-gray-300 cursor-grab active:cursor-grabbing" size="14" />
                        <div class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-xs">
-                         {{ (element.collaborator?.name || element.name || '?').charAt(0) }}
+                         {{ (element.collaborator?.firstName || element.collaborator?.name || element.name || '?').charAt(0) }}
                        </div>
                        <div class="flex-1">
-                         <div class="font-medium text-sm">{{ element.collaborator?.name || element.name }}</div>
+                         <div class="font-medium text-sm">{{ element.collaborator?.firstName }} {{ element.collaborator?.lastName }}</div>
                        </div>
                        
                        <!-- Actions -->

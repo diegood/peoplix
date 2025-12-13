@@ -2,7 +2,10 @@
 import { ref, computed } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { gql } from 'graphql-tag'
-import { X, Plus, Trash2, Edit2, ArrowUp, ArrowDown } from 'lucide-vue-next'
+import { X, Plus, Trash2, Edit2 } from 'lucide-vue-next'
+import { useNotificationStore } from '@/stores/notificationStore'
+
+const notificationStore = useNotificationStore()
 
 const GET_HIERARCHY_TYPES = gql`
   query GetHierarchyTypes {
@@ -37,9 +40,8 @@ const DELETE_TYPE = gql`
   }
 `
 
-const emit = defineEmits(['close'])
 
-const { result, loading, refetch } = useQuery(GET_HIERARCHY_TYPES)
+const { result } = useQuery(GET_HIERARCHY_TYPES)
 const { mutate: createType } = useMutation(CREATE_TYPE, { refetchQueries: ['GetHierarchyTypes', 'GetProjects'] })
 const { mutate: updateType } = useMutation(UPDATE_TYPE, { refetchQueries: ['GetHierarchyTypes', 'GetProjects'] })
 const { mutate: deleteType } = useMutation(DELETE_TYPE, { refetchQueries: ['GetHierarchyTypes', 'GetProjects'] })
@@ -72,16 +74,16 @@ const handleSave = async () => {
         }
         cancelEdit()
     } catch (e) {
-        alert("Error: " + e.message)
+        notificationStore.showToast("Error: " + e.message, 'error')
     }
 }
 
 const handleDelete = async (id) => {
-    if (!confirm("¿Eliminar este tipo de jerarquía?")) return
+    if (!await notificationStore.showDialog("¿Eliminar este tipo de jerarquía?")) return
     try {
         await deleteType({ id })
     } catch (e) {
-        alert("No se puede eliminar: " + e.message)
+        notificationStore.showToast("No se puede eliminar: " + e.message, 'error')
     }
 }
 

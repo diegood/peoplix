@@ -2,7 +2,10 @@
 import { ref } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_TECHNOLOGIES, CREATE_TECHNOLOGY, DELETE_TECHNOLOGY } from '@/graphql/queries'
-import { Trash2, Plus, Server } from 'lucide-vue-next'
+import { Plus, Trash2 } from 'lucide-vue-next'
+import { useNotificationStore } from '@/stores/notificationStore'
+
+const notificationStore = useNotificationStore()
 
 const { result, loading, error } = useQuery(GET_TECHNOLOGIES)
 const { mutate: createTechnology } = useMutation(CREATE_TECHNOLOGY, {
@@ -21,7 +24,7 @@ const handleCreate = async () => {
 }
 
 const handleDelete = async (id) => {
-  if (confirm('¿Estás seguro de eliminar esta tecnología?')) {
+  if (await notificationStore.showDialog('¿Estás seguro de eliminar esta tecnología?')) {
     await deleteTechnology({ id })
   }
 }

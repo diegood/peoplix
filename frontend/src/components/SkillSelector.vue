@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { GET_TECHNOLOGIES, CREATE_TECHNOLOGY } from '@/graphql/queries'
+import { GET_SKILLS, CREATE_SKILL } from '@/graphql/queries'
 import { Search, Plus } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -11,15 +11,15 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
-    default: 'Buscar tecnología...'
+    default: 'Buscar skill...'
   }
 })
 
 const emit = defineEmits(['update:modelValue', 'select'])
 
-const { result } = useQuery(GET_TECHNOLOGIES)
-const { mutate: createTechnology } = useMutation(CREATE_TECHNOLOGY, {
-  refetchQueries: ['GetTechnologies']
+const { result } = useQuery(GET_SKILLS)
+const { mutate: createSkill } = useMutation(CREATE_SKILL, {
+  refetchQueries: ['GetSkills']
 })
 
 const searchQuery = ref('')
@@ -28,10 +28,10 @@ const inputRef = ref(null)
 
 // Computed list of matches
 const matches = computed(() => {
-    if (!result.value?.technologies) return []
+    if (!result.value?.skills) return []
     const q = searchQuery.value.toLowerCase()
-    if (!q) return result.value.technologies.slice(0, 5) // Recent/Top 5
-    return result.value.technologies.filter(t => t.name.toLowerCase().includes(q))
+    if (!q) return result.value.skills.slice(0, 5) // Recent/Top 5
+    return result.value.skills.filter(t => t.name.toLowerCase().includes(q))
 })
 
 const handleInput = (e) => {
@@ -58,19 +58,19 @@ const createNew = async () => {
     if (!name) return
     
     // Check if exists first to avoid double create
-    const existing = result.value.technologies.find(t => t.name.toLowerCase() === name.toLowerCase())
+    const existing = result.value.skills.find(t => t.name.toLowerCase() === name.toLowerCase())
     if (existing) {
         selectTech(existing)
         return
     }
 
     try {
-        const res = await createTechnology({ name })
-        if (res.data?.createTechnology) {
-             selectTech(res.data.createTechnology)
+        const res = await createSkill({ name })
+        if (res.data?.createSkill) {
+             selectTech(res.data.createSkill)
         }
     } catch (e) {
-        console.error("Error creating technology", e)
+        console.error("Error creating skill", e)
     }
 }
 

@@ -3,6 +3,9 @@ import { ref } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_ROLES, CREATE_ROLE, DELETE_ROLE } from '@/graphql/queries'
 import { Trash2, Plus } from 'lucide-vue-next'
+import { useNotificationStore } from '@/stores/notificationStore'
+
+const notificationStore = useNotificationStore()
 
 const { result, loading, error } = useQuery(GET_ROLES)
 const { mutate: createRole } = useMutation(CREATE_ROLE, {
@@ -21,7 +24,7 @@ const handleCreate = async () => {
 }
 
 const handleDelete = async (id) => {
-  if (confirm('Are you sure?')) {
+  if (await notificationStore.showDialog('Are you sure?')) {
     await deleteRole({ id })
   }
 }
