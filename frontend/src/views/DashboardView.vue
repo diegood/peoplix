@@ -1,5 +1,5 @@
 <script setup>
-import AllocationPanel from '@/components/AllocationPanel.vue'
+import AllocationPanel from '@/modules/Allocations/views/AllocationPanel.vue'
 </script>
 
 <template>

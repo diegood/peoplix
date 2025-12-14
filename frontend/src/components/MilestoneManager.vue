@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { GET_MILESTONE_TYPES, CREATE_MILESTONE_TYPE, UPDATE_MILESTONE_TYPE, DELETE_MILESTONE_TYPE, GET_PROJECTS } from '@/graphql/queries'
-import { X, Plus, Trash2, Edit2, Hexagon } from 'lucide-vue-next'
+import { GET_MILESTONE_TYPES, GET_PROJECTS } from '@/graphql/queries'
+import { CREATE_MILESTONE_TYPE, UPDATE_MILESTONE_TYPE, DELETE_MILESTONE_TYPE } from '@/graphql/mutations'
+import { X, Plus, Trash2, Edit2, Hexagon, CheckCircle } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 
 const notificationStore = useNotificationStore()

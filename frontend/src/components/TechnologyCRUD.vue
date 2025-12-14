@@ -1,8 +1,10 @@
+```vue
 <script setup>
 import { ref } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { GET_TECHNOLOGIES, CREATE_TECHNOLOGY, DELETE_TECHNOLOGY } from '@/graphql/queries'
-import { Plus, Trash2 } from 'lucide-vue-next'
+import { GET_TECHNOLOGIES } from '@/graphql/queries'
+import { CREATE_TECHNOLOGY, DELETE_TECHNOLOGY } from '@/graphql/mutations'
+import { Plus, Trash2, Server } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 
 const notificationStore = useNotificationStore()

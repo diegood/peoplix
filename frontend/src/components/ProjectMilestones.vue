@@ -2,7 +2,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useMutation } from '@vue/apollo-composable'
-import { CREATE_MILESTONE, DELETE_MILESTONE } from '@/graphql/queries'
+import { CREATE_MILESTONE, DELETE_MILESTONE } from '@/graphql/mutations'
 import { Plus, Trash2, Flag} from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 import VueMultiselect from 'vue-multiselect'
@@ -19,7 +19,6 @@ const isExpanded = ref(false)
 const showForm = ref(false)
 const newMilestone = ref({ name: '', date: '', type: 'Delivery' })
 
-// Options for the multiselect
 const typeOptions = ref([
     'Delivery',
     'Meeting',
@@ -29,11 +28,9 @@ const typeOptions = ref([
 const { mutate: createMilestone } = useMutation(CREATE_MILESTONE, { refetchQueries: ['GetProjects'] })
 const { mutate: deleteMilestone } = useMutation(DELETE_MILESTONE, { refetchQueries: ['GetProjects'] })
 
-// Get dates of current week (Mon-Sun)
 const weekDates = computed(() => {
     const [y, w] = props.currentWeek.split('-W').map(Number)
-    const simple = new Date(Date.UTC(y, 0, 4)) // 4th Jan is always in week 1
-    // Adjust to Monday of Week 1
+    const simple = new Date(Date.UTC(y, 0, 4))
     const week1Start = simple.setUTCDate(simple.getUTCDate() - (simple.getUTCDay() || 7) + 1)
     const weekStart = new Date(week1Start + (w - 1) * 7 * 86400000)
     
@@ -49,14 +46,12 @@ const weekDates = computed(() => {
     return days
 })
 
-// Milestones in this week
 const weekMilestones = computed(() => {
     if (!props.project.milestones) return []
     const weekIsoDates = weekDates.value.map(d => d.date)
     return props.project.milestones.filter(m => weekIsoDates.includes(m.date))
 })
 
-// Upcoming milestones (future)
 const upcomingMilestones = computed(() => {
     if (!props.project.milestones) return []
     return props.project.milestones
@@ -69,7 +64,7 @@ const getTypeColor = (type) => {
         case 'Delivery': return 'bg-red-400'
         case 'Meeting': return 'bg-blue-400'
         case 'DevOps': return 'bg-green-400'
-        default: return 'bg-purple-400' // Default fallback
+        default: return 'bg-purple-400'
     }
 }
 
@@ -108,12 +103,10 @@ const handleDelete = async (id) => {
           </button>
       </div>
 
-      <!-- Add Form -->
       <div v-if="showForm" class="bg-white p-2 rounded shadow mb-3 border border-purple-100 relative">
           <input v-model="newMilestone.name" placeholder="Nombre (ej. Entrega Fase 1)" class="w-full text-xs border rounded p-1 mb-1" />
           <div class="flex gap-1 mb-1">
               <input v-model="newMilestone.date" type="date" class="flex-1 text-xs border rounded p-1 w-1/2" />
-               <!-- Vue Multiselect for Type -->
                <div class="w-1/2">
                    <VueMultiselect
                         v-model="newMilestone.type"
@@ -138,7 +131,6 @@ const handleDelete = async (id) => {
               <span class="text-[10px] text-gray-400 uppercase">{{ day.dayName }}</span>
               <span class="font-bold text-xs">{{ day.dayNum }}</span>
               
-              <!-- Dots for milestones -->
               <div class="flex flex-col gap-0.5 mt-1 w-full">
                   <div v-for="m in weekMilestones.filter(x => x.date === day.date)" :key="m.id"
                        class="h-1.5 w-full rounded-full"
@@ -149,7 +141,6 @@ const handleDelete = async (id) => {
           </div>
       </div>
 
-      <!-- List View (Collapsible) -->
       <div v-if="isExpanded" class="space-y-1 mt-2 border-t border-gray-200 pt-2">
           <p class="text-[10px] text-gray-400 uppercase font-bold">Próximos</p>
           <div v-for="m in upcomingMilestones.slice(0, 3)" :key="m.id" class="flex items-center justify-between group">
@@ -169,7 +160,6 @@ const handleDelete = async (id) => {
 </template>
 
 <style>
-/* Override Multiselect small size */
 .multiselect {
     min-height: 28px !important;
 }

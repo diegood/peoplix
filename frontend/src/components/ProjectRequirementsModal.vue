@@ -3,18 +3,18 @@ import { ref } from 'vue'
 import SkillSelector from './SkillSelector.vue'
 import { X, Trash2, Plus, Users, Clock, Briefcase } from 'lucide-vue-next'
 import { useQuery, useMutation } from '@vue/apollo-composable'
+import { GET_ROLES } from '@/graphql/queries'
 import { 
     ADD_PROJECT_REQUIREMENT, REMOVE_PROJECT_REQUIREMENT, 
-    ADD_REQUIREMENT_SKILL, REMOVE_REQUIREMENT_SKILL,
-    GET_ROLES 
-} from '@/graphql/queries'
+    ADD_REQUIREMENT_SKILL, REMOVE_REQUIREMENT_SKILL 
+} from '@/graphql/mutations'
 
 const props = defineProps({
     project: Object,
     isOpen: Boolean
 })
 
-const emit = defineEmits(['close'])
+defineEmits(['close'])
 
 // Data
 const { result: rolesResult } = useQuery(GET_ROLES)

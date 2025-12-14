@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { GET_SKILLS, CREATE_SKILL } from '@/graphql/queries'
+import { GET_SKILLS } from '@/graphql/queries'
+import { CREATE_SKILL } from '@/graphql/mutations'
 import { Search, Plus } from 'lucide-vue-next'
 
-const props = defineProps({
+defineProps({
   modelValue: {
     type: String,
     default: ''

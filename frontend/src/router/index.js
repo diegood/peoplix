@@ -1,15 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import RolesView from '@/views/RolesView.vue'
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    {
-      path: '/roles',
-      name: 'roles',
-      component: RolesView
-    },
     {
       path: '/projects',
       name: 'projects',
@@ -21,14 +14,9 @@ const router = createRouter({
       component: () => import('@/views/DashboardView.vue')
     },
     {
-      path: '/roles',
-      name: 'roles',
-      component: RolesView
-    },
-    {
       path: '/collaborators',
       name: 'collaborators',
-      component: () => import('@/views/CollaboratorsView.vue')
+      component: () => import('@/modules/Collaborators/views/CollaboratorsView.vue')
     },
     {
       path: '/stats',

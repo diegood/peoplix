@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useMutation, useQuery } from '@vue/apollo-composable'
-import { ADD_ALLOCATION_HIERARCHY, REMOVE_ALLOCATION_HIERARCHY } from '@/graphql/queries'
+import { ADD_ALLOCATION_HIERARCHY, REMOVE_ALLOCATION_HIERARCHY } from '@/graphql/mutations'
 import { gql } from 'graphql-tag'
 import { Shield, Network, Trash2, Plus, X, List, GitGraph, Settings } from 'lucide-vue-next'
 import HierarchyTreeNode from './HierarchyTreeNode.vue'

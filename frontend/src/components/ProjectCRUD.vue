@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { GET_PROJECTS, CREATE_PROJECT, UPDATE_PROJECT } from '@/graphql/queries'
+import { GET_PROJECTS } from '@/graphql/queries'
+import { CREATE_PROJECT, UPDATE_PROJECT } from '@/graphql/mutations'
 import { FolderPlus, Clock, Edit2, SlidersHorizontal } from 'lucide-vue-next'
 import ProjectRequirementsModal from './ProjectRequirementsModal.vue'
 

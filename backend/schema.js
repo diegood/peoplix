@@ -127,12 +127,40 @@ type Milestone {
   projectId: String!
 }
 
+type WorkCenter {
+    id: ID!
+    name: String!
+    regionCode: String
+    countryCode: String!
+    publicHolidayCalendars: [PublicHolidayCalendar!]!
+  }
+
+  type PublicHolidayCalendar {
+    id: ID!
+    year: Int!
+    holidays: [PublicHoliday!]!
+  }
+
+  type PublicHoliday {
+    date: String!
+    localName: String
+    name: String
+    countryCode: String
+  }
+  
+  input PublicHolidayInput {
+    date: String!
+    localName: String
+    name: String
+    countryCode: String
+  }
+  
 type ProjectRequirement {
   id: ID!
   role: Role!
   resourceCount: Int!
   monthlyHours: Int!
-  skills: [ProjectRequirementSkill!]!
+  skills: [ProjectRequirement!]!
 }
 
 type ProjectRequirementSkill {
@@ -143,55 +171,44 @@ type ProjectRequirementSkill {
 }
 
 type Query {
-  projects: [Project!]!
-  collaborators: [Collaborator!]!
+  projects(search: String): [Project!]!
+  project(id: ID!): Project
+  collaborators(search: String): [Collaborator!]!
   roles: [Role!]!
   skills: [Skill!]!
   technologies: [Technology!]!
   milestoneTypes: [MilestoneType!]!
   customFieldDefinitions: [CustomFieldDefinition!]!
-  project(id: ID!): Project
+  workCenters: [WorkCenter!]!
 }
 
 type Mutation {
   createProject(name: String!, contractedHours: Int!): Project!
+  updateProject(id: ID!, name: String, contractedHours: Int): Project!
   deleteProject(id: ID!): Boolean
   
-  createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String): Collaborator!
-  updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean): Collaborator!
-  deleteCollaborator(id: ID!): Boolean
+  createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!): Collaborator!
+  updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean, workCenterId: ID): Collaborator!
+  deleteCollaborator(id: ID!): Boolean!
   
-  # Hardware Management
-  addHardware(collaboratorId: ID!, name: String!, type: String!, serialNumber: String): Hardware!
-  removeHardware(id: ID!): Boolean
+  addCollaboratorSkill(collaboratorId: ID!, skillId: ID!, level: Int!): Collaborator!
+  removeCollaboratorSkill(collaboratorId: ID!, skillId: ID!): Collaborator!
   
-  # Holiday Calendar Management
-  updateHolidayCalendar(collaboratorId: ID!, year: Int!, holidays: [String!]!): HolidayCalendar!
-  
-  # Custom Field Definitions
-  createCustomFieldDefinition(fieldName: String!, fieldLabel: String!, fieldType: String!, fieldConfig: String, isRequired: Boolean, order: Int): CustomFieldDefinition!
-  updateCustomFieldDefinition(id: ID!, fieldName: String, fieldLabel: String, fieldType: String, fieldConfig: String, isRequired: Boolean, order: Int): CustomFieldDefinition!
-  deleteCustomFieldDefinition(id: ID!): Boolean
-  
-  # Custom Field Values
-  setCustomFieldValue(collaboratorId: ID!, fieldDefinitionId: ID!, value: String!): CustomFieldValue!
-  
+  addCollaboratorRole(collaboratorId: ID!, roleId: ID!): Collaborator!
+  removeCollaboratorRole(collaboratorId: ID!, roleId: ID!): Collaborator!
+
   createRole(name: String!): Role!
-  deleteRole(id: ID!): Boolean
+  deleteRole(id: ID!): Boolean!
 
   createSkill(name: String!): Skill!
-  deleteSkill(id: ID!): Boolean
-  
-  createTechnology(name: String!): Technology!
-  deleteTechnology(id: ID!): Boolean
-  
-  createMilestoneType(name: String!, color: String!): MilestoneType!
-  updateMilestoneType(id: ID!, name: String, color: String): MilestoneType!
-  deleteMilestoneType(id: ID!): Boolean
+  deleteSkill(id: ID!): Boolean!
 
-  createAllocation(projectId: ID!, collaboratorId: ID!, roleId: ID!, percentage: Int!, startWeek: String!): Allocation!
-  updateAllocation(allocationId: ID!, percentage: Int, startWeek: String, endWeek: String): Allocation!
-  deleteAllocation(allocationId: ID!): Boolean
+  createTechnology(name: String!): Technology!
+  deleteTechnology(id: ID!): Boolean!
+
+  createAllocation(projectId: ID!, collaboratorId: ID!, dedicationPercentage: Int!, startWeek: String!, endWeek: String): Allocation!
+  updateAllocation(id: ID!, dedicationPercentage: Int, startWeek: String, endWeek: String): Allocation!
+  deleteAllocation(id: ID!): Boolean!
   
   addAllocationRole(allocationId: ID!, roleId: ID!): Allocation!
   removeAllocationRole(allocationId: ID!, roleId: ID!): Allocation!
