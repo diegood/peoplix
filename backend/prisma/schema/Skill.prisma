@@ -1,0 +1,7 @@
+model Skill {
+  id   String @id @default(uuid())
+  name String @unique
+
+  collaborators CollaboratorSkill[]
+  requirements  RequirementSkill[]
+}

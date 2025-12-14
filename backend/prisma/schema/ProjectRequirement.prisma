@@ -1,0 +1,12 @@
+model ProjectRequirement {
+  id            String @id @default(uuid())
+  resourceCount Int    @default(1)
+  monthlyHours  Int    @default(160)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  roleId    String
+  role      Role    @relation(fields: [roleId], references: [id])
+
+  skills RequirementSkill[]
+}

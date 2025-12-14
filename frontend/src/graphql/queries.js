@@ -179,7 +179,7 @@ export const GET_CUSTOM_FIELD_DEFINITIONS = gql`
 `
 
 export const CREATE_CUSTOM_FIELD_DEFINITION = gql`
-  mutation CreateCustomFieldDefinition($fieldName: String!, $fieldLabel: String!, $fieldType: String!, $fieldConfig: String, $isRequired: Boolean, $order: Int) {
+  mutation CreateCustomFieldDefinition($fieldName: String!, $fieldLabel: String!, $fieldType: String!, $fieldConfig: String, $isRequired: Boolean!, $order: Int!) {
     createCustomFieldDefinition(fieldName: $fieldName, fieldLabel: $fieldLabel, fieldType: $fieldType, fieldConfig: $fieldConfig, isRequired: $isRequired, order: $order) {
       ...CustomFieldDefinitionFields
     }

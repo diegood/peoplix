@@ -1,0 +1,16 @@
+model Allocation {
+  id                   String  @id @default(uuid())
+  dedicationPercentage Int
+  startWeek            String
+  endWeek              String?
+
+  projectId      String
+  project        Project      @relation(fields: [projectId], references: [id])
+  collaboratorId String
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+
+  roles AllocationRole[]
+
+  subordinatesHierarchy AllocationHierarchy[] @relation("AllocationSupervisor")
+  supervisorsHierarchy  AllocationHierarchy[] @relation("AllocationSubordinate")
+}

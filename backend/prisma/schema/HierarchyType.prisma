@@ -1,0 +1,8 @@
+model HierarchyType {
+  id    String @id @default(uuid())
+  name  String @unique
+  color String @default("bg-gray-100 text-gray-700 border-gray-200")
+  rank  Int    @default(0)
+
+  hierarchies AllocationHierarchy[]
+}

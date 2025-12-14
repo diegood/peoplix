@@ -1,0 +1,15 @@
+model CustomFieldValue {
+  id    String @id @default(uuid())
+  value String // JSON value
+
+  collaboratorId String
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+
+  fieldDefinitionId String
+  fieldDefinition   CustomFieldDefinition @relation(fields: [fieldDefinitionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([collaboratorId, fieldDefinitionId])
+}

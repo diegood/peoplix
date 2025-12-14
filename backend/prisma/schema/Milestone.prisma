@@ -1,0 +1,14 @@
+model Milestone {
+  id   String @id @default(uuid())
+  name String
+  date String // ISO Date string
+
+  // Legacy string field (optional during migration)
+  type String?
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  milestoneTypeId String?
+  milestoneType   MilestoneType? @relation(fields: [milestoneTypeId], references: [id])
+}

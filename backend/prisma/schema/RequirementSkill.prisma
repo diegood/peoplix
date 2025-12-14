@@ -1,0 +1,9 @@
+model RequirementSkill {
+  id    String @id @default(uuid())
+  level Int
+
+  requirementId String
+  requirement   ProjectRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  skillId       String
+  skill         Skill              @relation(fields: [skillId], references: [id])
+}

@@ -1,0 +1,9 @@
+model AllocationRole {
+  id           String     @id @default(uuid())
+  allocationId String
+  allocation   Allocation @relation(fields: [allocationId], references: [id], onDelete: Cascade)
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id])
+
+  @@unique([allocationId, roleId])
+}

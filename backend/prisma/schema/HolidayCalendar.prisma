@@ -1,0 +1,11 @@
+model HolidayCalendar {
+  id           String   @id @default(uuid())
+  year         Int
+  holidays     String // JSON array of holiday dates
+  lastModified DateTime @updatedAt
+
+  collaboratorId String       @unique
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+
+  @@unique([collaboratorId, year])
+}

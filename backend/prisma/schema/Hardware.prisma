@@ -1,0 +1,13 @@
+model Hardware {
+  id           String   @id @default(uuid())
+  name         String
+  type         String // e.g., "Laptop", "Monitor", "Phone"
+  serialNumber String?
+  assignedDate DateTime @default(now())
+
+  collaboratorId String
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

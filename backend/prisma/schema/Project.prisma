@@ -1,0 +1,13 @@
+model Project {
+  id              String @id @default(uuid())
+  name            String
+  contractedHours Int
+
+  allocations   Allocation[]
+  milestones    Milestone[]
+  sprints       Sprint[]
+  requiredRoles ProjectRequirement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,0 +1,12 @@
+model WorkCenter {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  regionCode  String? // e.g. "MD" (Community code) or empty
+  countryCode String // e.g. "ES"
+
+  collaborators          Collaborator[]
+  publicHolidayCalendars PublicHolidayCalendar[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,0 +1,14 @@
+model AllocationHierarchy {
+  id String @id @default(uuid())
+
+  subordinateId String
+  subordinate   Allocation @relation("AllocationSubordinate", fields: [subordinateId], references: [id], onDelete: Cascade)
+
+  supervisorId String
+  supervisor   Allocation @relation("AllocationSupervisor", fields: [supervisorId], references: [id], onDelete: Cascade)
+
+  hierarchyTypeId String
+  hierarchyType   HierarchyType @relation(fields: [hierarchyTypeId], references: [id])
+
+  @@unique([subordinateId, hierarchyTypeId])
+}

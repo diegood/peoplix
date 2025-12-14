@@ -1,0 +1,7 @@
+model MilestoneType {
+  id    String @id @default(uuid())
+  name  String @unique
+  color String @default("bg-gray-400")
+
+  milestones Milestone[]
+}

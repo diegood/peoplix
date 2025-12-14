@@ -103,7 +103,12 @@ const saveEdit = async (fieldId) => {
 }
 
 const handleDelete = async (fieldId) => {
-  if (!confirm('¿Eliminar este campo personalizado? Se perderán todos los valores asociados.')) return
+  const confirmed = await notificationStore.showDialog(
+    '¿Eliminar este campo personalizado? Se perderán todos los valores asociados.',
+    'Eliminar Campo'
+  )
+  
+  if (!confirmed) return
   
   try {
     await deleteField({ id: fieldId })

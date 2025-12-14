@@ -88,86 +88,78 @@
              </form>
         </div>
         
-        <!-- Holiday Calendar Manager (Modal or Inline) -->
-        <div v-if="managingHolidaysFor" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-                <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
-                    <h3 class="text-lg font-medium text-gray-900">
-                        Gestionar Festivos: <span class="font-bold text-indigo-700">{{ managingHolidaysFor.name }}</span>
-                    </h3>
-                    <button @click="managingHolidaysFor = null" class="text-gray-400 hover:text-gray-500">
-                       <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                       </svg>
-                    </button>
-                </div>
-                
-                <div class="p-6 flex-1 overflow-y-auto">
-                    <!-- Year Selector and Import -->
-                    <div class="flex flex-wrap items-end gap-4 mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Año</label>
-                            <select v-model="selectedYear" class="block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10">
-                                <option :value="getCurrentYear() - 1">{{ getCurrentYear() - 1 }}</option>
-                                <option :value="getCurrentYear()">{{ getCurrentYear() }}</option>
-                                <option :value="getCurrentYear() + 1">{{ getCurrentYear() + 1 }}</option>
-                            </select>
-                        </div>
-                        
-                        <div class="flex-grow">
-                             <div class="text-sm text-gray-600 mb-2">
-                                 Importar automáticamente festivos para <strong>{{ managingHolidaysFor.countryCode }}</strong> 
-                                 <span v-if="managingHolidaysFor.regionCode">- <strong>{{ managingHolidaysFor.regionCode }}</strong></span>
-                             </div>
-                             <button @click="importHolidays" :disabled="importing" class="px-4 py-2 bg-white border border-blue-300 text-blue-700 rounded hover:bg-blue-100 shadow-sm flex items-center gap-2 h-10 w-full justify-center sm:w-auto">
-                                 <svg v-if="!importing" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                 </svg>
-                                 <span v-else class="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full mr-2"></span>
-                                 {{ importing ? 'Importando...' : 'Importar desde Nager.Date' }}
-                             </button>
-                        </div>
-                        
-                        <div class="w-full sm:w-auto mt-2 sm:mt-0">
-                            <button @click="saveCalendar" :disabled="savingCalendar" class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 shadow-sm flex items-center justify-center gap-2 h-10">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                {{ savingCalendar ? 'Guardando...' : 'Guardar Calendario' }}
-                            </button>
-                        </div>
+        <!-- Holiday Calendar Manager (Using BaseModal) -->
+        <BaseModal 
+            :isOpen="!!managingHolidaysFor"
+            :title="managingHolidaysFor ? `Gestionar Festivos: ${managingHolidaysFor.name}` : ''"
+            maxWidth="max-w-4xl"
+            @close="managingHolidaysFor = null"
+        >
+            <div class="flex flex-col h-full">
+                <!-- Year Selector and Import -->
+                <div class="flex flex-wrap items-end gap-4 mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Año</label>
+                        <select v-model="selectedYear" class="block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10">
+                            <option :value="getCurrentYear() - 1">{{ getCurrentYear() - 1 }}</option>
+                            <option :value="getCurrentYear()">{{ getCurrentYear() }}</option>
+                            <option :value="getCurrentYear() + 1">{{ getCurrentYear() + 1 }}</option>
+                        </select>
                     </div>
                     
-                    <!-- Holiday List -->
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center mb-2">
-                            <h4 class="font-bold text-gray-700">Festivos ({{ holidays.length }})</h4>
-                            <button @click="addHoliday" class="text-sm text-indigo-600 hover:text-indigo-800 flex items-center font-medium">
-                                + Agregar manual
+                    <div class="flex-grow">
+                            <div class="text-sm text-gray-600 mb-2">
+                                Importar automáticamente festivos para <strong>{{ managingHolidaysFor?.countryCode }}</strong> 
+                                <span v-if="managingHolidaysFor?.regionCode">- <strong>{{ managingHolidaysFor?.regionCode }}</strong></span>
+                            </div>
+                            <button @click="importHolidays" :disabled="importing" class="px-4 py-2 bg-white border border-blue-300 text-blue-700 rounded hover:bg-blue-100 shadow-sm flex items-center gap-2 h-10 w-full justify-center sm:w-auto">
+                                <svg v-if="!importing" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                                <span v-else class="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full mr-2"></span>
+                                {{ importing ? 'Importando...' : 'Importar desde Nager.Date' }}
                             </button>
-                        </div>
-                        
-                        <div v-if="holidays.length === 0" class="text-center py-8 bg-gray-50 border border-dashed rounded text-gray-500 italic">
-                            No hay festivos definidos para este año. Importa o agrega manualmente.
-                        </div>
-                        
-                        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                             <div v-for="(h, index) in holidays" :key="index" class="bg-white border p-3 rounded shadow-sm relative group hover:border-indigo-300 transition-colors">
-                                 <button @click="removeHoliday(index)" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                     </svg>
-                                 </button>
-                                 <div class="flex items-center gap-2 mb-1">
-                                     <input type="date" v-model="h.date" class="text-sm border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500 py-0.5 px-2 w-32">
-                                 </div>
-                                 <input type="text" v-model="h.localName" placeholder="Nombre (ej. Navidad)" class="w-full text-sm border-transparent hover:border-gray-200 focus:border-indigo-500 rounded px-0 py-0.5 font-medium -ml-1">
-                             </div>
-                        </div>
+                    </div>
+                    
+                    <div class="w-full sm:w-auto mt-2 sm:mt-0">
+                        <button @click="saveCalendar" :disabled="savingCalendar" class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 shadow-sm flex items-center justify-center gap-2 h-10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            {{ savingCalendar ? 'Guardando...' : 'Guardar Calendario' }}
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Holiday List -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-bold text-gray-700">Festivos ({{ holidays.length }})</h4>
+                        <button @click="addHoliday" class="text-sm text-indigo-600 hover:text-indigo-800 flex items-center font-medium">
+                            + Agregar manual
+                        </button>
+                    </div>
+                    
+                    <div v-if="holidays.length === 0" class="text-center py-8 bg-gray-50 border border-dashed rounded text-gray-500 italic">
+                        No hay festivos definidos para este año. Importa o agrega manualmente.
+                    </div>
+                    
+                    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div v-for="(h, index) in holidays" :key="index" class="bg-white border p-3 rounded shadow-sm relative group hover:border-indigo-300 transition-colors">
+                                <button @click="removeHoliday(index)" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <input type="date" v-model="h.date" class="text-sm border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500 py-0.5 px-2 w-32">
+                                </div>
+                                <input type="text" v-model="h.localName" placeholder="Nombre (ej. Navidad)" class="w-full text-sm border-transparent hover:border-gray-200 focus:border-indigo-500 rounded px-0 py-0.5 font-medium -ml-1">
+                            </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </BaseModal>
     </div>
 </template>
 
@@ -175,6 +167,10 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { gql } from 'graphql-tag'
 import { useQuery, useMutation } from '@vue/apollo-composable'
+import { useNotificationStore } from '@/stores/notificationStore'
+import BaseModal from '@/components/BaseModal.vue'
+
+const notificationStore = useNotificationStore()
 
 // Definitions
 const GET_WORK_CENTERS = gql`
@@ -308,22 +304,29 @@ const saveWorkCenter = async () => {
         }
         await refetch()
         cancelForm()
+        notificationStore.showToast('Centro de trabajo guardado correctamente', 'success')
     } catch (e) {
         console.error(e)
-        alert('Error al guardar centro: ' + e.message)
+        notificationStore.showToast('Error al guardar centro: ' + e.message, 'error')
     } finally {
         saving.value = false
     }
 }
 
 const confirmDelete = async (wc) => {
-    if (confirm(`¿Estás seguro de eliminar "${wc.name}"? Esto afectará a los colaboradores asignados.`)) {
+    const confirmed = await notificationStore.showDialog(
+        `¿Estás seguro de eliminar "${wc.name}"? Esto afectará a los colaboradores asignados.`,
+        'Eliminar Centro de Trabajo'
+    )
+    
+    if (confirmed) {
         try {
             await deleteWorkCenter({ id: wc.id })
             await refetch()
+            notificationStore.showToast('Centro eliminado correctamente', 'success')
         } catch (e) {
             console.error(e)
-            alert('Error al eliminar: ' + e.message)
+            notificationStore.showToast('Error al eliminar: ' + e.message, 'error')
         }
     }
 }
@@ -383,10 +386,11 @@ const importHolidays = async () => {
         
         // Sort
         holidays.value.sort((a, b) => a.date.localeCompare(b.date))
+        notificationStore.showToast(`Importados ${imported.length} festivos`, 'success')
         
     } catch (e) {
         console.error(e)
-        alert('Error importando: ' + e.message)
+        notificationStore.showToast('Error importando: ' + e.message, 'error')
     } finally {
         importing.value = false
     }
@@ -433,10 +437,10 @@ const saveCalendar = async () => {
              loadHolidaysForYear(updatedWc, selectedYear.value)
         }
 
-        alert('Calendario guardado correctamente')
+        notificationStore.showToast('Calendario guardado correctamente', 'success')
     } catch (e) {
         console.error(e)
-        alert('Error guardando: ' + e.message)
+        notificationStore.showToast('Error guardando: ' + e.message, 'error')
     } finally {
         savingCalendar.value = false
     }

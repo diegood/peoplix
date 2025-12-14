@@ -1,0 +1,11 @@
+model CollaboratorSkill {
+  id    String @id @default(uuid())
+  level Int
+
+  collaboratorId String
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  skillId        String
+  skill          Skill        @relation(fields: [skillId], references: [id])
+
+  @@unique([collaboratorId, skillId])
+}

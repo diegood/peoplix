@@ -1,0 +1,23 @@
+model Collaborator {
+  id              String   @id @default(uuid())
+  userName        String?  @unique
+  firstName       String   @default("")
+  lastName        String   @default("")
+  name            String? // Deprecated, kept for migration
+  contractedHours Int
+  joinDate        DateTime @default(now())
+  isActive        Boolean  @default(true)
+
+  allocations       Allocation[]
+  skills            CollaboratorSkill[]
+  roles             CollaboratorRole[]
+  hardware          Hardware[]
+  holidayCalendar   HolidayCalendar?
+  customFieldValues CustomFieldValue[]
+
+  workCenterId String?
+  workCenter   WorkCenter? @relation(fields: [workCenterId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
