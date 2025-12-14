@@ -17,6 +17,7 @@ type Collaborator {
   hardware: [Hardware!]!
   holidayCalendar: HolidayCalendar
   customFields: [CustomFieldValue!]!
+  workCenter: WorkCenter
 }
 
 type CollaboratorSkill {
@@ -33,7 +34,7 @@ type CollaboratorSkill {
   extend type Mutation {
 
   
-  createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!): Collaborator!
+  createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID): Collaborator!
 
   updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean, workCenterId: ID): Collaborator!
 

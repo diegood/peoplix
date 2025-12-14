@@ -10,6 +10,18 @@ export const GET_COLLABORATORS = gql`
       contractedHours
       joinDate
       isActive
+      workCenter {
+        id
+        name
+        publicHolidayCalendars {
+          id
+          year
+          holidays {
+            date
+            name
+          }
+        }
+      }
       skills {
         id
         level
@@ -48,8 +60,8 @@ export const GET_COLLABORATORS = gql`
 `
 
 export const CREATE_COLLABORATOR = gql`
-  mutation CreateCollaborator($userName: String, $firstName: String!, $lastName: String!, $contractedHours: Int!, $joinDate: String!) {
-    createCollaborator(userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate) {
+  mutation CreateCollaborator($userName: String, $firstName: String!, $lastName: String!, $contractedHours: Int!, $joinDate: String!, $workCenterId: ID) {
+    createCollaborator(userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, workCenterId: $workCenterId) {
       id
       userName
       firstName
@@ -57,13 +69,17 @@ export const CREATE_COLLABORATOR = gql`
       contractedHours
       joinDate
       isActive
+      workCenter {
+          id
+          name
+      }
     }
   }
 `
 
 export const UPDATE_COLLABORATOR = gql`
-  mutation UpdateCollaborator($id: ID!, $userName: String, $firstName: String, $lastName: String, $contractedHours: Int, $joinDate: String, $isActive: Boolean) {
-    updateCollaborator(id: $id, userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, isActive: $isActive) {
+  mutation UpdateCollaborator($id: ID!, $userName: String, $firstName: String, $lastName: String, $contractedHours: Int, $joinDate: String, $isActive: Boolean, $workCenterId: ID) {
+    updateCollaborator(id: $id, userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, isActive: $isActive, workCenterId: $workCenterId) {
       id
       userName
       firstName
@@ -71,6 +87,18 @@ export const UPDATE_COLLABORATOR = gql`
       contractedHours
       joinDate
       isActive
+      workCenter {
+          id
+          name
+          publicHolidayCalendars {
+             id
+             year
+             holidays {
+                date
+                name
+             }
+          }
+      }
     }
   }
 `

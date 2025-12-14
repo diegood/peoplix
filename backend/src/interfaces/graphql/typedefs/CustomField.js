@@ -32,7 +32,7 @@ type CustomFieldValue {
 
   deleteCustomFieldDefinition(id: ID!): Boolean!
 
-  setCustomFieldValue(collaboratorId: ID!, fieldDefinitionId: ID!, value: String!): CustomFieldValue!
+  setCustomFieldValue(collaboratorId: ID!, fieldDefinitionId: ID!, value: String!): Collaborator!
   }
 
 `;

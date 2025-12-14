@@ -1,7 +1,6 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { User, Briefcase } from 'lucide-vue-next'
-import { gql } from 'graphql-tag'
 import { useQuery } from '@vue/apollo-composable'
 
 const props = defineProps({
@@ -16,16 +15,8 @@ const emit = defineEmits(['save', 'update:form', 'update:customFieldForm'])
 
 // Check if we need to fetch Work Centers here or pass them as props.
 // Fetching here keeps the Tab self-contained.
-const GET_WORK_CENTERS = gql`
-    query GetWorkCentersSimple {
-        workCenters {
-            id
-            name
-            countryCode
-            regionCode
-        }
-    }
-`
+import { GET_WORK_CENTERS } from '@/graphql/queries'
+
 const { result: wcResult } = useQuery(GET_WORK_CENTERS)
 const workCenters = computed(() => wcResult.value?.workCenters || [])
 

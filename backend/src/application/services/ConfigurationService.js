@@ -7,6 +7,8 @@ import {
     PrismaCustomFieldRepository 
 } from '../../infrastructure/repositories/PrismaConfigurationRepositories.js'
 
+import { PrismaCollaboratorRepository } from '../../infrastructure/repositories/PrismaCollaboratorRepository.js'
+
 export class ConfigurationService {
     constructor() {
         this.roles = new PrismaRoleRepository()
@@ -15,6 +17,7 @@ export class ConfigurationService {
         this.milestoneTypes = new PrismaMilestoneTypeRepository()
         this.hierarchyTypes = new PrismaHierarchyTypeRepository()
         this.customFields = new PrismaCustomFieldRepository()
+        this.collaboratorRepository = new PrismaCollaboratorRepository()
     }
     
     // Roles
@@ -49,5 +52,8 @@ export class ConfigurationService {
     async createCustomFieldDefinition(data) { return this.customFields.create(data) }
     async updateCustomFieldDefinition(id, data) { return this.customFields.update(id, data) }
     async deleteCustomFieldDefinition(id) { return this.customFields.delete(id) }
-    async setCustomFieldValue(data) { return this.customFields.setValue(data) }
+    async setCustomFieldValue(data) { 
+        await this.customFields.setValue(data)
+        return this.collaboratorRepository.findById(data.collaboratorId)
+    }
 }

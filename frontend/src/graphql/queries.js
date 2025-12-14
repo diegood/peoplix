@@ -201,3 +201,13 @@ export const DELETE_CUSTOM_FIELD_DEFINITION = gql`
      deleteCustomFieldDefinition(id: $id)
   }
 `
+export const GET_WORK_CENTERS = gql`
+  query GetWorkCenters {
+    workCenters {
+      id
+      name
+      regionCode
+      countryCode
+    }
+  }
+`

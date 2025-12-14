@@ -35,6 +35,18 @@ export const COLLABORATOR_FRAGMENT = gql`
     contractedHours
     joinDate
     isActive
+    workCenter {
+      id
+      name
+      publicHolidayCalendars {
+         id
+         year
+         holidays {
+            date
+            name
+         }
+      }
+    }
   }
 `
 

@@ -11,7 +11,6 @@ import {
 } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 
-// Tabs
 import CollaboratorGeneralTab from './tabs/CollaboratorGeneralTab.vue'
 import CollaboratorSkillsTab from './tabs/CollaboratorSkillsTab.vue'
 import CollaboratorHardwareTab from './tabs/CollaboratorHardwareTab.vue'
@@ -26,25 +25,23 @@ const props = defineProps({
 const emit = defineEmits(['close', 'saved'])
 const notificationStore = useNotificationStore()
 
-// Mutations
 const { mutate: createCollaborator, loading: creating } = useMutation(CREATE_COLLABORATOR, { refetchQueries: ['GetCollaborators'] })
 const { mutate: updateCollaborator, loading: updating } = useMutation(UPDATE_COLLABORATOR, { refetchQueries: ['GetCollaborators'] })
 const { mutate: setCustomFieldValue } = useMutation(SET_CUSTOM_FIELD_VALUE, { refetchQueries: ['GetCollaborators'] })
 
-// State
 const activeTab = ref('general')
-const localCollaborator = ref(null) // Keeps track of the collaborator being edited (either from props or just created)
+const localCollaborator = ref(null)
 const form = ref({
   userName: '',
   firstName: '',
   lastName: '',
   contractedHours: 40,
   joinDate: new Date().toISOString().split('T')[0],
-  isActive: true
+  isActive: true,
+  workCenterId: ''
 })
-const customFieldForm = ref({}) // Stores values for custom fields (fieldId -> value)
+const customFieldForm = ref({})
 
-// Computed
 const isEditing = computed(() => !!localCollaborator.value?.id)
 const modalTitle = computed(() => isEditing.value ? 'Editar Colaborador' : 'Nuevo Colaborador')
 const tabs = computed(() => [
@@ -54,11 +51,9 @@ const tabs = computed(() => [
   { id: 'holidays', label: 'Festivos', icon: Calendar, disabled: !isEditing.value },
 ])
 
-// Watchers
 watch(() => props.show, (newVal) => {
   if (newVal) {
     if (props.collaborator) {
-      // Edit Mode
       localCollaborator.value = JSON.parse(JSON.stringify(props.collaborator))
       form.value = {
         userName: props.collaborator.userName || '',
@@ -66,23 +61,21 @@ watch(() => props.show, (newVal) => {
         lastName: props.collaborator.lastName,
         contractedHours: props.collaborator.contractedHours,
         joinDate: props.collaborator.joinDate?.split('T')[0] || new Date().toISOString().split('T')[0],
-        isActive: props.collaborator.isActive
+        isActive: props.collaborator.isActive,
+        workCenterId: props.collaborator.workCenter?.id || ''
       }
-      // Populate custom fields form
       customFieldForm.value = {}
       props.customFieldDefinitions.forEach(def => {
         const val = getCustomFieldValue(props.collaborator, def.id)
         if (val !== undefined && val !== '') customFieldForm.value[def.id] = val
       })
     } else {
-      // Create Mode
       resetForms()
     }
     activeTab.value = 'general'
   }
 })
 
-// Helpers
 const resetForms = () => {
   localCollaborator.value = null
   form.value = {
@@ -91,7 +84,8 @@ const resetForms = () => {
     lastName: '',
     contractedHours: 40,
     joinDate: new Date().toISOString().split('T')[0],
-    isActive: true
+    isActive: true,
+    workCenterId: ''
   }
   customFieldForm.value = {}
 }
@@ -106,7 +100,6 @@ const getCustomFieldValue = (collab, fieldDefId) => {
   }
 }
 
-// Actions
 const handleClose = () => {
   emit('close')
 }
@@ -121,7 +114,6 @@ const handleSaveGeneral = async () => {
     let savedCollaborator
     
     if (isEditing.value) {
-      // Update
       const res = await updateCollaborator({ 
         id: localCollaborator.value.id,
         userName: form.value.userName || null,
@@ -129,25 +121,25 @@ const handleSaveGeneral = async () => {
         lastName: form.value.lastName,
         contractedHours: Number(form.value.contractedHours),
         joinDate: form.value.joinDate,
-        isActive: form.value.isActive
+        isActive: form.value.isActive,
+        workCenterId: form.value.workCenterId || null
       })
       savedCollaborator = res.data.updateCollaborator
       notificationStore.showToast('Colaborador actualizado', 'success')
     } else {
-      // Create
       const res = await createCollaborator({ 
         userName: form.value.userName || null,
         firstName: form.value.firstName,
         lastName: form.value.lastName,
         contractedHours: Number(form.value.contractedHours),
-        joinDate: form.value.joinDate
+        joinDate: form.value.joinDate,
+        workCenterId: form.value.workCenterId || null 
       })
       savedCollaborator = res.data.createCollaborator
-      localCollaborator.value = savedCollaborator // Enable other tabs
+      localCollaborator.value = savedCollaborator
       notificationStore.showToast('Colaborador creado', 'success')
     }
 
-    // Save Custom Fields
     if (savedCollaborator && savedCollaborator.id) {
        for (const [fieldId, value] of Object.entries(customFieldForm.value)) {
            if (value !== undefined && value !== null && value !== '') {
@@ -162,7 +154,6 @@ const handleSaveGeneral = async () => {
     
     emit('saved', savedCollaborator)
     if (!isEditing.value) {
-        // Close on create
         handleClose() 
     }
     
@@ -182,19 +173,12 @@ const updateHardware = (newHardware) => {
         localCollaborator.value.hardware = newHardware
     }
 }
-
-const updateHolidayCalendar = (newCalendar) => {
-     if (localCollaborator.value) {
-        localCollaborator.value.holidayCalendar = newCalendar
-    }
-}
 </script>
 
 <template>
   <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
       
-      <!-- Header -->
       <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
         <div class="flex items-center gap-3">
             <div class="p-2 bg-blue-100 text-blue-600 rounded-lg">
@@ -210,7 +194,6 @@ const updateHolidayCalendar = (newCalendar) => {
         </button>
       </div>
 
-      <!-- Tabs -->
       <div class="flex border-b border-gray-100 px-4 pt-2 gap-1 overflow-x-auto">
         <button 
           v-for="tab in tabs" 
@@ -228,10 +211,8 @@ const updateHolidayCalendar = (newCalendar) => {
         </button>
       </div>
 
-      <!-- Body -->
       <div class="flex-1 overflow-y-auto p-6 bg-gray-50/50">
         
-        <!-- Tab: General -->
         <CollaboratorGeneralTab 
             v-if="activeTab === 'general'"
             v-model:form="form"
@@ -242,7 +223,6 @@ const updateHolidayCalendar = (newCalendar) => {
             @save="handleSaveGeneral"
         />
 
-        <!-- Tab: Skills -->
         <CollaboratorSkillsTab
             v-else-if="activeTab === 'skills'"
             :collaboratorId="localCollaborator.id"
@@ -250,7 +230,6 @@ const updateHolidayCalendar = (newCalendar) => {
             @update:skills="updateSkills"
         />
 
-        <!-- Tab: Hardware -->
         <CollaboratorHardwareTab
             v-else-if="activeTab === 'hardware'"
             :collaboratorId="localCollaborator.id"
@@ -258,12 +237,10 @@ const updateHolidayCalendar = (newCalendar) => {
             @update:hardware="updateHardware"
         />
 
-        <!-- Tab: Holidays -->
         <CollaboratorHolidaysTab
              v-else-if="activeTab === 'holidays'"
+             :workCenter="localCollaborator.workCenter"
              :collaboratorId="localCollaborator.id"
-             :holidayCalendar="localCollaborator.holidayCalendar"
-             @update:holidayCalendar="updateHolidayCalendar"
         />
 
       </div>
