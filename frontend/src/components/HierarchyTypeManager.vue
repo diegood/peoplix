@@ -18,13 +18,15 @@ const GET_HIERARCHY_TYPES = gql`
   }
 `
 
+
 const CREATE_TYPE = gql`
-  mutation CreateHierarchyType($name: String!, $color: String!, $rank: Int) {
+  mutation CreateHierarchyType($name: String!, $color: String!, $rank: Int!) {
     createHierarchyType(name: $name, color: $color, rank: $rank) {
       id
     }
   }
 `
+
 
 const UPDATE_TYPE = gql`
   mutation UpdateHierarchyType($id: ID!, $name: String, $color: String, $rank: Int) {

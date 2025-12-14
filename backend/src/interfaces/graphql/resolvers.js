@@ -12,8 +12,7 @@ const adapter = new PrismaPg(pool)
 
 const prisma = new PrismaClient({ adapter })
 
-// Debug available models
-console.log('Prisma Models:', Object.keys(prisma)) // Should show project, technology, etc.
+console.log('Prisma Models:', Object.keys(prisma)) 
 if (!prisma.technology) console.error('CRITICAL: prisma.technology is missing!')
 
 export const resolvers = {
@@ -67,7 +66,8 @@ export const resolvers = {
       include: {
         publicHolidayCalendars: true
       }
-    })
+    }),
+    hierarchyTypes: () => prisma.hierarchyType.findMany({ orderBy: { rank: 'asc' } })
   },
   
   
@@ -354,6 +354,45 @@ export const resolvers = {
             }
         })
         return roleId
+    },
+
+    addAllocationHierarchy: async (_, { subordinateAllocId, supervisorAllocId, typeId }) => {
+        return await prisma.allocationHierarchy.create({
+            data: {
+                subordinateId: subordinateAllocId,
+                supervisorId: supervisorAllocId,
+                hierarchyTypeId: typeId
+            },
+            include: { hierarchyType: true }
+        })
+    },
+
+    removeAllocationHierarchy: async (_, { hierarchyId }) => {
+        await prisma.allocationHierarchy.delete({ where: { id: hierarchyId } })
+        return true
+    },
+
+    createHierarchyType: async (_, { name, color, rank }) => {
+        return await prisma.hierarchyType.create({
+            data: { name, color, rank }
+        })
+    },
+
+    updateHierarchyType: async (_, { id, name, color, rank }) => {
+        const data = {}
+        if (name !== undefined) data.name = name
+        if (color !== undefined) data.color = color
+        if (rank !== undefined) data.rank = rank
+        
+        return await prisma.hierarchyType.update({
+            where: { id },
+            data
+        })
+    },
+
+    deleteHierarchyType: async (_, { id }) => {
+        await prisma.hierarchyType.delete({ where: { id } })
+        return true
     },
     
     // Milestones
