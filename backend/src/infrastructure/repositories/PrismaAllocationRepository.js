@@ -1,15 +1,23 @@
-import { prisma } from '../database/prisma.js';
-import { Allocation } from '../../domain/entities/Allocation.js';
+import { prisma } from '../database/client.js'
 
 export class PrismaAllocationRepository {
-    async create({ projectId, collaboratorId, roleId, percentage, startWeek }) {
-        const allocation = await prisma.allocation.create({
+    async create(data) {
+        // data expects: { projectId, collaboratorId, dedicationPercentage, startWeek, endWeek, roleId }
+        // The service layer should prepare the data structure for Prisma
+        // But here we can accept raw args or structured data. 
+        // Let's assume generic create data passed from Service.
+        // However, the current resolver does specific nesting.
+        // Let's stick to the current resolver logic but encapsulated.
+        
+        const { projectId, collaboratorId, dedicationPercentage, startWeek, endWeek, roleId } = data
+        
+        return prisma.allocation.create({
             data: {
                 projectId,
                 collaboratorId,
-                dedicationPercentage: percentage,
+                dedicationPercentage,
                 startWeek,
-                endWeek: null,
+                endWeek,
                 roles: {
                     create: { roleId }
                 }
@@ -19,47 +27,82 @@ export class PrismaAllocationRepository {
                 collaborator: true,
                 project: true
             }
-        });
-        
-        return this._toEntity(allocation);
+        })
     }
-    
-    async update(id, { percentage, endWeek }) {
-         const data = {};
-         if (percentage !== undefined) data.dedicationPercentage = percentage;
-         if (endWeek !== undefined) data.endWeek = endWeek;
-         
-         const updated = await prisma.allocation.update({
-             where: { id },
-             data,
-             include: { roles: { include: { role: true } } }
-         });
-         return this._toEntity(updated);
+
+    async update(id, data) {
+        return prisma.allocation.update({
+            where: { id },
+            data,
+            include: { roles: { include: { role: true } } }
+        })
     }
-    
+
     async delete(id) {
-        await prisma.allocation.delete({ where: { id } });
-        return id;
+        await prisma.allocation.delete({ where: { id } })
+        return true
     }
     
     async addRole(allocationId, roleId) {
         await prisma.allocationRole.create({
             data: { allocationId, roleId }
-        });
-        // Return simple role object or fetch full? Logic needs just Role
-        const role = await prisma.role.findUnique({ where: { id: roleId } });
-        return role;
+        })
+        // Return only the role as per schema
+        return prisma.role.findUnique({ where: { id: roleId } }) 
     }
     
     async removeRole(allocationId, roleId) {
         await prisma.allocationRole.delete({
-             where: { allocationId_roleId: { allocationId, roleId } }
-        });
-        return roleId;
+            where: {
+                allocationId_roleId: { allocationId, roleId }
+            }
+        })
+        return true
     }
 
-    _toEntity(a) {
-        const roles = a.roles ? a.roles.map(ar => ar.role) : [];
-        return new Allocation({ ...a, roles });
+    // Hierarchy
+    async addHierarchy(subordinateId, supervisorId, hierarchyTypeId) {
+        return prisma.allocationHierarchy.create({
+            data: {
+                subordinateId,
+                supervisorId,
+                hierarchyTypeId
+            },
+            include: { hierarchyType: true }
+        })
+    }
+
+    async removeHierarchy(id) {
+        await prisma.allocationHierarchy.delete({ where: { id } })
+        return true
+    }
+    
+    // Field resolvers support
+    async findRoles(allocationId) {
+         const rs = await prisma.allocationRole.findMany({
+            where: { allocationId },
+            include: { role: true }
+        })
+        return rs.map(ar => ar.role)
+    }
+    
+    async findSupervisors(subordinateId) {
+        return prisma.allocationHierarchy.findMany({
+            where: { subordinateId },
+            include: { 
+                hierarchyType: true,
+                supervisor: { include: { collaborator: true } }
+            }
+        })
+    }
+    
+    async findSubordinates(supervisorId) {
+        return prisma.allocationHierarchy.findMany({
+            where: { supervisorId },
+            include: { 
+                hierarchyType: true,
+                subordinate: { include: { collaborator: true } }
+            }
+        })
     }
 }

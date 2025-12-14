@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_PROJECTS } from '@/graphql/queries'
 import { CREATE_PROJECT, UPDATE_PROJECT } from '@/graphql/mutations'
@@ -20,7 +20,12 @@ const editForm = ref({ name: '', contractedHours: 0 })
 
 // Requirements Modal
 const requirementsModalOpen = ref(false)
-const selectedProjectForReq = ref(null)
+const selectedProjectIdForReq = ref(null)
+
+const selectedProjectForReq = computed(() => {
+    if (!selectedProjectIdForReq.value || !result.value) return null
+    return result.value.projects.find(p => p.id === selectedProjectIdForReq.value)
+})
 
 const handleCreate = async () => {
   if (!form.value.name) return
@@ -51,10 +56,11 @@ const saveEdit = async () => {
 }
 
 const openRequirements = (project) => {
-    selectedProjectForReq.value = project
+    selectedProjectIdForReq.value = project.id
     requirementsModalOpen.value = true
 }
 </script>
+// ... existing code
 
 <template>
   <div class="space-y-6">

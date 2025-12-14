@@ -1,12 +1,8 @@
-import { prisma } from '../database/prisma.js';
-import { Project } from '../../domain/entities/Project.js';
-import { Allocation } from '../../domain/entities/Allocation.js';
-
-import { Collaborator } from '../../domain/entities/Collaborator.js';
+import { prisma } from '../database/client.js'
 
 export class PrismaProjectRepository {
-    async findAll() {
-        const projects = await prisma.project.findMany({
+    async findAll(args = {}) {
+        return prisma.project.findMany({
             include: {
                 allocations: {
                     include: {
@@ -22,69 +18,88 @@ export class PrismaProjectRepository {
                         skills: { include: { skill: true } }
                     }
                 }
-            }
-        }); 
-        
-        return projects.map(p => {
-             const mappedAllocations = p.allocations ? p.allocations.map(a => {
-                 const roles = a.roles ? a.roles.map(ar => ar.role) : [];
-                 
-                 let mappedCollaborator = null;
-                 if (a.collaborator) {
-                     const flatSkills = a.collaborator.skills ? a.collaborator.skills.map(cs => ({ ...cs.skill, level: cs.level })) : [];
-                     mappedCollaborator = new Collaborator({ ...a.collaborator, skills: flatSkills });
-                 }
-                 
-                 return new Allocation({ ...a, roles, collaborator: mappedCollaborator });
-             }) : [];
-             return new Project({ ...p, allocations: mappedAllocations });
-        });
+            },
+            ...args
+        })
     }
 
     async findById(id) {
-        const project = await prisma.project.findUnique({
+        return prisma.project.findUnique({
             where: { id },
-             include: {
+            include: {
                 allocations: {
-                   include: { 
-                     collaborator: { include: { skills: { include: { skill: true } } } }, 
-                     roles: { include: { role: true } } 
-                   }
+                    include: {
+                        roles: { include: { role: true } }
+                    }
                 },
                 milestones: { include: { milestoneType: true } },
                 requiredRoles: { include: { role: true, skills: { include: { skill: true } } } }
-              }
-        });
-        
-        if (!project) return null;
-        
-        const mappedAllocations = project.allocations ? project.allocations.map(a => {
-             const roles = a.roles ? a.roles.map(ar => ar.role) : [];
-             
-             let mappedCollaborator = null;
-             if (a.collaborator) {
-                  const flatSkills = a.collaborator.skills ? a.collaborator.skills.map(cs => ({ ...cs.skill, level: cs.level })) : [];
-                  mappedCollaborator = new Collaborator({ ...a.collaborator, skills: flatSkills });
-             }
-
-             return new Allocation({ ...a, roles, collaborator: mappedCollaborator });
-        }) : [];
-        
-        return new Project({ ...project, allocations: mappedAllocations });
+            }
+        })
     }
 
     async create({ name, contractedHours }) {
-        const project = await prisma.project.create({
+        return prisma.project.create({
             data: { name, contractedHours }
-        });
-        return new Project(project);
+        })
     }
-    
-    async update({ id, name, contractedHours }) {
-         const project = await prisma.project.update({
-             where: { id },
-             data: { name, contractedHours }
-         });
-         return new Project(project);
+
+    async update(id, data) {
+        return prisma.project.update({
+            where: { id },
+            data
+        })
+    }
+
+    async delete(id) {
+        await prisma.project.delete({ where: { id } })
+        return true
+    }
+
+    // Requirements
+    async addRequirement({ projectId, roleId, resourceCount, monthlyHours }) {
+        return prisma.projectRequirement.create({
+            data: { projectId, roleId, resourceCount, monthlyHours },
+            include: { role: true, skills: { include: { skill: true } } }
+        })
+    }
+
+    async removeRequirement(id) {
+        await prisma.projectRequirement.delete({ where: { id } })
+        return true
+    }
+
+    async addRequirementSkill(requirementId, skillName, level) {
+         // Upsert logic from original resolver
+        let skill = await prisma.skill.findUnique({ where: { name: skillName } })
+        if (!skill) {
+            skill = await prisma.skill.create({ data: { name: skillName } })
+        }
+        
+        const existing = await prisma.requirementSkill.findFirst({
+            where: { requirementId, skillId: skill.id }
+        })
+        
+        let result;
+        if (existing) {
+            result = await prisma.requirementSkill.update({
+                where: { id: existing.id },
+                data: { level },
+                include: { skill: true }
+            })
+        } else {
+            result = await prisma.requirementSkill.create({
+                data: { requirementId, skillId: skill.id, level },
+                include: { skill: true }
+            })
+        }
+        return result
+    }
+
+    async removeRequirementSkill(requirementId, skillId) {
+        await prisma.requirementSkill.deleteMany({
+            where: { requirementId, skillId }
+        })
+        return true
     }
 }

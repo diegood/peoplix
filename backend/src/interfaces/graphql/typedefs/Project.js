@@ -45,7 +45,7 @@ type ProjectRequirementSkill {
 
   removeProjectRequirement(projectId: ID!, requirementId: ID!): Boolean
 
-  addRequirementSkill(projectId: ID!, requirementId: ID!, skillName: String!, level: Int!): Skill!
+  addRequirementSkill(projectId: ID!, requirementId: ID!, skillName: String!, level: Int!): ProjectRequirementSkill!
 
   removeRequirementSkill(projectId: ID!, requirementId: ID!, skillId: ID!): Boolean
   }

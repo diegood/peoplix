@@ -1,9 +1,9 @@
 model Collaborator {
-  id              String   @id @default(uuid())
-  userName        String?  @unique
-  firstName       String   @default("")
-  lastName        String   @default("")
-  name            String? // Deprecated, kept for migration
+  id        String  @id @default(uuid())
+  userName  String? @unique
+  firstName String  @default("")
+  lastName  String  @default("")
+
   contractedHours Int
   joinDate        DateTime @default(now())
   isActive        Boolean  @default(true)

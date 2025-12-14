@@ -193,12 +193,17 @@ export const ADD_PROJECT_REQUIREMENT = gql`
         ...RoleFields
       }
       skills {
-        ...SkillWithLevelFields
+        id
+        name
+        level
+        skill {
+          ...SkillFields
+        }
       }
     }
   }
   ${ROLE_FRAGMENT}
-  ${SKILL_WITH_LEVEL_FRAGMENT}
+  ${SKILL_FRAGMENT}
 `
 
 export const REMOVE_PROJECT_REQUIREMENT = gql`

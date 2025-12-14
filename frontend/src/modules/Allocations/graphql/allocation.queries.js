@@ -49,7 +49,7 @@ export const GET_PROJECTS = gql`
         }
         collaborator {
           id
-          name
+
           firstName
           lastName
           skills {
@@ -72,7 +72,7 @@ export const GET_PROJECTS = gql`
             id
             collaborator {
               id
-              name
+
             }
           }
         }
@@ -87,7 +87,7 @@ export const GET_PROJECTS = gql`
             id
             collaborator {
               id
-              name
+
             }
           }
         }
@@ -103,7 +103,7 @@ export const GET_COLLABORATORS = gql`
       userName
       firstName
       lastName
-      name
+
       contractedHours
       joinDate
       isActive

@@ -1,8 +1,8 @@
 import Fastify from 'fastify'
 import mercurius from 'mercurius'
 import cors from '@fastify/cors'
+import { resolvers } from '../graphql/resolvers/index.js'
 import { schema } from '../graphql/schema.js'
-import { resolvers } from '../graphql/resolvers.js'
 
 const app = Fastify()
 

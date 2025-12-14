@@ -34,11 +34,11 @@ const hasChildren = computed(() => props.node.children && props.node.children.le
 
         <!-- Avatar -->
         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-50 to-gray-200 border border-gray-100 flex items-center justify-center font-bold text-gray-500 shrink-0">
-            {{ node.details.collaborator.name.substring(0,2).toUpperCase() }}
+            {{ (node.details.collaborator.firstName[0] + node.details.collaborator.lastName[0]).toUpperCase() }}
         </div>
         
         <div class="flex-1 min-w-0">
-            <div class="font-bold text-gray-800 text-sm truncate">{{ node.details.collaborator.name }}</div>
+            <div class="font-bold text-gray-800 text-sm truncate">{{ node.details.collaborator.firstName }} {{ node.details.collaborator.lastName }}</div>
             <div class="flex flex-wrap gap-1 mt-1">
                  <span v-for="role in node.details.roles" :key="role.id" class="text-[10px] px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded border border-gray-100">
                     {{ role.name }}

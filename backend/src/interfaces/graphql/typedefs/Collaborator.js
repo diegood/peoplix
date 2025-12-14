@@ -6,7 +6,7 @@ type Collaborator {
   userName: String
   firstName: String!
   lastName: String!
-  name: String # Deprecated
+
   avatar: String
   roles: [Role!]!
   skills: [CollaboratorSkill!]!

@@ -31,7 +31,7 @@ export const COLLABORATOR_FRAGMENT = gql`
     userName
     firstName
     lastName
-    name
+
     contractedHours
     joinDate
     isActive

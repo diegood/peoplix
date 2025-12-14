@@ -27,10 +27,10 @@ const emit = defineEmits(['drag-start', 'drag-end'])
           <div class="flex-shrink-0 w-48 bg-gray-50 p-3 rounded-lg border border-gray-200 cursor-move hover:shadow-md transition-shadow select-none">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                 {{ (element.firstName || element.name || '?').charAt(0) }}
+                 {{ (element.firstName || '?').charAt(0) }}
               </div>
               <div>
-                <div class="font-semibold text-sm truncate">{{ element.firstName || element.name }} {{ element.lastName }}</div>
+                <div class="font-semibold text-sm truncate">{{ element.firstName }} {{ element.lastName }}</div>
                 <div class="text-xs text-gray-400">{{ element.contractedHours }} hrs</div>
               </div>
             </div>

@@ -1,23 +1,43 @@
-import { PrismaProjectRepository } from '../../infrastructure/repositories/PrismaProjectRepository.js';
+import { PrismaProjectRepository } from '../../infrastructure/repositories/PrismaProjectRepository.js'
 
 export class ProjectService {
     constructor() {
-        this.repository = new PrismaProjectRepository();
+        this.repository = new PrismaProjectRepository()
     }
     
-    getAll() {
-        return this.repository.findAll();
+    async getAll(args) {
+        return this.repository.findAll(args)
     }
     
-    getById(id) {
-        return this.repository.findById(id);
+    async getById(id) {
+        return this.repository.findById(id)
     }
     
-    create(data) {
-        return this.repository.create(data);
+    async create(data) {
+        return this.repository.create(data)
     }
     
-    update(data) {
-        return this.repository.update(data);
+    async update(id, data) {
+        return this.repository.update(id, data)
+    }
+    
+    async delete(id) {
+        return this.repository.delete(id)
+    }
+    
+    async addRequirement(data) {
+        return this.repository.addRequirement(data)
+    }
+
+    async removeRequirement(id) {
+        return this.repository.removeRequirement(id)
+    }
+
+    async addRequirementSkill(requirementId, skillName, level) {
+        return this.repository.addRequirementSkill(requirementId, skillName, level)
+    }
+
+    async removeRequirementSkill(requirementId, skillId) {
+        return this.repository.removeRequirementSkill(requirementId, skillId)
     }
 }
