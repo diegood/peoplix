@@ -32,26 +32,8 @@ const handleDelete = async (id) => {
 </script>
 
 <template>
-  <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-100">
+  <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2">
     <h2 class="text-xl font-bold mb-4 text-gray-800">Gestión de Roles</h2>
-    
-    <!-- Error/Loading -->
-    <div v-if="loading" class="text-gray-500">Cargando roles...</div>
-    <div v-if="error" class="text-red-500">Error: {{ error.message }}</div>
-
-    <!-- List -->
-    <ul v-if="result && result.roles" class="space-y-2 mb-6">
-      <li v-for="role in result.roles" :key="role.id" 
-          class="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
-        <span class="font-medium text-gray-700">{{ role.name }}</span>
-        <button @click="handleDelete(role.id)" 
-                class="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Trash2 size="18" />
-        </button>
-      </li>
-    </ul>
-
-    <!-- Add Form -->
     <div class="flex gap-2">
       <input v-model="newRoleName" 
              @keyup.enter="handleCreate"
@@ -63,5 +45,20 @@ const handleDelete = async (id) => {
         Agregar
       </button>
     </div>
+    
+    <div v-if="loading" class="text-gray-500">Cargando roles...</div>
+    <div v-if="error" class="text-red-500">Error: {{ error.message }}</div>
+
+    <ul v-if="result && result.roles" class="space-y-2 mb-6">
+      <li v-for="role in result.roles" :key="role.id" 
+          class="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
+        <span class="font-medium text-gray-700">{{ role.name }}</span>
+        <button @click="handleDelete(role.id)" 
+                class="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Trash2 size="18" />
+        </button>
+      </li>
+    </ul>
+
   </div>
 </template>

@@ -21,10 +21,12 @@
     "@formkit/themes": "^1.6.9",
     "@formkit/vue": "^1.6.9",
     "dayjs": "^1.11.19",
+    "hy-vue-gantt": "^4.2.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.25",
     "vue-multiselect": "^3.4.0",
-    "vue-router": "^4.6.3"
+    "vue-router": "^4.6.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

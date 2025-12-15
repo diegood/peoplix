@@ -1,6 +1,7 @@
 <script setup>
 import { Network } from 'lucide-vue-next'
 import { dayjs } from '@/config'
+import { stringToColor } from '@/helper/Colors'
 
 const props = defineProps({
     projects: { type: Array, default: () => [] },
@@ -16,18 +17,25 @@ const isToday = (dateObj) => {
 }
 
 const getTypeColor = (milestoneOrType) => {
+    let color = null
     if (typeof milestoneOrType === 'object' && milestoneOrType.milestoneType) {
-        return milestoneOrType.milestoneType.color
+        color = milestoneOrType.milestoneType.color
+    } else if (milestoneOrType?.color) {
+        color = milestoneOrType.color
     }
-    if (typeof milestoneOrType === 'string') {
-        switch (milestoneOrType) {
-            case 'Delivery': return 'bg-red-400'
-            case 'Meeting': return 'bg-blue-400'
-            case 'DevOps': return 'bg-green-400'
-             default: return 'bg-purple-400'
+    
+    if (color) {
+        if (color.startsWith('#') || color.startsWith('rgb')) {
+            return `bg-[${color}]`
         }
+        return color
     }
-    return milestoneOrType?.color || 'bg-gray-400'
+
+    if (typeof milestoneOrType === 'string') {
+        return `bg-[${stringToColor(milestoneOrType)}]`
+    }
+    
+    return 'bg-gray-400'
 }
 
 const getMilestonesForKey = (project, key) => {

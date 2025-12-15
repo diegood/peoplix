@@ -1,21 +1,25 @@
 <script setup>
-const props = defineProps({
+import { stringToColor } from '@/helper/Colors'
+defineProps({
     milestones: { type: Array, default: () => [] }
 })
 
 const getTypeColor = (milestoneOrType) => {
+    let color = null
     if (typeof milestoneOrType === 'object' && milestoneOrType.milestoneType) {
-        return milestoneOrType.milestoneType.color
+        color = milestoneOrType.milestoneType.color
     }
-    if (typeof milestoneOrType === 'string') {
-        switch (milestoneOrType) {
-            case 'Delivery': return 'bg-red-400'
-            case 'Meeting': return 'bg-blue-400'
-            case 'DevOps': return 'bg-green-400'
-             default: return 'bg-purple-400'
+    
+    if (color) {
+        if (color.startsWith('#') || color.startsWith('rgb')) {
+            return `bg-[${color}]`
         }
+        return color
     }
-    return milestoneOrType?.color || 'bg-gray-400'
+    
+    // Fallback string gen
+    const str = typeof milestoneOrType === 'string' ? milestoneOrType : (milestoneOrType?.type || '?')
+    return `bg-[${stringToColor(str)}]`
 }
 </script>
 

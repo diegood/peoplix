@@ -6,6 +6,8 @@ import { CREATE_MILESTONE_TYPE, UPDATE_MILESTONE_TYPE, DELETE_MILESTONE_TYPE } f
 import { X, Plus, Trash2, Edit2, Hexagon, CheckCircle } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 import BaseModal from '@/components/BaseModal.vue'
+import { stringToColor } from '@/helper/Colors'
+import { watch } from 'vue'
 
 const notificationStore = useNotificationStore()
 
@@ -34,9 +36,16 @@ const typeUsage = computed(() => {
 })
 
 // State for editing
-const newTypeForm = ref({ name: '', color: 'bg-indigo-400' })
+const newTypeForm = ref({ name: '', color: '#6366f1' })
 const editingId = ref(null)
 const editForm = ref({ name: '', color: '' })
+
+// Auto-generate color
+watch(() => newTypeForm.value.name, (newName) => {
+    if (newName) {
+        newTypeForm.value.color = stringToColor(newName)
+    }
+})
 
 // Actions
 const handleCreate = async () => {
@@ -75,13 +84,7 @@ const handleDelete = async (id) => {
 }
 
 // Color Palette
-const colors = [
-    'bg-red-400', 'bg-orange-400', 'bg-amber-400', 'bg-yellow-400', 
-    'bg-lime-400', 'bg-green-400', 'bg-emerald-400', 'bg-teal-400',
-    'bg-cyan-400', 'bg-sky-400', 'bg-blue-400', 'bg-indigo-400',
-    'bg-violet-400', 'bg-purple-400', 'bg-fuchsia-400', 'bg-pink-400',
-    'bg-rose-400', 'bg-gray-400'
-]
+// const colors = [...] // Removed
 </script>
 
 <template>
@@ -124,13 +127,10 @@ const colors = [
                 <!-- New Type Form -->
                 <div class="flex items-center gap-3 mb-6 bg-gray-50 p-3 rounded-lg border border-gray-200">
                     <div class="w-8 h-8 rounded-full shrink-0 shadow-sm border-2 border-white cursor-pointer relative group overflow-hidden">
-                        <div :class="[newTypeForm.color, 'w-full h-full']"></div>
-                        <select v-model="newTypeForm.color" class="absolute inset-0 opacity-0 cursor-pointer">
-                            <option v-for="c in colors" :key="c" :value="c">{{ c }}</option>
-                        </select>
+                        <input type="color" v-model="newTypeForm.color" class="absolute inset-0 w-[150%] h-[150%] -translate-x-1/4 -translate-y-1/4 p-0 border-0 cursor-pointer" />
                     </div>
                     <input v-model="newTypeForm.name" placeholder="Nuevo tipo (ej: Despliegue...)" 
-                            class="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium placeholder-gray-400" @keyup.enter="handleCreate"/>
+                            class="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium placeholder-gray-400 outline-none" @keyup.enter="handleCreate"/>
                     <button @click="handleCreate" :disabled="!newTypeForm.name" 
                             class="bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition shadow-sm">
                         <Plus size="18" />
@@ -145,13 +145,10 @@ const colors = [
                         <!-- Editing Mode -->
                         <template v-if="editingId === type.id">
                             <div class="flex items-center gap-3 flex-1">
-                                <div class="w-8 h-8 rounded-full shrink-0 shadow-sm border-2 border-white cursor-pointer relative">
-                                    <div :class="[editForm.color, 'w-full h-full']"></div>
-                                    <select v-model="editForm.color" class="absolute inset-0 opacity-0 cursor-pointer">
-                                        <option v-for="c in colors" :key="c" :value="c">{{ c }}</option>
-                                    </select>
+                                <div class="w-8 h-8 rounded-full shrink-0 shadow-sm border-2 border-white cursor-pointer relative overflow-hidden">
+                                    <input type="color" v-model="editForm.color" class="absolute inset-0 w-[150%] h-[150%] -translate-x-1/4 -translate-y-1/4 p-0 border-0 cursor-pointer" />
                                 </div>
-                                <input v-model="editForm.name" class="flex-1 border rounded px-2 py-1 text-sm" @keyup.enter="handleUpdate" />
+                                <input v-model="editForm.name" class="flex-1 border rounded px-2 py-1 text-sm outline-none focus:border-indigo-500" @keyup.enter="handleUpdate" />
                             </div>
                             <div class="flex gap-2 ml-4">
                                     <button @click="handleUpdate" class="text-green-600 hover:bg-green-100 p-1.5 rounded"><CheckCircle size="16"/></button>
@@ -162,7 +159,7 @@ const colors = [
                         <!-- View Mode -->
                         <template v-else>
                             <div class="flex items-center gap-3">
-                                <div class="w-3 h-3 rounded-full shadow-sm" :class="type.color"></div>
+                                <div class="w-3 h-3 rounded-full shadow-sm" :style="{ backgroundColor: type.color }"></div>
                                 <span class="font-medium text-gray-700">{{ type.name }}</span>
                                 <span class="text-xs text-gray-400 bg-white border border-gray-100 px-2 py-0.5 rounded-full ml-2">
                                     {{ typeUsage[type.id] || 0 }} usos

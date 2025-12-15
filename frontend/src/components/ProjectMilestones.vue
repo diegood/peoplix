@@ -1,12 +1,14 @@
 ```vue
 <script setup>
 import { computed, ref } from 'vue'
-import { useMutation } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable'
 import { CREATE_MILESTONE, DELETE_MILESTONE } from '@/graphql/mutations'
+import { GET_MILESTONE_TYPES } from '@/graphql/queries'
 import { Plus, Trash2, Flag} from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 import VueMultiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
+import { stringToColor } from '@/helper/Colors'
 
 const notificationStore = useNotificationStore()
 
@@ -17,13 +19,11 @@ const props = defineProps({
 
 const isExpanded = ref(false)
 const showForm = ref(false)
-const newMilestone = ref({ name: '', date: '', type: 'Delivery' })
+const newMilestone = ref({ name: '', date: '', type: null })
 
-const typeOptions = ref([
-    'Delivery',
-    'Meeting',
-    'DevOps'
-])
+// Fetch correct types from backend
+const { result: milestoneTypesResult } = useQuery(GET_MILESTONE_TYPES)
+const typeOptions = computed(() => milestoneTypesResult.value?.milestoneTypes || [])
 
 const { mutate: createMilestone } = useMutation(CREATE_MILESTONE, { refetchQueries: ['GetProjects'] })
 const { mutate: deleteMilestone } = useMutation(DELETE_MILESTONE, { refetchQueries: ['GetProjects'] })
@@ -59,30 +59,37 @@ const upcomingMilestones = computed(() => {
         .sort((a, b) => a.date.localeCompare(b.date))
 })
 
-const getTypeColor = (type) => {
-    switch (type) {
-        case 'Delivery': return 'bg-red-400'
-        case 'Meeting': return 'bg-blue-400'
-        case 'DevOps': return 'bg-green-400'
-        default: return 'bg-purple-400'
+const getTypeColor = (milestoneOrType) => {
+    // If it's a milestone object with a rich type
+    let color = milestoneOrType?.milestoneType?.color
+    
+    if (color) {
+        if (color.startsWith('#') || color.startsWith('rgb')) {
+            return `bg-[${color}]`
+        }
+        return color // Assume it is a Tailwind class like 'bg-red-400'
     }
-}
-
-const addTag = (newTag) => {
-    typeOptions.value.push(newTag)
-    newMilestone.value.type = newTag
+    
+    // Fallback/Legacy
+    const typeStr = typeof milestoneOrType === 'string' ? milestoneOrType : (milestoneOrType?.type || milestoneOrType?.name || '?')
+    return `bg-[${stringToColor(typeStr)}]`
 }
 
 const handleCreate = async () => {
-    if (!newMilestone.value.name || !newMilestone.value.date) return
+    if (!newMilestone.value.name || !newMilestone.value.date || !newMilestone.value.type) return
+    
+    // Check if newMilestone.value.type is an object (from Multiselect)
+    const selected = newMilestone.value.type
+    
     await createMilestone({
         projectId: props.project.id,
         name: newMilestone.value.name,
         date: newMilestone.value.date,
-        type: newMilestone.value.type
+        milestoneTypeId: selected.id
     })
     showForm.value = false
-    newMilestone.value = { name: '', date: '', type: 'Delivery' }
+    // Reset defaults (pick first if available?)
+    newMilestone.value = { name: '', date: '', type: null }
 }
 
 const handleDelete = async (id) => {
@@ -111,8 +118,9 @@ const handleDelete = async (id) => {
                    <VueMultiselect
                         v-model="newMilestone.type"
                         :options="typeOptions"
-                        :taggable="true"
-                        @tag="addTag"
+                        :taggable="false"
+                        label="name"
+                        track-by="id"
                         placeholder="Tipo"
                         select-label=""
                         deselect-label=""
@@ -134,8 +142,8 @@ const handleDelete = async (id) => {
               <div class="flex flex-col gap-0.5 mt-1 w-full">
                   <div v-for="m in weekMilestones.filter(x => x.date === day.date)" :key="m.id"
                        class="h-1.5 w-full rounded-full"
-                       :class="getTypeColor(m.type)"
-                       :title="m.name + ' (' + m.type + ')'">
+                       :class="getTypeColor(m)"
+                       :title="m.name + ' (' + (m.milestoneType?.name || m.type) + ')'">
                   </div>
               </div>
           </div>
@@ -146,7 +154,7 @@ const handleDelete = async (id) => {
           <div v-for="m in upcomingMilestones.slice(0, 3)" :key="m.id" class="flex items-center justify-between group">
               <div class="flex items-center gap-2">
                    <div class="w-2 h-2 rounded-full" 
-                        :class="getTypeColor(m.type)"></div>
+                        :class="getTypeColor(m)"></div>
                    <span class="text-xs text-gray-600 truncate max-w-[120px]" :title="m.name">{{ m.name }}</span>
               </div>
               <div class="flex items-center gap-2">

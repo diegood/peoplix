@@ -17,7 +17,12 @@ export const projectResolver = {
     addProjectRequirement: (_, args) => service.addRequirement(args),
     removeProjectRequirement: (_, { projectId, requirementId }) => service.removeRequirement(requirementId),
     addRequirementSkill: (_, { requirementId, skillName, level }) => service.addRequirementSkill(requirementId, skillName, level),
-    removeRequirementSkill: (_, { requirementId, skillId }) => service.removeRequirementSkill(requirementId, skillId)
+    removeRequirementSkill: (_, { requirementId, skillId }) => service.removeRequirementSkill(requirementId, skillId),
+    createMilestone: (_, args) => service.createMilestone(args),
+    deleteMilestone: async (_, { id }) => {
+        await service.deleteMilestone(id)
+        return true
+    }
   },
   ProjectRequirement: {
     skills: (parent) => {

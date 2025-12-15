@@ -102,4 +102,16 @@ export class PrismaProjectRepository {
         })
         return true
     }
+
+    async createMilestone({ projectId, name, date, type, milestoneTypeId }) {
+        return prisma.milestone.create({
+            data: { projectId, name, date, type, milestoneTypeId },
+            include: { milestoneType: true }
+        })
+    }
+
+    async deleteMilestone(id) {
+        await prisma.milestone.delete({ where: { id } })
+        return true
+    }
 }

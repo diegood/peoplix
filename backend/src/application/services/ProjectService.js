@@ -40,4 +40,12 @@ export class ProjectService {
     async removeRequirementSkill(requirementId, skillId) {
         return this.repository.removeRequirementSkill(requirementId, skillId)
     }
+
+    async createMilestone(data) {
+        return this.repository.createMilestone(data)
+    }
+
+    async deleteMilestone(id) {
+        return this.repository.deleteMilestone(id)
+    }
 }

@@ -19,7 +19,7 @@ import AllocationHeader from '../components/AllocationHeader.vue'
 import GlobalMilestonesSummary from '../components/GlobalMilestonesSummary.vue'
 import CollaboratorPool from '../components/CollaboratorPool.vue'
 import ProjectAllocationCard from '../components/ProjectAllocationCard.vue'
-import MonthlyTimelineView from '../components/MonthlyTimelineView.vue'
+import GanttTimelineView from '../components/GanttTimelineView.vue'
 import AssignmentModal from '../forms/AssignmentModal.vue'
 
 // Legacy Shared Components (outside module for now)
@@ -368,14 +368,13 @@ const handleRemoveRole = async (allocation, roleId) => {
         
       </div>
       
-      <!-- Monthly View -->
-      <MonthlyTimelineView 
+      <!-- Gantt View -->
+      <GanttTimelineView 
         v-else 
         :projects="localProjects"
-        :timelineItems="monthlyTimeline"
-        :zoomLevel="zoomLevel"
         :absences="absences"
-        @open-hierarchy="openHierarchy"
+        :chart-start="monthlyRange.start"
+        :chart-end="monthlyRange.end"
       />
 
     </div>
