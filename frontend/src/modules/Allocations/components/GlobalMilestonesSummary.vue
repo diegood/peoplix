@@ -6,7 +6,7 @@ defineProps({
 
 const getTypeColor = (milestoneOrType) => {
     let color = null
-    if (typeof milestoneOrType === 'object' && milestoneOrType.milestoneType) {
+    if (milestoneOrType && typeof milestoneOrType === 'object' && milestoneOrType.milestoneType) {
         color = milestoneOrType.milestoneType.color
     }
     
@@ -17,7 +17,6 @@ const getTypeColor = (milestoneOrType) => {
         return color
     }
     
-    // Fallback string gen
     const str = typeof milestoneOrType === 'string' ? milestoneOrType : (milestoneOrType?.type || '?')
     return `bg-[${stringToColor(str)}]`
 }

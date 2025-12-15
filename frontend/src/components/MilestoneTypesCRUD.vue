@@ -33,10 +33,6 @@ const typeUsage = computed(() => {
     })
     return usage
 })
-// ...
-
-// ...
-// State for editing
 const newTypeForm = ref({ name: '', color: '#6366f1' })
 const editingId = ref(null)
 const editForm = ref({ name: '', color: '' })
@@ -47,11 +43,10 @@ watch(() => newTypeForm.value.name, (newName) => {
     }
 })
 
-// Actions
 const handleCreate = async () => {
     if (!newTypeForm.value.name) return
     await createType(newTypeForm.value)
-    newTypeForm.value.name = '' // Reset
+    newTypeForm.value.name = ''
 }
 
 const startEdit = (type) => {
@@ -84,8 +79,6 @@ const handleDelete = async (id) => {
 }
 
 
-// Color Palette
-// const colors = [...] // Removed in favor of Color Picker
 </script>
 
 <template>
@@ -96,7 +89,6 @@ const handleDelete = async (id) => {
         </h2>
         <p class="text-sm text-gray-500 mb-6">Define los tipos de hitos disponibles para categorizar eventos en los proyectos.</p>
         
-        <!-- Stats Mini-Dashboard -->
          <div class="grid grid-cols-2 gap-4 mb-6">
             <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-center">
                 <div class="text-2xl font-bold text-blue-600">{{ projects.reduce((acc, p) => acc + (p.milestones?.length || 0), 0) }}</div>
@@ -121,12 +113,10 @@ const handleDelete = async (id) => {
             </button>
         </div>
 
-        <!-- List -->
         <div class="space-y-2">
             <div v-for="type in milestoneTypes" :key="type.id" 
                     class="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition group">
                 
-                <!-- Editing Mode -->
                 <template v-if="editingId === type.id">
                     <div class="flex items-center gap-3 flex-1">
                         <div class="w-8 h-8 rounded-full shrink-0 shadow-sm border-2 border-white cursor-pointer relative overflow-hidden">
@@ -140,7 +130,6 @@ const handleDelete = async (id) => {
                     </div>
                 </template>
                 
-                <!-- View Mode -->
                 <template v-else>
                     <div class="flex items-center gap-3">
                         <div class="w-4 h-4 rounded-full shadow-sm" :style="{ backgroundColor: type.color }"></div>

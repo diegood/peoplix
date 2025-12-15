@@ -5,15 +5,11 @@ export class AllocationService {
         this.repository = new PrismaAllocationRepository()
     }
     
-    // Pass-through create with potential business logic in future
     async create(data) {
-        // data: { projectId, collaboratorId, roleId, percentage, startWeek }
-        // Transform percentage to dedicationPercentage if needed, but repository expects fields.
-        // The resolver will likely map args to this structure.
         return this.repository.create({
             projectId: data.projectId,
             collaboratorId: data.collaboratorId,
-            dedicationPercentage: data.percentage, // Mapping here or in resolver? Let's do it here for consistency if repo expects dedicationPercentage
+            dedicationPercentage: data.percentage,
             roleId: data.roleId,
             startWeek: data.startWeek,
             endWeek: data.endWeek
@@ -21,7 +17,6 @@ export class AllocationService {
     }
     
     async update(id, data) {
-         // Map percentage -> dedicationPercentage
          const updateData = {}
          if (data.percentage !== undefined) updateData.dedicationPercentage = data.percentage
          if (data.endWeek !== undefined) updateData.endWeek = data.endWeek
@@ -42,7 +37,6 @@ export class AllocationService {
         return this.repository.removeRole(allocationId, roleId)
     }
     
-    // Hierarchy
     async addHierarchy(subordinateId, supervisorId, typeId) {
         return this.repository.addHierarchy(subordinateId, supervisorId, typeId)
     }
@@ -51,7 +45,6 @@ export class AllocationService {
         return this.repository.removeHierarchy(id)
     }
     
-    // Getters for field resolvers
     async getRoles(allocationId) {
         return this.repository.findRoles(allocationId)
     }

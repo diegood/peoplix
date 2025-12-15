@@ -11,7 +11,6 @@ import { watch } from 'vue'
 
 const notificationStore = useNotificationStore()
 
-// Data
 const { result: typesResult} = useQuery(GET_MILESTONE_TYPES)
 const { result: projectsResult } = useQuery(GET_PROJECTS)
 const { mutate: createType } = useMutation(CREATE_MILESTONE_TYPE, { refetchQueries: ['GetMilestoneTypes'] })
@@ -21,7 +20,6 @@ const { mutate: deleteType } = useMutation(DELETE_MILESTONE_TYPE, { refetchQueri
 const milestoneTypes = computed(() => typesResult.value?.milestoneTypes || [])
 const projects = computed(() => projectsResult.value?.projects || [])
 
-// Stats aggregation
 const typeUsage = computed(() => {
     const usage = {}
     projects.value.forEach(p => {
@@ -35,23 +33,20 @@ const typeUsage = computed(() => {
     return usage
 })
 
-// State for editing
 const newTypeForm = ref({ name: '', color: '#6366f1' })
 const editingId = ref(null)
 const editForm = ref({ name: '', color: '' })
 
-// Auto-generate color
 watch(() => newTypeForm.value.name, (newName) => {
     if (newName) {
         newTypeForm.value.color = stringToColor(newName)
     }
 })
 
-// Actions
 const handleCreate = async () => {
     if (!newTypeForm.value.name) return
     await createType(newTypeForm.value)
-    newTypeForm.value.name = '' // Reset
+    newTypeForm.value.name = ''
 }
 
 const startEdit = (type) => {
@@ -83,8 +78,6 @@ const handleDelete = async (id) => {
     }
 }
 
-// Color Palette
-// const colors = [...] // Removed
 </script>
 
 <template>
@@ -105,7 +98,6 @@ const handleDelete = async (id) => {
         </template>
 
         <div class="space-y-8">
-            <!-- SECTION: Statistics -->
             <div>
                 <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">Estadísticas Globales</h3>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -120,11 +112,9 @@ const handleDelete = async (id) => {
                 </div>
             </div>
 
-            <!-- SECTION: Types Management -->
             <div>
                 <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">Tipos de Hito</h3>
                 
-                <!-- New Type Form -->
                 <div class="flex items-center gap-3 mb-6 bg-gray-50 p-3 rounded-lg border border-gray-200">
                     <div class="w-8 h-8 rounded-full shrink-0 shadow-sm border-2 border-white cursor-pointer relative group overflow-hidden">
                         <input type="color" v-model="newTypeForm.color" class="absolute inset-0 w-[150%] h-[150%] -translate-x-1/4 -translate-y-1/4 p-0 border-0 cursor-pointer" />
@@ -137,12 +127,10 @@ const handleDelete = async (id) => {
                     </button>
                 </div>
 
-                <!-- List -->
                 <div class="space-y-2">
                     <div v-for="type in milestoneTypes" :key="type.id" 
                             class="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition group">
                         
-                        <!-- Editing Mode -->
                         <template v-if="editingId === type.id">
                             <div class="flex items-center gap-3 flex-1">
                                 <div class="w-8 h-8 rounded-full shrink-0 shadow-sm border-2 border-white cursor-pointer relative overflow-hidden">
@@ -156,7 +144,6 @@ const handleDelete = async (id) => {
                             </div>
                         </template>
                         
-                        <!-- View Mode -->
                         <template v-else>
                             <div class="flex items-center gap-3">
                                 <div class="w-3 h-3 rounded-full shadow-sm" :style="{ backgroundColor: type.color }"></div>

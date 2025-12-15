@@ -18,7 +18,7 @@ const isToday = (dateObj) => {
 
 const getTypeColor = (milestoneOrType) => {
     let color = null
-    if (typeof milestoneOrType === 'object' && milestoneOrType.milestoneType) {
+    if (milestoneOrType && typeof milestoneOrType === 'object' && milestoneOrType.milestoneType) {
         color = milestoneOrType.milestoneType.color
     } else if (milestoneOrType?.color) {
         color = milestoneOrType.color
@@ -60,20 +60,8 @@ const getAbsencesForKey = (project, item) => {
     
     return props.absences.filter(a => {
         if (!projectCollaboratorIds.includes(a.collaboratorId)) return false
-        // Format absence dates to YYYY-MM-DD calling split to ignore timezone shifts
-        // (Assumes backend stores dates as YYYY-MM-DDT00:00:00Z and represents "that day")
         const startKey = a.startDate.split('T')[0]
         const endKey = a.endDate.split('T')[0]
-        
-        // Debug for a specific date range of interest
-        if (currentKey >= '2025-12-15' && currentKey <= '2025-12-19') {
-             console.log(`Checking ${currentKey} against ${startKey}-${endKey} for ${a.collaboratorId}`)
-             if (currentKey >= startKey && currentKey <= endKey) {
-                 console.log('MATCH FOUND', currentKey)
-             }
-        }
-        
-        // Inclusive comparison of date strings
         return currentKey >= startKey && currentKey <= endKey
     }).map(a => {
         const alloc = project.allocations.find(all => all.collaborator.id === a.collaboratorId)

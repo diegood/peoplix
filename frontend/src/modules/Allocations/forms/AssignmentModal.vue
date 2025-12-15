@@ -21,7 +21,6 @@ watch(() => props.show, (newVal) => {
         form.value.roleId = ''
         form.value.percentage = 50
         
-        // Auto-select role if single choice
         if (props.project?.requiredRoles?.length === 1) {
             form.value.roleId = props.project.requiredRoles[0].role.id
         }
