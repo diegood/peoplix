@@ -3,6 +3,8 @@ import { collaboratorResolver } from './collaborator.resolver.js'
 import { allocationResolver } from './allocation.resolver.js'
 import { configurationResolver } from './configuration.resolver.js'
 import { workCenterResolver } from './workCenter.resolver.js'
+import { absenceResolver } from './absence.resolver.js'
+import GraphQLJSON from 'graphql-type-json';
 
 const mergeResolvers = (resolvers) => {
     const merged = { Query: {}, Mutation: {} }
@@ -15,6 +17,7 @@ const mergeResolvers = (resolvers) => {
             }
         })
     })
+    merged.JSON = GraphQLJSON; // Add JSON Scalar resolver
     return merged
 }
 
@@ -23,5 +26,6 @@ export const resolvers = mergeResolvers([
     collaboratorResolver,
     allocationResolver,
     configurationResolver,
-    workCenterResolver
+    workCenterResolver,
+    absenceResolver
 ])

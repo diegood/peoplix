@@ -5,6 +5,7 @@ import MilestoneManager from '../components/MilestoneManager.vue'
 import WorkCenterManager from '../components/WorkCenterManager.vue'
 import CustomFieldManager from '../components/CustomFieldManager.vue'
 import RoleCRUD from '../components/RoleCRUD.vue'
+import AbsenceTypeManager from '../components/AbsenceTypeManager.vue'
 import { Hexagon } from 'lucide-vue-next'
 
 const showMilestones = ref(false)
@@ -58,6 +59,11 @@ const showMilestones = ref(false)
         <!-- Custom Fields Section -->
         <div class="lg:col-span-2">
             <CustomFieldManager />
+        </div>
+        
+        <!-- Absence Types Section -->
+        <div class="lg:col-span-2">
+            <AbsenceTypeManager />
         </div>
     </div>
 

@@ -10,6 +10,7 @@ const props = defineProps({
     project: Object,
     currentWeek: String,
     dragging: Boolean,
+    absences: Array,
     getSkillMatch: Function // Passing helper function or we duplicate logic? Passing is easier for now.
 })
 
@@ -33,6 +34,25 @@ const getAvailableRolesToAdd = (project, currentRoles) => {
 const onDrop = (evt) => {
     emit('drop', evt, props.project.id)
 }
+
+const getAbsenceInWeek = (collaboratorId) => {
+    if (!props.absences || !collaboratorId) return null
+    return props.absences.find(a => {
+        return a.collaborator.id === collaboratorId && doesOverlap(a, props.currentWeek)
+    })
+}
+
+import { dayjs } from '@/config'
+
+const doesOverlap = (absence, weekStr) => {
+    const [y, w] = weekStr.split('-W').map(Number)
+    const wStart = dayjs().year(y).isoWeek(w).startOf('isoWeek')
+    const wEnd = dayjs().year(y).isoWeek(w).endOf('isoWeek')
+    const aStart = dayjs(absence.startDate)
+    const aEnd = dayjs(absence.endDate)
+    return aStart.isBefore(wEnd.add(1, 'day')) && aEnd.isAfter(wStart.subtract(1, 'day'))
+}
+
 </script>
 
 <template>
@@ -76,16 +96,29 @@ const onDrop = (evt) => {
                          {{ (element.collaborator?.firstName || element.collaborator?.name || element.name || '?').charAt(0) }}
                        </div>
                        <div class="flex-1">
-                         <div class="font-medium text-sm">
-                            {{ element.collaborator?.firstName }} {{ element.collaborator?.lastName }}
+                         <div class="font-medium text-sm flex items-start gap-x-2 flex-col">
+                            <span>
+                            {{ element.collaborator?.firstName }} {{ element.collaborator?.lastName }} 
+                            </span>
                             <span v-if="!element.collaborator?.firstName && !element.collaborator?.lastName" class="text-gray-400 text-xs">
                                 {{ element.collaborator?.name || element.name || 'Sin nombre' }}
+                            </span>
+
+                            <span v-if="getAbsenceInWeek(element.collaborator?.id)" 
+                                   class="px-1.5 py-0.5 rounded text-[8px] font-bold border truncate max-w-[100px]"
+                                   :style="{ 
+                                       backgroundColor: getAbsenceInWeek(element.collaborator?.id).type.color + '20', 
+                                       color: getAbsenceInWeek(element.collaborator?.id).type.color,
+                                       borderColor: getAbsenceInWeek(element.collaborator?.id).type.color + '40'
+                                   }"
+                                   :title="getAbsenceInWeek(element.collaborator?.id).type.name">
+                                 <span class="opacity-80 ml-0.5">({{ getAbsenceInWeek(element.collaborator?.id).daysConsumed }}d)</span>
+                                 {{ getAbsenceInWeek(element.collaborator?.id).type.name }}
                             </span>
                          </div>
                        </div>
                        
                        <div class="flex items-center gap-2">
-                           <!-- Skill Match Indicator -->
                            <div v-if="getSkillMatch(element.collaborator || element, project).status === 'good'" class="text-green-500" title="Skills Match">
                                <CheckCircle size="14" />
                            </div>
@@ -99,9 +132,7 @@ const onDrop = (evt) => {
                        </div>
                     </div>
 
-                    <!-- Bottom Row: Roles Tokens + Add Btn + Percentage -->
                     <div class="flex items-start justify-between border-t border-gray-50 pt-2 gap-2">
-                        <!-- Roles List -->
                         <div class="flex-1 flex flex-wrap gap-1">
                              <div v-for="role in element.roles" :key="role.id" 
                                 class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-blue-100 flex items-center gap-1">

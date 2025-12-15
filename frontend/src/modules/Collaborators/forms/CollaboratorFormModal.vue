@@ -15,6 +15,7 @@ import CollaboratorGeneralTab from './tabs/CollaboratorGeneralTab.vue'
 import CollaboratorSkillsTab from './tabs/CollaboratorSkillsTab.vue'
 import CollaboratorHardwareTab from './tabs/CollaboratorHardwareTab.vue'
 import CollaboratorHolidaysTab from './tabs/CollaboratorHolidaysTab.vue'
+import CollaboratorAbsencesTab from './tabs/CollaboratorAbsencesTab.vue'
 
 const props = defineProps({
   show: Boolean,
@@ -49,6 +50,7 @@ const tabs = computed(() => [
   { id: 'skills', label: 'Skills', icon: Star, disabled: !isEditing.value },
   { id: 'hardware', label: 'Hardware', icon: Laptop, disabled: !isEditing.value },
   { id: 'holidays', label: 'Festivos', icon: Calendar, disabled: !isEditing.value },
+  { id: 'absences', label: 'Ausencias', icon: Calendar, disabled: !isEditing.value },
 ])
 
 watch(() => props.show, (newVal) => {
@@ -241,6 +243,13 @@ const updateHardware = (newHardware) => {
              v-else-if="activeTab === 'holidays'"
              :workCenter="localCollaborator.workCenter"
              :collaboratorId="localCollaborator.id"
+        />
+
+        <CollaboratorAbsencesTab
+             v-else-if="activeTab === 'absences'"
+             :collaboratorId="localCollaborator.id"
+             :workCenter="localCollaborator.workCenter"
+             :vacationDaysPerYear="localCollaborator.vacationDaysPerYear"
         />
 
       </div>

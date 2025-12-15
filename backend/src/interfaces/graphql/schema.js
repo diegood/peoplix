@@ -13,8 +13,11 @@ import { SkillSchema } from './typedefs/Skill.js';
 import { SprintSchema } from './typedefs/Sprint.js';
 import { TechnologySchema } from './typedefs/Technology.js';
 import { WorkCenterSchema } from './typedefs/WorkCenter.js';
+import { AbsenceSchema } from './typedefs/Absence.js';
 
 const baseSchema = `
+  scalar JSON
+
   type Query {
     _empty: String
   }
@@ -38,5 +41,6 @@ export const schema = [
   print(SkillSchema),
   print(SprintSchema),
   print(TechnologySchema),
-  print(WorkCenterSchema)
+  print(WorkCenterSchema),
+  print(AbsenceSchema)
 ].join('\n');

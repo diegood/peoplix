@@ -18,6 +18,7 @@ type Collaborator {
   holidayCalendar: HolidayCalendar
   customFields: [CustomFieldValue!]!
   workCenter: WorkCenter
+  vacationDaysPerYear: JSON
 }
 
 type CollaboratorSkill {

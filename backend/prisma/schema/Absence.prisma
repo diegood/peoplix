@@ -1,0 +1,26 @@
+model AbsenceType {
+  id               String    @id @default(uuid())
+  name             String    @unique
+  color            String // Hex color for UI
+  isPaid           Boolean   @default(true)
+  requiresApproval Boolean   @default(false)
+  isVacation       Boolean   @default(false) // If true, counts towards vacation balance
+  absences         Absence[]
+}
+
+model Absence {
+  id             String   @id @default(uuid())
+  collaboratorId String
+  typeId         String
+  startDate      DateTime
+  endDate        DateTime
+  status         String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  reason         String?
+  daysConsumed   Float    @default(0) // Calculated business days
+
+  collaborator Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  type         AbsenceType  @relation(fields: [typeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

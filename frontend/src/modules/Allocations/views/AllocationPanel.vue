@@ -10,6 +10,7 @@ import {
     ADD_ALLOCATION_ROLE, 
     REMOVE_ALLOCATION_ROLE 
 } from '@/modules/Allocations/graphql/allocation.queries'
+import { GET_ABSENCES } from '@/modules/Absences/graphql/absence.queries'
 import { dayjs } from '@/config'
 import { useNotificationStore } from '@/stores/notificationStore'
 
@@ -61,6 +62,14 @@ const assignmentContext = ref({
 // --- Queries & Mutations ---
 const { result: projectResult, loading: projectsLoading } = useQuery(GET_PROJECTS)
 const { result: collabResult, loading: collabsLoading } = useQuery(GET_COLLABORATORS)
+
+// Fetch Absences for the loaded period (broad range to cover months)
+// For simplicity, we fetch all active absences from current year or broad range
+const { result: absencesResult } = useQuery(GET_ABSENCES, () => ({
+    startDate: dayjs().subtract(1, 'year').format('YYYY-MM-DD'), 
+    endDate: dayjs().add(1, 'year').format('YYYY-MM-DD')
+}))
+const absences = computed(() => absencesResult.value?.absences || [])
 
 const { mutate: createAllocation } = useMutation(CREATE_ALLOCATION, { refetchQueries: ['GetProjects', 'GetCollaborators'] })
 const { mutate: updateAllocation } = useMutation(UPDATE_ALLOCATION, { refetchQueries: ['GetProjects'] })
@@ -348,6 +357,7 @@ const handleRemoveRole = async (allocation, roleId) => {
             :currentWeek="selectedWeek"
             :dragging="dragging"
             :getSkillMatch="getSkillMatch"
+            :absences="absences"
             @drop="handleDrop"
             @delete-allocation="handleDeleteAllocation"
             @update-allocation-percentage="handleUpdateAllocationPercentage"
@@ -364,6 +374,7 @@ const handleRemoveRole = async (allocation, roleId) => {
         :projects="localProjects"
         :timelineItems="monthlyTimeline"
         :zoomLevel="zoomLevel"
+        :absences="absences"
         @open-hierarchy="openHierarchy"
       />
 

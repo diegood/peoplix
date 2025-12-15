@@ -22,6 +22,7 @@ export const GET_COLLABORATORS = gql`
           }
         }
       }
+      vacationDaysPerYear
       skills {
         id
         level

@@ -9,6 +9,15 @@ export class PrismaWorkCenterRepository {
         })
     }
 
+    async findById(id) {
+        return prisma.workCenter.findUnique({
+            where: { id },
+            include: {
+                publicHolidayCalendars: true
+            }
+        })
+    }
+
     async create(data) {
         return prisma.workCenter.create({ data })
     }

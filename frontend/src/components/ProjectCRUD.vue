@@ -3,8 +3,9 @@ import { ref, computed } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_PROJECTS } from '@/graphql/queries'
 import { CREATE_PROJECT, UPDATE_PROJECT } from '@/graphql/mutations'
-import { FolderPlus, Clock, Edit2, SlidersHorizontal } from 'lucide-vue-next'
+import { FolderPlus, Clock, Edit2, SlidersHorizontal, Calendar } from 'lucide-vue-next'
 import ProjectRequirementsModal from './ProjectRequirementsModal.vue'
+import ProjectVacationModal from './Project/ProjectVacationModal.vue'
 
 const { result, loading, error } = useQuery(GET_PROJECTS)
 const { mutate: createProject } = useMutation(CREATE_PROJECT, { refetchQueries: ['GetProjects'] })
@@ -59,6 +60,15 @@ const openRequirements = (project) => {
     selectedProjectIdForReq.value = project.id
     requirementsModalOpen.value = true
 }
+
+// Vacation Modal
+const vacationModalOpen = ref(false)
+const selectedProjectForVacation = ref(null)
+
+const openVacations = (project) => {
+    selectedProjectForVacation.value = project
+    vacationModalOpen.value = true
+}
 </script>
 // ... existing code
 
@@ -69,6 +79,13 @@ const openRequirements = (project) => {
         :isOpen="requirementsModalOpen" 
         :project="selectedProjectForReq"
         @close="requirementsModalOpen = false"
+    />
+
+    <ProjectVacationModal
+        v-if="selectedProjectForVacation"
+        :isOpen="vacationModalOpen"
+        :project="selectedProjectForVacation"
+        @close="vacationModalOpen = false"
     />
     
     <!-- Header/Create -->
@@ -129,7 +146,14 @@ const openRequirements = (project) => {
                         <span class="bg-white px-1 rounded text-[10px] text-gray-500 border border-gray-100">{{ req.resourceCount }}</span>
                     </span>
                 </div>
-                <div v-else class="text-sm text-gray-400 italic mb-3">Sin requerimientos de roles</div>
+                <div class="text-sm text-gray-400 italic mb-3">Sin requerimientos de roles</div>
+            </div>
+            
+            <!-- Vacation Gantt Button -->
+             <div class="border-t border-gray-100 pt-3">
+                <button @click="openVacations(project)" class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2">
+                    <Calendar size="16" /> Ver Calendario de Vacaciones
+                </button>
             </div>
         </div>
 

@@ -8,12 +8,14 @@ model Collaborator {
   joinDate        DateTime @default(now())
   isActive        Boolean  @default(true)
 
-  allocations       Allocation[]
-  skills            CollaboratorSkill[]
-  roles             CollaboratorRole[]
-  hardware          Hardware[]
-  holidayCalendar   HolidayCalendar?
-  customFieldValues CustomFieldValue[]
+  allocations         Allocation[]
+  skills              CollaboratorSkill[]
+  roles               CollaboratorRole[]
+  hardware            Hardware[]
+  holidayCalendar     HolidayCalendar?
+  customFieldValues   CustomFieldValue[]
+  absences            Absence[]
+  vacationDaysPerYear Json? // Stores { "2024": 23, "2025": 25 }
 
   workCenterId String?
   workCenter   WorkCenter? @relation(fields: [workCenterId], references: [id])
