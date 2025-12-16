@@ -39,21 +39,18 @@ onUnmounted(() => {
       @click.self="handleCancel"
     >
       <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-        <!-- Header -->
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
           <h3 class="text-lg font-bold text-gray-800">
             {{ notificationStore.dialog.title }}
           </h3>
         </div>
 
-        <!-- Body -->
         <div class="px-6 py-6">
           <p class="text-gray-700 leading-relaxed">
             {{ notificationStore.dialog.message }}
           </p>
         </div>
 
-        <!-- Footer -->
         <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
           <button
             @click="handleCancel"

@@ -97,7 +97,7 @@ export const GET_PROJECTS = gql`
             id
             collaborator {
               id
-
+              name
             }
           }
         }
@@ -110,7 +110,7 @@ export const GET_PROJECTS = gql`
             id
             collaborator {
               id
-
+              name
             }
           }
         }

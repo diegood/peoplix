@@ -131,7 +131,6 @@ const handleDelete = async (id) => {
           <button @click="handleCreate" class="w-full mt-1 bg-purple-600 text-white text-xs py-1 rounded hover:bg-purple-700">Guardar</button>
       </div>
 
-      <!-- Timeline (Only visible if expanded or if there are milestones this week) -->
       <div v-if="isExpanded || weekMilestones.length > 0" class="flex gap-1 mb-2">
           <div v-for="day in weekDates" :key="day.date" 
                class="flex-1 flex flex-col items-center p-1 rounded transition-colors"

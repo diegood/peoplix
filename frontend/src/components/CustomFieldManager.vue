@@ -133,7 +133,6 @@ const handleDelete = async (fieldId) => {
       </button>
     </div>
     
-    <!-- Add Form -->
     <div v-if="showAddForm" class="bg-white p-4 rounded-xl shadow-sm border border-blue-200">
       <h4 class="font-bold text-gray-800 mb-3">Crear Nuevo Campo</h4>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -174,16 +173,13 @@ const handleDelete = async (fieldId) => {
       </div>
     </div>
     
-    <!-- Loading/Error -->
     <div v-if="loading" class="text-gray-500">Cargando campos...</div>
     <div v-else-if="error" class="text-red-500">{{ error.message }}</div>
     
-    <!-- Fields List -->
     <div v-else-if="result?.customFieldDefinitions?.length" class="space-y-2">
       <div v-for="field in result.customFieldDefinitions" :key="field.id" 
            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
         
-        <!-- View Mode -->
         <div v-if="editingId !== field.id" class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <GripVertical size="18" class="text-gray-300 cursor-move" />
@@ -207,7 +203,6 @@ const handleDelete = async (fieldId) => {
           </div>
         </div>
         
-        <!-- Edit Mode -->
         <div v-else class="space-y-3">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>

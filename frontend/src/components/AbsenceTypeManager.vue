@@ -91,7 +91,6 @@ const onDelete = async (id) => {
             </button>
         </div>
 
-        <!-- List -->
         <div v-if="!isCreating && !editingId" class="space-y-2">
             <div v-if="loading" class="text-center py-4 text-gray-500">Cargando...</div>
             <div v-else-if="!result?.absenceTypes?.length" class="text-center py-8 bg-gray-50 rounded text-gray-500 italic">
@@ -117,7 +116,6 @@ const onDelete = async (id) => {
             </div>
         </div>
 
-        <!-- Form -->
         <div v-else class="bg-gray-50 p-4 rounded-lg border border-blue-100">
             <h4 class="font-bold text-gray-700 mb-3">{{ isCreating ? 'Nuevo Motivo' : 'Editar Motivo' }}</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

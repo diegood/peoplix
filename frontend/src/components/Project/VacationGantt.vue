@@ -74,9 +74,7 @@ const getAbsenceForDay = (collabId, dateDayjs) => {
 <template>
     <div class="overflow-x-auto">
         <div class="min-w-[800px]">
-            <!-- Header Dates -->
             <div class="flex flex-col">
-                <!-- Month Row -->
                  <div class="flex border-b border-t border-gray-200">
                      <div class="w-48 shrink-0 p-2 bg-gray-50 border-r border-gray-200"></div>
                      <div class="flex-1 flex">
@@ -88,7 +86,6 @@ const getAbsenceForDay = (collabId, dateDayjs) => {
                      </div>
                  </div>
                  
-                 <!-- Days Row -->
                 <div class="flex border-b">
                     <div class="w-48 shrink-0 p-2 font-bold bg-gray-50 border-r">Colaborador</div>
                     <div class="flex-1 flex">
@@ -101,7 +98,6 @@ const getAbsenceForDay = (collabId, dateDayjs) => {
                 </div>
             </div>
 
-            <!-- Rows -->
             <div v-for="alloc in project.allocations" :key="alloc.id" class="flex border-b hover:bg-gray-50">
                 <div class="w-48 shrink-0 p-2 flex items-center gap-2 border-r truncate">
                     <div class="w-6 h-6 rounded-full bg-gray-200 text-xs flex items-center justify-center">
@@ -115,7 +111,6 @@ const getAbsenceForDay = (collabId, dateDayjs) => {
                          :class="{'bg-gray-100': day.isWeekend}">
                         
                         <template v-if="getAbsenceForDay(alloc.collaborator.id, day.date)">
-                             <!-- Absence Bar Part -->
                              <div class="absolute inset-0 m-0.5 rounded opacity-80"
                                   :class="{
                                      'rounded-l-md': getAbsenceForDay(alloc.collaborator.id, day.date).startDate === day.date.format('YYYY-MM-DD'),

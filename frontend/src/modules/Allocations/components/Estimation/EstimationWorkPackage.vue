@@ -1,6 +1,5 @@
 <template>
   <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <!-- Header -->
       <div class="p-4 bg-gray-50 flex justify-between items-center cursor-pointer" @click="toggleExpand">
           <div class="flex items-center gap-3">
               <button class="text-gray-400">
@@ -13,7 +12,7 @@
                   <span class="text-gray-300 mx-2">|</span>
                   <input type="date" 
                          :value="formatDate(wp.startDate)" 
-                         @change="onStartDateChange"
+                         @change="handleUpdateWPDate"
                          @click.stop
                          class="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 focus:ring-2 focus:ring-blue-500 outline-none" 
                   />
@@ -23,7 +22,7 @@
                <div class="text-sm font-medium text-gray-600">
                    {{ wp.tasks?.reduce((acc, t) => acc + (t.estimations?.reduce((a,e)=>a+e.hours,0) || 0), 0) }}h
                </div>
-              <button @click.stop="$emit('delete', wp.id)" class="text-red-400 hover:text-red-600">
+              <button @click.stop="handleDeleteWP" class="text-red-400 hover:text-red-600">
                   <Trash size="18" />
               </button>
           </div>
@@ -44,7 +43,7 @@
                        <td class="py-2 pl-2 font-medium">
                            <input :value="task.name" 
                                   class="w-full bg-transparent border-none outline-none focus:ring-0 font-medium text-gray-700"
-                                  @change="(e) => $emit('update-task-name', task.id, e.target.value)" />
+                                  @change="(e) => handleUpdateTaskName(task.id, e.target.value)" />
                        </td>
                        <td v-for="role in roleColumns" :key="role.id" class="py-2 text-center">
                            <input 
@@ -52,29 +51,26 @@
                                min="0"
                                class="w-16 border rounded px-1 py-0.5 text-center focus:border-blue-500 outline-none"
                                :value="task.estimations.find(e => e.role.id === role.id)?.hours || 0"
-                               @change="(e) => $emit('update-est', task.id, role.id, e.target.value)"
+                               @change="(e) => handleUpdateEst(task.id, role.id, e.target.value)"
                            />
                        </td>
                        <td class="py-2 px-2 text-center w-48 align-top">
                            <div class="flex flex-col gap-1 items-start">
-                               <!-- Existing Dependencies -->
                                <div v-for="dep in task.dependencies" :key="dep.id" 
                                     class="bg-orange-50 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded text-[10px] flex items-center gap-1 w-full justify-between">
                                    <span class="truncate max-w-[100px]" :title="dep.name">{{ dep.name }}</span>
-                                   <button @click="$emit('remove-dependency', task.id, dep.id)" class="text-orange-400 hover:text-red-500"><X size="10"/></button>
+                                   <button @click="handleRemoveDependency(task.id, dep.id)" class="text-orange-400 hover:text-red-500"><X size="10"/></button>
                                </div>
                                
-                               <!-- Add Button -->
                                <div v-if="addingDepFor !== task.id" class="w-full">
                                    <button @click="addingDepFor = task.id" class="text-gray-400 hover:text-blue-500 text-xs flex items-center gap-1">
                                        <Link size="12" /> Link
                                    </button>
                                </div>
                                
-                               <!-- Select Predecessor -->
                                <div v-else class="flex items-center gap-1 w-full">
                                    <select class="w-full text-[10px] border rounded py-0.5" 
-                                           @change="(e) => onAddDependency(task.id, e.target.value)"
+                                           @change="(e) => handleAddDependency(task.id, e.target.value)"
                                            @blur="addingDepFor = null">
                                        <option value="">Select...</option>
                                        <option v-for="t in wp.tasks.filter(t => t.id !== task.id)" :key="t.id" :value="t.id">
@@ -85,10 +81,8 @@
                            </div>
                        </td>
                        <td class="py-2 text-center text-gray-400">
-                            <!-- Actions -->
                        </td>
                   </tr>
-                  <!-- Draft Row -->
                   <tr class="bg-gray-50/50">
                        <td class="py-3 pl-2">
                            <input placeholder="+ Nueva tarea..." 
@@ -122,8 +116,19 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useMutation } from '@vue/apollo-composable'
+import { 
+    CREATE_TASK, 
+    UPDATE_TASK, 
+    UPDATE_WORK_PACKAGE, 
+    ESTIMATE_TASK, 
+    DELETE_WORK_PACKAGE, 
+    ADD_TASK_DEPENDENCY, 
+    REMOVE_TASK_DEPENDENCY 
+} from '@/graphql/mutations'
 import { Trash, ChevronDown, ChevronRight, Link, X } from 'lucide-vue-next'
 import dayjs from '@/config/dayjs'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 const props = defineProps({
   wp: { type: Object, required: true },
@@ -131,25 +136,142 @@ const props = defineProps({
   initiallyExpanded: { type: Boolean, default: false }
 })
 
-const emit = defineEmits([
-  'update-wp-date', 
-  'delete', 
-  'update-task-name', 
-  'update-est', 
-  'save-draft', 
-  'add-dependency', 
-  'remove-dependency'
-])
+const emit = defineEmits(['refetch'])
 
+const notificationStore = useNotificationStore()
 const isExpanded = ref(props.initiallyExpanded)
 const toggleExpand = () => isExpanded.value = !isExpanded.value
 
 const addingDepFor = ref(null)
-
 const draftName = ref('')
 const draftEstimations = ref({})
 
-// Shared date utils (duplicated here for independence, or could be imported)
+// Mutations
+const { mutate: updateTask } = useMutation(UPDATE_TASK)
+const { mutate: estimateTask } = useMutation(ESTIMATE_TASK)
+const { mutate: deleteWorkPackage } = useMutation(DELETE_WORK_PACKAGE)
+const { mutate: updateWorkPackage } = useMutation(UPDATE_WORK_PACKAGE)
+const { mutate: createTask } = useMutation(CREATE_TASK)
+const { mutate: addTaskDependency } = useMutation(ADD_TASK_DEPENDENCY)
+const { mutate: removeTaskDependency } = useMutation(REMOVE_TASK_DEPENDENCY)
+
+// Handlers
+const handleUpdateTaskName = async (id, name) => {
+    try {
+        await updateTask({ id, name })
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+const handleUpdateEst = async (taskId, roleId, hours) => {
+    try {
+        await estimateTask({ taskId, roleId, hours: parseFloat(hours) || 0 })
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+const handleDeleteWP = async () => {
+    if (confirm('¿Eliminar funcionalidad y todas sus tareas?')) {
+        await deleteWorkPackage({ id: props.wp.id })
+        emit('refetch')
+    }
+}
+
+const handleUpdateWPDate = async (e) => {
+    const date = e.target.value
+    if (!date) return
+    try {
+        await updateWorkPackage({ id: props.wp.id, name: props.wp.name, startDate: date })
+        emit('refetch')
+    } catch(err) {
+        notificationStore.showToast(err.message, 'error')
+    }
+}
+
+const handleAddDependency = async (taskId, predecessorId) => {
+    if (!predecessorId) return
+    try {
+        await addTaskDependency({ taskId, predecessorId })
+        addingDepFor.value = null
+        emit('refetch')
+    } catch (e) {
+         notificationStore.showToast(e.message, 'error')
+    }
+}
+
+const handleRemoveDependency = async (taskId, predecessorId) => {
+    try {
+        await removeTaskDependency({ taskId, predecessorId })
+        emit('refetch')
+    } catch (e) {
+         console.error(e)
+    }
+}
+
+const handleSaveDraft = async () => {
+    if(!draftName.value) return
+    
+    try {
+        // Logic to append after last task
+        let defaultDate = null
+        if (props.wp.tasks && props.wp.tasks.length > 0) {
+            // Find the latest start date among existing tasks to append after
+            // Or ideally, find the latest END date, but we only store task.startDate in DB + estimation hours
+            // For simplicity/continuity with "adding behind previous ones", let's take the last task's startDate 
+            // and maybe add a day, or just use the same start date if we don't calculate duration here.
+            // User said "behind previous ones", implying order.
+            
+            // Let's find the max start date
+            const lastTask = props.wp.tasks.reduce((latest, current) => {
+                 const lDate = dayjs(latest.startDate)
+                 const cDate = dayjs(current.startDate)
+                 return cDate.isAfter(lDate) ? current : latest
+            }, props.wp.tasks[0])
+            
+            if (lastTask && lastTask.startDate) {
+                // If we want to append "after", we could add 1 day, or just use the same date and let them drag it.
+                // Usually "behind" means "after in the list" (which is visual) or "after in time".
+                // Given Gantt context, likely "after in time".
+                defaultDate = dayjs(lastTask.startDate).format('YYYY-MM-DD')
+            }
+        }
+
+        const parsedWPDate = parseDateSafe(props.wp?.startDate)
+        
+        if (!defaultDate) {
+             defaultDate = parsedWPDate && parsedWPDate.isValid() 
+            ? parsedWPDate.format('YYYY-MM-DD') 
+            : dayjs().format('YYYY-MM-DD')
+        }
+        
+        const { data } = await createTask({ 
+            workPackageId: props.wp.id, 
+            name: draftName.value, 
+            startDate: defaultDate 
+        })
+        const newTask = data.createTask
+        
+        const estimationPromises = Object.entries(draftEstimations.value).map(([roleId, hours]) => {
+            if (hours > 0) {
+               return estimateTask({ taskId: newTask.id, roleId, hours: parseFloat(hours) })
+            }
+            return Promise.resolve()
+        })
+        
+        await Promise.all(estimationPromises)
+        
+        draftName.value = ''
+        draftEstimations.value = {}
+        emit('refetch')
+        notificationStore.showToast('Tarea creada', 'success')
+    } catch (e) {
+        notificationStore.showToast(e.message, 'error')
+    }
+}
+
+// Utils
 const parseDateSafe = (val) => {
     if (!val) return null
     if (!isNaN(val) && !isNaN(parseFloat(val))) {
@@ -161,24 +283,5 @@ const parseDateSafe = (val) => {
 const formatDate = (dateVal) => {
     const d = parseDateSafe(dateVal)
     return d && d.isValid() ? d.format('YYYY-MM-DD') : ''
-}
-
-const onStartDateChange = (e) => {
-    emit('update-wp-date', props.wp, e.target.value)
-}
-
-const onAddDependency = (taskId, predecessorId) => {
-    if(predecessorId) {
-        emit('add-dependency', taskId, predecessorId)
-        addingDepFor.value = null
-    }
-}
-
-const handleSaveDraft = () => {
-    if(!draftName.value) return
-    emit('save-draft', props.wp.id, { name: draftName.value, estimations: draftEstimations.value })
-    // Clear local state
-    draftName.value = ''
-    draftEstimations.value = {}
 }
 </script>

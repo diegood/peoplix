@@ -13,7 +13,6 @@ const emit = defineEmits(['close'])
 <template>
   <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
-      <!-- Header -->
       <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
         <div class="flex items-center gap-3">
             <div class="p-2 bg-blue-100 text-blue-600 rounded-lg">
@@ -29,7 +28,6 @@ const emit = defineEmits(['close'])
         </button>
       </div>
 
-      <!-- Body -->
       <div class="flex-1 overflow-auto p-6 bg-white">
           <VacationGantt v-if="project" :project="project" />
       </div>

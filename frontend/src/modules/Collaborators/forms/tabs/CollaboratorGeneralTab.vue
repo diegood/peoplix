@@ -68,29 +68,24 @@ const getFieldOptions = (field) => {
     <div class="space-y-6">
         <form @submit.prevent="handleSubmit" class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Basic Info -->
                 <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                     <h3 class="font-bold text-gray-700 text-sm flex items-center gap-2 mb-3">
                         <User size="16" class="text-blue-500"/> Información Básica
                     </h3>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <!-- User Name -->
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
                             <input v-model="localForm.userName" type="text" placeholder="@usuario" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
                         </div>
-                        <!-- First Name -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Nombre *</label>
                             <input v-model="localForm.firstName" type="text" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
                         </div>
-                        <!-- Last Name -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Apellidos *</label>
                             <input v-model="localForm.lastName" type="text" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
                         </div>
-                        <!-- Contracted Hours -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Horas Contratadas (Mensual)</label>
                             <div class="mt-1 relative rounded-md shadow-sm">
@@ -101,13 +96,11 @@ const getFieldOptions = (field) => {
                             </div>
                         </div>
 
-                        <!-- Join Date -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Fecha de Ingreso</label>
                             <input v-model="localForm.joinDate" type="date" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                         </div>
 
-                        <!-- Work Center -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Centro de Trabajo</label>
                             <select v-model="localForm.workCenterId" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
@@ -118,7 +111,6 @@ const getFieldOptions = (field) => {
                             </select>
                         </div>
                         
-                        <!-- Active Status -->
                         <div class="flex items-center h-full pt-6">
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="checkbox" v-model="localForm.isActive" class="form-checkbox h-5 w-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
@@ -128,7 +120,6 @@ const getFieldOptions = (field) => {
                     </div>
                 </div>
 
-                <!-- Custom Fields -->
                 <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                     <h3 class="font-bold text-gray-700 text-sm flex items-center gap-2 mb-3">
                         <Briefcase size="16" class="text-purple-500"/> Detalles Adicionales
@@ -137,7 +128,6 @@ const getFieldOptions = (field) => {
                         <div v-for="field in customFieldDefinitions" :key="field.id">
                             <label class="block text-sm font-medium text-gray-700">{{ field.fieldLabel }}</label>
                             
-                            <!-- Text / Number / Date / Email -->
                             <input 
                                 v-if="['text', 'number', 'date', 'email'].includes(field.fieldType)"
                                 :type="field.fieldType"
@@ -146,7 +136,6 @@ const getFieldOptions = (field) => {
                                 class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                             >
                             
-                            <!-- Select -->
                             <select
                                 v-else-if="field.fieldType === 'select'"
                                 v-model="localCustomFieldForm[field.id]"
@@ -157,7 +146,6 @@ const getFieldOptions = (field) => {
                                 <option v-for="opt in getFieldOptions(field)" :key="opt" :value="opt">{{ opt }}</option>
                             </select>
 
-                            <!-- Checkbox -->
                             <div v-else-if="field.fieldType === 'checkbox'" class="mt-2">
                                 <label class="inline-flex items-center">
                                     <input type="checkbox" v-model="localCustomFieldForm[field.id]" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded">
@@ -172,7 +160,6 @@ const getFieldOptions = (field) => {
                 </div>
             </div>
 
-            <!-- Actions -->
             <div class="flex justify-end pt-4 border-t border-gray-100">
                 <button 
                     type="submit" 

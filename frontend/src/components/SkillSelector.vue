@@ -27,7 +27,6 @@ const searchQuery = ref('')
 const isOpen = ref(false)
 const inputRef = ref(null)
 
-// Computed list of matches
 const matches = computed(() => {
     if (!result.value?.skills) return []
     const q = searchQuery.value.toLowerCase()
@@ -58,7 +57,6 @@ const createNew = async () => {
     const name = searchQuery.value
     if (!name) return
     
-    // Check if exists first to avoid double create
     const existing = result.value.skills.find(t => t.name.toLowerCase() === name.toLowerCase())
     if (existing) {
         selectTech(existing)
@@ -75,8 +73,6 @@ const createNew = async () => {
     }
 }
 
-// Close on click outside (simplified)
-// In a real app use vueuse/onClickOutside
 </script>
 
 <template>
@@ -95,7 +91,6 @@ const createNew = async () => {
         <Search class="absolute left-3 top-2.5 text-gray-400" size="18" />
     </div>
 
-    <!-- Dropdown -->
     <div v-if="isOpen && (matches.length > 0 || searchQuery)" 
          class="absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-lg shadow-lg max-h-60 overflow-y-auto">
         
@@ -107,7 +102,6 @@ const createNew = async () => {
             </li>
         </ul>
         
-        <!-- Create Option -->
         <div v-if="searchQuery && !matches.find(m => m.name.toLowerCase() === searchQuery.toLowerCase())"
              @click="createNew"
              class="px-4 py-2 border-t border-gray-50 hover:bg-blue-50 cursor-pointer text-blue-600 text-sm flex items-center gap-2">

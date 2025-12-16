@@ -41,11 +41,9 @@ const handleDelete = async (id) => {
         <h2 class="text-xl font-bold text-gray-800">Gestión de Tecnologías</h2>
     </div>
     
-    <!-- Error/Loading -->
     <div v-if="loading" class="text-gray-500">Cargando tecnologías...</div>
     <div v-if="error" class="text-red-500">Error: {{ error.message }}</div>
 
-    <!-- List -->
     <ul v-if="result && result.technologies" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
       <li v-for="tech in result.technologies" :key="tech.id" 
           class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg group hover:border-purple-300 hover:shadow-sm transition-all">
@@ -57,7 +55,6 @@ const handleDelete = async (id) => {
       </li>
     </ul>
 
-    <!-- Add Form -->
     <div class="flex gap-2">
       <input v-model="newTechName" 
              @keyup.enter="handleCreate"

@@ -100,7 +100,6 @@ const handleDelete = async (id) => {
             </div>
         </div>
 
-                <!-- Create Form -->
         <div class="flex items-center gap-3 mb-6 bg-gray-50 p-3 rounded-lg border border-gray-200">
             <div class="w-8 h-8 rounded-full shrink-0 shadow-sm border-2 border-white cursor-pointer relative group overflow-hidden">
                 <input type="color" v-model="newTypeForm.color" class="absolute inset-0 w-[150%] h-[150%] -translate-x-1/4 -translate-y-1/4 p-0 border-0 cursor-pointer" />

@@ -61,7 +61,6 @@ const chartOptions = {
     <div v-else-if="error" class="text-red-500">{{ error.message }}</div>
 
     <div v-else class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-8 overflow-hidden">
-       <!-- Chart -->
        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
           <h3 class="font-bold text-gray-700 mb-4">Distribución de Carga de Trabajo</h3>
           <div class="flex-1 min-h-[300px]">
@@ -69,7 +68,6 @@ const chartOptions = {
           </div>
        </div>
 
-       <!-- Summary Cards -->
        <div class="space-y-6 overflow-auto">
           <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
              <h3 class="font-bold text-gray-700 mb-4">Requieren Atención</h3>

@@ -265,7 +265,6 @@ const handleRemoveRole = async (allocation, roleId) => {
         </template>
     </AllocationHeader>
     
-    <!-- Modals -->
     <div v-if="managerOpen" class="z-[60] relative">
         <MilestoneManager @close="managerOpen = false" />
     </div>

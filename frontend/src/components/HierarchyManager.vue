@@ -62,7 +62,11 @@ const activeSupervisors = (allocation) => {
 // Tree Builder
 const treeRoots = computed(() => {
     const roots = allocations.value.filter(a => !a.supervisors || a.supervisors.length === 0)
-    return roots.sort((a,b) => a.collaborator.name.localeCompare(b.collaborator.name))
+    return roots.sort((a,b) => {
+        const nameA = getDisplayName(a.collaborator)
+        const nameB = getDisplayName(b.collaborator)
+        return nameA.localeCompare(nameB)
+    })
 })
 
 const buildTreeFrom = (rootAlloc, visitedIds = new Set()) => {
@@ -135,9 +139,17 @@ const handleRemove = async (hierarchyId) => {
     }
 }
 
+const getDisplayName = (collab) => {
+    if (!collab) return 'Desconocido'
+    if (collab.firstName && collab.lastName) {
+        return `${collab.firstName} ${collab.lastName}`
+    }
+    return collab.userName || collab.id
+}
+
 const getName = (allocId) => {
     const alloc = allocations.value.find(a => a.id === allocId)
-    return alloc?.collaborator?.name || 'Desconocido'
+    return getDisplayName(alloc?.collaborator)
 }
 
 </script>
@@ -146,7 +158,6 @@ const getName = (allocId) => {
   <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @click.self="$emit('close')">
     <div class="bg-white rounded-xl shadow-2xl w-[95vw] h-[90vh] flex flex-col overflow-hidden">
         
-        <!-- Header -->
         <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
             <div>
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -157,7 +168,6 @@ const getName = (allocId) => {
             </div>
             
             <div class="flex items-center gap-4">
-                 <!-- View Toggler -->
                  <div class="bg-white border border-gray-200 rounded-lg p-1 flex shadow-sm">
                      <button @click="viewMode = 'list'" :class="['p-2 rounded transition', viewMode === 'list' ? 'bg-blue-50 text-blue-600' : 'text-gray-400 hover:text-gray-600']" title="Lista">
                          <List size="20"/>
@@ -177,25 +187,21 @@ const getName = (allocId) => {
             </div>
         </div>
 
-        <!-- Content -->
         <div class="flex-1 overflow-hidden flex">
-            <!-- Left Panel: Visualization (List or Tree) -->
             <div class="flex-1 overflow-auto p-6 bg-gray-50/50 relative">
                 
-                <!-- LIST VIEW -->
                 <div v-if="viewMode === 'list'" class="space-y-3">
                     <div v-for="alloc in allocations" :key="alloc.id" 
                             @click="startEdit(alloc)"
                             :class="['p-4 rounded-xl border cursor-pointer transition flex items-center gap-4 bg-white hover:shadow-md', 
                                     editingAllocationId === alloc.id ? 'border-blue-500 ring-1 ring-blue-500 shadow-md' : 'border-gray-200 hover:border-blue-300']">
                         
-                        <!-- Avatar placeholder -->
                         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-500 font-bold border border-gray-100">
-                                {{ alloc.collaborator.name.substring(0,2).toUpperCase() }}
+                                {{ getDisplayName(alloc.collaborator).substring(0,2).toUpperCase() }}
                         </div>
 
                         <div class="flex-1">
-                            <div class="font-bold text-gray-800">{{ alloc.collaborator.name }}</div>
+                            <div class="font-bold text-gray-800">{{ getDisplayName(alloc.collaborator) }}</div>
                             <div class="flex gap-2 mt-1 flex-wrap">
                                 <span v-for="role in alloc.roles" :key="role.id" class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md border border-gray-200">
                                     {{ role.name }}
@@ -203,7 +209,6 @@ const getName = (allocId) => {
                             </div>
                         </div>
 
-                        <!-- Mini indicator of supervisors -->
                         <div v-if="activeSupervisors(alloc).length > 0" class="flex flex-col items-end gap-1">
                                 <div v-for="sup in activeSupervisors(alloc)" :key="sup.id" :class="['text-[10px] font-bold px-1.5 py-0.5 rounded border', sup.hierarchyType?.color]">
                                     {{ sup.hierarchyType?.name }}
@@ -212,7 +217,6 @@ const getName = (allocId) => {
                     </div>
                 </div>
 
-                <!-- TREE VIEW -->
                 <div v-else class="min-h-full min-w-full flex justify-center p-8">
                      <div v-if="treeData.length === 0" class="text-gray-400 italic">No hay datos para mostrar el árbol.</div>
                      
@@ -229,7 +233,6 @@ const getName = (allocId) => {
 
             </div>
 
-            <!-- Right Panel: Editor (Fixed Width) -->
             <div class="w-96 bg-white border-l border-gray-200 p-6 shadow-xl z-20 overflow-y-auto flex flex-col">
                 <div v-if="editingAllocationId">
                     <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
@@ -242,7 +245,6 @@ const getName = (allocId) => {
                         </div>
                     </div>
 
-                    <!-- Current Supervisors -->
                     <div class="space-y-4 mb-6">
                         <h4 class="text-sm font-bold text-gray-700 flex items-center gap-2">
                             <Shield size="16"/> Supervisores Asignados
@@ -256,7 +258,7 @@ const getName = (allocId) => {
                                 class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-red-200 group transition">
                             <div class="flex items-center gap-3">
                                 <span :class="['text-xs font-bold px-2 py-1 rounded border', h.hierarchyType?.color]">{{ h.hierarchyType?.name }}</span>
-                                <span class="text-gray-700 font-medium">{{ h.supervisor?.collaborator?.name || 'Usuario eliminado' }}</span>
+                                <span class="text-gray-700 font-medium">{{ getName(h.supervisor?.id) }}</span>
                             </div>
                             <button @click="handleRemove(h.id)" class="text-gray-300 group-hover:text-red-500 p-1 rounded hover:bg-red-50 transition">
                                 <Trash2 size="16"/>
@@ -264,7 +266,6 @@ const getName = (allocId) => {
                         </div>
                     </div>
 
-                    <!-- Add Form -->
                     <div v-if="showAddForm" class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 animate-in fade-in slide-in-from-top-2">
                         <div class="grid grid-cols-1 gap-3">
                             <div>
@@ -283,7 +284,7 @@ const getName = (allocId) => {
                                 <select v-model="selectedSupervisorId" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                                     <option value="" disabled>Seleccionar...</option>
                                     <option v-for="sup in availableSupervisors" :key="sup.id" :value="sup.id">
-                                        {{ sup.collaborator.name }}
+                                        {{ getDisplayName(sup.collaborator) }}
                                     </option>
                                 </select>
                             </div>
@@ -312,7 +313,6 @@ const getName = (allocId) => {
             </div>
         </div>
         
-        <!-- Nested Managers -->
         <HierarchyTypeManager v-if="showTypeManager" @close="showTypeManager = false" />
     </div>
   </div>

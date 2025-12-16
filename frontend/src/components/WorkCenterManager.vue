@@ -7,7 +7,6 @@
             Centros de Trabajo
         </h2>
         
-        <!-- List -->
         <div v-if="!editingId && !creating" class="space-y-4">
              <div class="flex justify-end">
                 <button @click="startCreate" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-2">
@@ -54,7 +53,6 @@
             </div>
         </div>
 
-        <!-- Form (Create/Edit WorkCenter) -->
         <div v-if="creating || editingId" class="bg-gray-50 p-4 rounded border border-gray-200">
              <h3 class="font-bold mb-4">{{ creating ? 'Nuevo Centro de Trabajo' : 'Editar Centro de Trabajo' }}</h3>
              <form @submit.prevent="saveWorkCenter" class="space-y-4">
@@ -88,7 +86,6 @@
              </form>
         </div>
         
-        <!-- Holiday Calendar Manager (Using BaseModal) -->
         <BaseModal 
             :isOpen="!!managingHolidaysFor"
             :title="managingHolidaysFor ? `Gestionar Festivos: ${managingHolidaysFor.name}` : ''"
@@ -96,7 +93,6 @@
             @close="managingHolidaysFor = null"
         >
             <div class="flex flex-col h-full">
-                <!-- Year Selector and Import -->
                 <div class="flex flex-wrap items-end gap-4 mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
                         <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Año</label>
@@ -131,7 +127,6 @@
                     </div>
                 </div>
                 
-                <!-- Holiday List -->
                 <div class="space-y-2">
                     <div class="flex justify-between items-center mb-2">
                         <h4 class="font-bold text-gray-700">Festivos ({{ holidays.length }})</h4>

@@ -72,7 +72,6 @@ const saveSkill = async (reqId) => {
 <template>
   <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <!-- Header -->
         <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-xl">
             <div>
                 <h2 class="text-xl font-bold text-gray-800">Requerimientos de Roles</h2>
@@ -83,10 +82,8 @@ const saveSkill = async (reqId) => {
             </button>
         </div>
 
-        <!-- Content -->
         <div class="flex-1 overflow-y-auto p-6 space-y-8">
             
-            <!-- Existing Roles List -->
             <div class="space-y-4">
                 <div v-if="!project.requiredRoles || project.requiredRoles.length === 0" class="text-sm text-gray-400 italic py-4 text-center bg-gray-50 rounded-lg">
                     Sin roles definidos
@@ -95,7 +92,6 @@ const saveSkill = async (reqId) => {
                     <div v-for="req in project.requiredRoles" :key="req.id" 
                          class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
                         
-                        <!-- Role Header -->
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
@@ -121,7 +117,6 @@ const saveSkill = async (reqId) => {
                             </button>
                         </div>
 
-                        <!-- Role Skills -->
                         <div class="ml-12 border-t border-gray-100 pt-3">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tecnologías Específicas</span>
@@ -131,7 +126,6 @@ const saveSkill = async (reqId) => {
                                 </button>
                             </div>
 
-                            <!-- Add Skill Form -->
                             <div v-if="addingSkillToReqId === req.id" class="bg-gray-50 p-2 rounded mb-2 border border-gray-200 flex gap-2 items-start">
                                 <div class="flex-1">
                                      <SkillSelector 
@@ -149,7 +143,6 @@ const saveSkill = async (reqId) => {
                                 <button @click="saveSkill(req.id)" class="bg-blue-600 text-white text-xs px-3 h-[38px] rounded font-medium">OK</button>
                             </div>
 
-                            <!-- Skills List -->
                             <div class="flex flex-wrap gap-2">
                                 <span v-for="skill in req.skills" :key="skill.id" 
                                     class="pl-2 pr-1 py-1 bg-blue-50 text-blue-700 rounded text-xs flex items-center gap-1 group border border-blue-100">
@@ -167,7 +160,6 @@ const saveSkill = async (reqId) => {
                 </div>
             </div>
 
-            <!-- Add Role Form -->
             <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
                 <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <Plus size="18" class="text-blue-600"/>

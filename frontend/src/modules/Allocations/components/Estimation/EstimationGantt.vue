@@ -6,12 +6,15 @@
             :chart-start="chartStart"
             :chart-end="chartEnd"
             :precision="'day'"
-            bar-start="myBeginDate"
-            bar-end="myEndDate"
+            bar-start="from"
+            bar-end="to"
             :date-format="'YYYY-MM-DD HH:mm'"
             @dragend-bar="handleDragEndBar"
            >
-             <GGanttRow v-for="row in ganttRows" :key="row.label" :label="row.label" :bars="row.bars" />
+             <template v-for="row in ganttRows" :key="row.label">
+                 <GGanttRow :label="row.label" :bars="row.bars" style="font-weight: bold; background-color: #f3f4f6;" />
+                 <GGanttRow v-for="child in row.children" :key="child.label" :label="child.label" :bars="child.bars" />
+             </template>
            </GGanttChart>
       </div>
   </div>
@@ -95,9 +98,8 @@ const addBusinessDays = (startDate, hours) => {
 const handleDragEndBar = (e) => {
     const { bar } = e
     const [taskId, roleId] = bar.ganttBarConfig.id.split('|')
-    const newStartDate = dayjs(bar.myBeginDate).format('YYYY-MM-DD')
+    const newStartDate = dayjs(bar.from).format('YYYY-MM-DD')
     
-    // Emit event up to parent to handle mutation
     emit('update-task-date', { taskId, startDate: newStartDate })
 }
 
@@ -105,68 +107,76 @@ const ganttRows = computed(() => {
     if (!props.project || !props.project.requiredRoles) return []
 
     const rows = []
-    const roleRowMap = {}
-    
-    props.project.requiredRoles.forEach(req => {
-        roleRowMap[req.role.id] = []
-        for (let i = 0; i < req.resourceCount; i++) {
-             const row = {
-                 label: `${req.role.name} ${i + 1}`,
-                 bars: []
-             }
-             rows.push(row)
-             roleRowMap[req.role.id].push(row)
-        }
-    })
 
-    const allTasks = props.workPackages.flatMap(wp => 
-        (wp.tasks || []).map(t => ({...t, wpSubtitle: wp.name, wpStart: wp.startDate}))
-    )
-    
-    allTasks.forEach(task => {
-        if (!task.estimations) return
+    props.workPackages.forEach(wp => {
+        rows.push({
+            label: wp.name,
+            bars: [], 
+            isGroup: true // styling flag
+        })
 
-        task.estimations.forEach(est => {
-            if (est.hours > 0) {
-                 const roleId = est.role.id
-                 const eligibleRows = roleRowMap[roleId]
-                 
-                 if (eligibleRows && eligibleRows.length > 0) {
-                     
-                     let taskStart = parseDateSafe(task.startDate)
-                     
-                     if (!taskStart || !taskStart.isValid()) {
-                        const wpS = parseDateSafe(task.wpStart)
-                        taskStart = (wpS && wpS.isValid()) ? wpS : dayjs()
-                     }
-
-                     const taskEnd = addBusinessDays(taskStart, est.hours)
-
-                     let targetRow = eligibleRows[0]
-                     
-                     const freeRow = eligibleRows.find(row => {
-                         return !row.bars.some(bar => {
-                             const bStart = dayjs(bar.myBeginDate)
-                             const bEnd = dayjs(bar.myEndDate)
-                             return (taskStart.isBefore(bEnd) && taskEnd.isAfter(bStart))
-                         })
-                     })
-                     
-                     if (freeRow) targetRow = freeRow
-
-                     targetRow.bars.push({
-                         myBeginDate: taskStart.format('YYYY-MM-DD HH:mm'),
-                         myEndDate: taskEnd.format('YYYY-MM-DD HH:mm'),
-                         ganttBarConfig: {
-                             id: task.id + '|' + roleId,
-                             label: `${task.name} (${est.hours}h)`,
-                             style: { background: '#3b82f6', borderRadius: '4px', color: 'white', fontSize:'11px' },
-                             hasHandles: true
-                         }
-                     })
+        const roleRowMap = {}
+        const currentWPRoleRows = []
+        
+        props.project.requiredRoles.forEach(req => {
+            roleRowMap[req.role.id] = []
+            for (let i = 0; i < req.resourceCount; i++) {
+                 const row = {
+                     label: `${req.role.name} ${i + 1}`,
+                     bars: [],
+                     isGroup: false
                  }
+                 currentWPRoleRows.push(row)
+                 roleRowMap[req.role.id].push(row)
             }
         })
+
+        if (wp.tasks) {
+            wp.tasks.forEach(task => {
+                if (!task.estimations) return
+
+                task.estimations.forEach(est => {
+                    if (est.hours > 0) {
+                        const roleId = est.role.id
+                        const eligibleRows = roleRowMap[roleId]
+                        
+                        if (eligibleRows && eligibleRows.length > 0) {
+                            
+                            let taskStart = parseDateSafe(task.startDate)
+                            if (!taskStart || !taskStart.isValid()) {
+                                const wpS = parseDateSafe(wp.startDate)
+                                taskStart = (wpS && wpS.isValid()) ? wpS : dayjs()
+                            }
+
+                            const taskEnd = addBusinessDays(taskStart, est.hours)
+
+                            let targetRow = eligibleRows[0]
+                            const freeRow = eligibleRows.find(row => {
+                                return !row.bars.some(bar => {
+                                    const bStart = dayjs(bar.from)
+                                    const bEnd = dayjs(bar.to)
+                                    return (taskStart.isBefore(bEnd) && taskEnd.isAfter(bStart))
+                                })
+                            })
+                            if (freeRow) targetRow = freeRow
+
+                            targetRow.bars.push({
+                                from: taskStart.format('YYYY-MM-DD HH:mm'),
+                                to: taskEnd.format('YYYY-MM-DD HH:mm'),
+                                ganttBarConfig: {
+                                    id: task.id + '|' + roleId,
+                                    label: `${task.name} (${est.hours}h)`,
+                                    style: { background: '#3b82f6', borderRadius: '4px', color: 'white', fontSize:'11px' },
+                                    hasHandles: true
+                                }
+                            })
+                        }
+                    }
+                })
+            })
+        }
+        
+        rows.push(...currentWPRoleRows)
     })
 
     return rows

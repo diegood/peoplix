@@ -146,7 +146,6 @@ const predefinedColors = [
                     </div>
                 </div>
 
-                <!-- Add New -->
                 <div v-if="!editingId" class="border-2 border-dashed border-gray-200 rounded-lg p-3 hover:border-blue-300 transition">
                      <div class="space-y-2">
                         <div class="flex gap-2">

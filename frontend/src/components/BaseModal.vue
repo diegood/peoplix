@@ -45,7 +45,6 @@ onUnmounted(() => {
         class="bg-white rounded-xl shadow-2xl w-full relative flex flex-col max-h-[90vh]"
         :class="maxWidth"
       >
-        <!-- Header -->
         <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-xl shrink-0">
           <h3 class="text-lg font-bold text-gray-800">
             <slot name="title">{{ title }}</slot>
@@ -58,12 +57,10 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <!-- Body -->
         <div class="p-6 overflow-y-auto">
           <slot />
         </div>
 
-        <!-- Footer -->
         <div v-if="$slots.footer" class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-xl shrink-0 flex justify-end gap-3">
           <slot name="footer" />
         </div>

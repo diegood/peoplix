@@ -88,7 +88,6 @@ const openVacations = (project) => {
         @close="vacationModalOpen = false"
     />
     
-    <!-- Header/Create -->
     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-end gap-4">
       <div class="flex-1 space-y-1">
         <label class="text-sm font-medium text-gray-700">Nombre del Proyecto</label>
@@ -110,7 +109,6 @@ const openVacations = (project) => {
       </button>
     </div>
 
-    <!-- List -->
     <div v-if="loading">Cargando proyectos...</div>
     <div v-else-if="error" class="text-red-500">{{ error.message }}</div>
     
@@ -118,7 +116,6 @@ const openVacations = (project) => {
       <div v-for="project in result.projects" :key="project.id" 
            class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative group">
         
-        <!-- View Mode -->
         <div v-if="editingId !== project.id">
             <button @click="startEdit(project)" class="absolute top-4 right-4 text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Edit2 size="16" />
@@ -144,7 +141,6 @@ const openVacations = (project) => {
                     <div v-for="req in project.requiredRoles" :key="req.id" class="pl-2 pr-2 py-1 bg-purple-50 text-purple-700 rounded text-xs flex flex-wrap items-center gap-1 border border-purple-100">
                         <span class="font-bold">{{ req.role.name }}</span>
                         <span class="bg-purple-100 px-1 rounded text-[10px] text-purple-800 border border-purple-200">{{ req.resourceCount }}</span>
-                        <!-- Skills -->
                         <span v-for="skill in req.skills" :key="skill.id" class="ml-1 text-[10px] px-1 py-0.5 bg-white border border-purple-100 text-gray-500 rounded">
                             {{ skill.name }}
                         </span>
@@ -153,7 +149,6 @@ const openVacations = (project) => {
                 <div class="text-sm text-gray-400 italic mb-3" v-else>Sin requerimientos de roles</div>
             </div>
             
-            <!-- Vacation Gantt Button -->
              <div class="border-t border-gray-100 pt-3">
                 <button @click="openVacations(project)" class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2">
                     <Calendar size="16" /> Ver Calendario de Vacaciones
@@ -161,7 +156,6 @@ const openVacations = (project) => {
             </div>
         </div>
 
-        <!-- Edit Mode -->
         <div v-else class="space-y-4">
             <div class="space-y-1">
                 <label class="text-xs font-bold text-gray-500">Nombre</label>

@@ -56,7 +56,6 @@ const localMonthlyEnd = computed({
                 </div>
             </div>
 
-            <!-- Slots for extra summaries like Milestones -->
             <slot name="summary" />
             
         </div>
@@ -85,7 +84,6 @@ const localMonthlyEnd = computed({
                         Gestionar Hitos
                      </button>
                      
-                      <!-- Zoom Controls for Monthly View -->
                      <div class="flex bg-gray-100 p-0.5 rounded-lg ml-2">
                         <button @click="emit('update:zoomLevel', 'month')" 
                                 class="px-2 py-0.5 text-xs rounded transition-all"

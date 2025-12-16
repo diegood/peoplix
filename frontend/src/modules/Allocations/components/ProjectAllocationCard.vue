@@ -143,13 +143,11 @@ const doesOverlap = (absence, weekStr) => {
                                 <button @click="emit('remove-role', element, role.id)" class="hover:text-red-500"><X size="10"/></button>
                              </div>
                              
-                             <!-- Add Role Button/Dropdown -->
                              <div class="relative">
                                  <button @click="addingRoleToAllocId = (addingRoleToAllocId === element.id ? null : element.id)" 
                                          class="text-blue-500 hover:bg-blue-50 p-0.5 rounded">
                                      <Plus size="14" />
                                  </button>
-                                 <!-- Simple Popover for Role Selection -->
                                  <div v-if="addingRoleToAllocId === element.id" class="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow-lg rounded p-1 z-20 w-32">
                                      <div v-for="r in getAvailableRolesToAdd(project, element.roles)" :key="r.id" 
                                           @click="emit('add-role', element, r.id); addingRoleToAllocId = null"
@@ -163,7 +161,6 @@ const doesOverlap = (absence, weekStr) => {
                              </div>
                         </div>
 
-                        <!-- Percentage Input -->
                         <div class="text-xs text-green-600 font-medium flex items-center gap-1 shrink-0">
                            <input type="number" 
                                   :value="element.dedicationPercentage || 50" 

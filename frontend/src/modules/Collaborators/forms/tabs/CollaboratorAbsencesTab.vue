@@ -132,7 +132,6 @@ const formatDate = (d) => {
 
 <template>
     <div class="h-full flex flex-col gap-4">
-        <!-- Balance Header -->
         <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 flex justify-between items-center">
             <div>
                 <h4 class="font-bold text-blue-900">Saldo de Vacaciones {{ selectedYear }}</h4>
@@ -154,7 +153,6 @@ const formatDate = (d) => {
             </div>
         </div>
 
-        <!-- Request Form -->
         <div v-if="isCreating" class="bg-white p-4 rounded-lg border shadow-sm">
             <h4 class="font-bold text-gray-700 mb-3">Nueva Solicitud</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -188,7 +186,6 @@ const formatDate = (d) => {
             </div>
         </div>
 
-        <!-- List -->
         <div class="flex-1 overflow-y-auto bg-white rounded-lg border">
             <table class="w-full text-sm text-left">
                 <thead class="bg-gray-50 text-gray-600 font-medium">

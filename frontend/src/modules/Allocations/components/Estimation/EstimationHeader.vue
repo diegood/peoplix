@@ -2,7 +2,7 @@
   <div class="flex justify-between items-center">
       <div>
           <h1 class="text-3xl font-bold text-gray-900">Estimación de {{ projectName }}</h1>
-          <p class="text-gray-500">Gestión de funcionalidades y tiempos.</p>
+          <p class="text-gray-500">Gestión de funcionalidades y tiempos.aa</p>
       </div>
       <div>
           <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-lg text-right">
