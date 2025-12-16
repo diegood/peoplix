@@ -14,6 +14,7 @@ import { SprintSchema } from './typedefs/Sprint.js';
 import { TechnologySchema } from './typedefs/Technology.js';
 import { WorkCenterSchema } from './typedefs/WorkCenter.js';
 import { AbsenceSchema } from './typedefs/Absence.js';
+import { WorkPackageSchema } from './typedefs/WorkPackage.js';
 
 const baseSchema = `
   scalar JSON
@@ -42,5 +43,6 @@ export const schema = [
   print(SprintSchema),
   print(TechnologySchema),
   print(WorkCenterSchema),
-  print(AbsenceSchema)
+  print(AbsenceSchema),
+  print(WorkPackageSchema)
 ].join('\n');

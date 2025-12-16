@@ -315,7 +315,7 @@ const handleRemoveRole = async (allocation, roleId) => {
         />
         
       </div>
-      <div class="flex flex-col gap-6">
+      <div v-else class="flex flex-col gap-6">
 
           <GanttTimelineView 
             v-for="project in localProjects" 

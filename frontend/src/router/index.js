@@ -28,6 +28,11 @@ const router = createRouter({
       name: 'settings',
       component: () => import('@/views/SettingsView.vue')
     },
+    {
+      path: '/projects/:id/estimation',
+      name: 'project-estimation',
+      component: () => import('@/modules/Allocations/views/ProjectEstimationView.vue')
+    },
   ],
 })
 

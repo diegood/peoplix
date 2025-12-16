@@ -1,0 +1,18 @@
+model Task {
+  id             String           @id @default(uuid())
+  name           String
+  description    String?
+  workPackageId  String?
+  workPackage    WorkPackage?     @relation(fields: [workPackageId], references: [id])
+  estimations    TaskEstimation[]
+  startDate      DateTime?
+  endDate        DateTime?
+  collaboratorId String?
+  collaborator   Collaborator?    @relation(fields: [collaboratorId], references: [id])
+
+  dependencies Task[] @relation("TaskDependencies")
+  dependents   Task[] @relation("TaskDependencies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

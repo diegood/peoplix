@@ -8,8 +8,8 @@ export const projectResolver = {
     project: (_, { id }) => service.getById(id)
   },
   Mutation: {
-    createProject: (_, { name, contractedHours }) => service.create({ name, contractedHours }),
-    updateProject: (_, { id, name, contractedHours }) => service.update(id, { name, contractedHours }),
+    createProject: (_, { name, contractedHours, startDate }) => service.create({ name, contractedHours, startDate }),
+    updateProject: (_, { id, name, contractedHours, startDate }) => service.update(id, { name, contractedHours, startDate }),
     deleteProject: async (_, { id }) => {
         await service.delete(id)
         return true

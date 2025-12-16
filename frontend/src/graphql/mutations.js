@@ -10,7 +10,9 @@ import {
   HARDWARE_FRAGMENT,
   HOLIDAY_CALENDAR_FRAGMENT,
   CUSTOM_FIELD_DEFINITION_FRAGMENT,
-  CUSTOM_FIELD_VALUE_FRAGMENT
+  CUSTOM_FIELD_VALUE_FRAGMENT,
+  WORK_PACKAGE_FRAGMENT,
+  TASK_FRAGMENT
 } from './fragments'
 
 export const CREATE_ROLE = gql`
@@ -175,8 +177,8 @@ export const CREATE_PROJECT = gql`
 `
 
 export const UPDATE_PROJECT = gql`
-  mutation UpdateProject($id: ID!, $name: String!, $contractedHours: Int!) {
-    updateProject(id: $id, name: $name, contractedHours: $contractedHours) {
+  mutation UpdateProject($id: ID!, $name: String!, $contractedHours: Int!, $startDate: String) {
+    updateProject(id: $id, name: $name, contractedHours: $contractedHours, startDate: $startDate) {
       ...ProjectFields
     }
   }
@@ -329,4 +331,73 @@ export const SET_CUSTOM_FIELD_VALUE = gql`
     }
   }
   ${CUSTOM_FIELD_VALUE_FRAGMENT}
+`
+
+export const CREATE_WORK_PACKAGE = gql`
+  mutation CreateWorkPackage($projectId: ID!, $name: String!, $description: String, $highLevelEstimation: Int, $startDate: String) {
+    createWorkPackage(projectId: $projectId, name: $name, description: $description, highLevelEstimation: $highLevelEstimation, startDate: $startDate) {
+      ...WorkPackageFields
+    }
+  }
+  ${WORK_PACKAGE_FRAGMENT}
+`
+
+export const UPDATE_WORK_PACKAGE = gql`
+  mutation UpdateWorkPackage($id: ID!, $name: String, $description: String, $highLevelEstimation: Int, $startDate: String, $status: String) {
+    updateWorkPackage(id: $id, name: $name, description: $description, highLevelEstimation: $highLevelEstimation, startDate: $startDate, status: $status) {
+      ...WorkPackageFields
+    }
+  }
+  ${WORK_PACKAGE_FRAGMENT}
+`
+
+export const DELETE_WORK_PACKAGE = gql`
+  mutation DeleteWorkPackage($id: ID!) {
+    deleteWorkPackage(id: $id)
+  }
+`
+
+export const CREATE_TASK = gql`
+  mutation CreateTask($workPackageId: ID, $name: String!, $description: String, $startDate: String, $collaboratorId: ID) {
+    createTask(workPackageId: $workPackageId, name: $name, description: $description, startDate: $startDate, collaboratorId: $collaboratorId) {
+       ...TaskFields
+    }
+  }
+  ${TASK_FRAGMENT}
+`
+
+export const ESTIMATE_TASK = gql`
+  mutation EstimateTask($taskId: ID!, $roleId: ID!, $hours: Float!) {
+    estimateTask(taskId: $taskId, roleId: $roleId, hours: $hours) {
+       ...TaskFields
+    }
+  }
+  ${TASK_FRAGMENT}
+`
+
+export const ADD_TASK_DEPENDENCY = gql`
+  mutation AddTaskDependency($taskId: ID!, $predecessorId: ID!) {
+     addTaskDependency(taskId: $taskId, predecessorId: $predecessorId) {
+       ...TaskFields
+     }
+  }
+  ${TASK_FRAGMENT}
+`
+
+export const REMOVE_TASK_DEPENDENCY = gql`
+  mutation RemoveTaskDependency($taskId: ID!, $predecessorId: ID!) {
+     removeTaskDependency(taskId: $taskId, predecessorId: $predecessorId) {
+        ...TaskFields
+     }
+  }
+  ${TASK_FRAGMENT}
+`
+
+export const UPDATE_TASK = gql`
+  mutation UpdateTask($id: ID!, $name: String, $description: String, $startDate: String, $collaboratorId: ID) {
+    updateTask(id: $id, name: $name, description: $description, startDate: $startDate, collaboratorId: $collaboratorId) {
+       ...TaskFields
+    }
+  }
+  ${TASK_FRAGMENT}
 `

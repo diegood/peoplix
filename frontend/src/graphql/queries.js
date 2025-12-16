@@ -10,7 +10,8 @@ import {
   HARDWARE_FRAGMENT,
   HOLIDAY_CALENDAR_FRAGMENT,
   CUSTOM_FIELD_DEFINITION_FRAGMENT,
-  CUSTOM_FIELD_VALUE_FRAGMENT
+  CUSTOM_FIELD_VALUE_FRAGMENT,
+  WORK_PACKAGE_FRAGMENT
 } from './fragments'
 
 export const GET_ROLES = gql`
@@ -210,4 +211,13 @@ export const GET_WORK_CENTERS = gql`
       countryCode
     }
   }
+`
+
+export const GET_PROJECT_WORK_PACKAGES = gql`
+  query GetProjectWorkPackages($projectId: ID!) {
+     projectWorkPackages(projectId: $projectId) {
+       ...WorkPackageFields
+     }
+  }
+  ${WORK_PACKAGE_FRAGMENT}
 `

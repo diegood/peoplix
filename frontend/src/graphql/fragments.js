@@ -55,6 +55,7 @@ export const PROJECT_FRAGMENT = gql`
     id
     name
     contractedHours
+    startDate
   }
 `
 
@@ -114,4 +115,54 @@ export const CUSTOM_FIELD_VALUE_FRAGMENT = gql`
     }
   }
   ${CUSTOM_FIELD_DEFINITION_FRAGMENT}
+`
+
+export const TASK_ESTIMATION_FRAGMENT = gql`
+  fragment TaskEstimationFields on TaskEstimation {
+    id
+    hours
+    role {
+      ...RoleFields
+    }
+  }
+  ${ROLE_FRAGMENT}
+`
+
+export const TASK_FRAGMENT = gql`
+  fragment TaskFields on Task {
+    id
+    name
+    description
+    startDate
+    endDate
+    collaborator {
+        ...CollaboratorFields
+    }
+    estimations {
+      ...TaskEstimationFields
+    }
+    dependencies {
+        id
+        name
+        endDate
+    }
+  }
+  ${COLLABORATOR_FRAGMENT}
+  ${TASK_ESTIMATION_FRAGMENT}
+`
+
+export const WORK_PACKAGE_FRAGMENT = gql`
+  fragment WorkPackageFields on WorkPackage {
+    id
+    name
+    description
+    startDate
+    endDate
+    highLevelEstimation
+    status
+    tasks {
+      ...TaskFields
+    }
+  }
+  ${TASK_FRAGMENT}
 `

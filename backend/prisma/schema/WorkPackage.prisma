@@ -1,0 +1,14 @@
+model WorkPackage {
+  id                  String    @id @default(uuid())
+  name                String
+  description         String?
+  projectId           String
+  project             Project   @relation(fields: [projectId], references: [id])
+  tasks               Task[]
+  startDate           DateTime?
+  endDate             DateTime?
+  highLevelEstimation Int?
+  status              String    @default("BACKLOG")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}

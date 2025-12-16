@@ -5,6 +5,7 @@ type Project {
   id: ID!
   name: String!
   contractedHours: Int!
+  startDate: String
   allocations: [Allocation!]
   requiredRoles: [ProjectRequirement!]
   sprints: [Sprint!]
@@ -35,9 +36,9 @@ type ProjectRequirementSkill {
 
   extend type Mutation {
 
-  createProject(name: String!, contractedHours: Int!): Project!
+  createProject(name: String!, contractedHours: Int!, startDate: String): Project!
 
-  updateProject(id: ID!, name: String, contractedHours: Int): Project!
+  updateProject(id: ID!, name: String, contractedHours: Int, startDate: String): Project!
 
   deleteProject(id: ID!): Boolean
 

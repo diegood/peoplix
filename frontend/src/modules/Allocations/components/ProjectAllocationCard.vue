@@ -1,5 +1,5 @@
 <script setup>
-import { Network, GripVertical, CheckCircle, AlertCircle, Trash2, X, Plus } from 'lucide-vue-next'
+import { Network, GripVertical, CheckCircle, AlertCircle, Trash2, X, Plus, Calculator } from 'lucide-vue-next'
 import draggable from 'vuedraggable'
 import ProjectMilestones from '@/components/ProjectMilestones.vue' // Keeping this shared component relative for now, or update if we move it. Assuming global 'components' folder stays for generic stuff.
 // Actually, ProjectMilestones seems specific to projects, let's assume it stays in src/components for now or we update import path later if we move it to shared.
@@ -64,6 +64,9 @@ const doesOverlap = (absence, weekStr) => {
                    <button @click="emit('open-hierarchy', project)" class="p-1 px-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition" title="Jerarquía">
                        <Network size="16"/>
                    </button>
+                   <router-link :to="{ name: 'project-estimation', params: { id: project.id } }" class="p-1 px-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition" title="Estimación">
+                       <Calculator size="16"/>
+                   </router-link>
                </div>
                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">{{ project.contractedHours }} h</span>
              </div>

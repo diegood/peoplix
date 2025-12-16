@@ -1,12 +1,14 @@
 model Project {
-  id              String @id @default(uuid())
+  id              String  @id @default(uuid())
   name            String
   contractedHours Int
+  startDate       String?
 
   allocations   Allocation[]
   milestones    Milestone[]
   sprints       Sprint[]
   requiredRoles ProjectRequirement[]
+  workPackages  WorkPackage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

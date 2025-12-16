@@ -2,7 +2,8 @@ model Role {
   id   String @id @default(uuid())
   name String @unique
 
-  collaborators CollaboratorRole[]
-  allocations   AllocationRole[]
-  requirements  ProjectRequirement[]
+  collaborators   CollaboratorRole[]
+  allocations     AllocationRole[]
+  requirements    ProjectRequirement[]
+  taskEstimations TaskEstimation[]
 }
