@@ -48,6 +48,19 @@ const days = computed(() => {
     return list
 })
 
+const months = computed(() => {
+    let m = start.clone()
+    const list = []
+    while(m.isBefore(end)) {
+       list.push({
+           label: m.format('MMMM YYYY'),
+           daysCount: m.daysInMonth()
+       })
+       m = m.add(1, 'month')
+    }
+    return list
+})
+
 const getAbsenceForDay = (collabId, dateDayjs) => {
     return absences.value.find(a => {
         if (a.collaborator.id !== collabId) return false
@@ -62,13 +75,28 @@ const getAbsenceForDay = (collabId, dateDayjs) => {
     <div class="overflow-x-auto">
         <div class="min-w-[800px]">
             <!-- Header Dates -->
-            <div class="flex">
-                <div class="w-48 shrink-0 p-2 font-bold bg-gray-50 border-b">Colaborador</div>
-                <div class="flex-1 flex">
-                    <div v-for="day in days" :key="day.date.toString()" 
-                         class="w-8 shrink-0 text-center text-xs border-r border-b p-1"
-                         :class="{'bg-gray-100': day.isWeekend, 'bg-blue-50 font-bold': day.date.date() === 1}">
-                        {{ day.label }}
+            <div class="flex flex-col">
+                <!-- Month Row -->
+                 <div class="flex border-b border-t border-gray-200">
+                     <div class="w-48 shrink-0 p-2 bg-gray-50 border-r border-gray-200"></div>
+                     <div class="flex-1 flex">
+                         <div v-for="month in months" :key="month.label"
+                              class="text-center text-sm font-bold text-gray-600 border-r border-gray-200 py-1 bg-gray-100 shrink-0"
+                              :style="{ width: (month.daysCount * 2) + 'rem' }">
+                             {{ month.label }}
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <!-- Days Row -->
+                <div class="flex border-b">
+                    <div class="w-48 shrink-0 p-2 font-bold bg-gray-50 border-r">Colaborador</div>
+                    <div class="flex-1 flex">
+                        <div v-for="day in days" :key="day.date.toString()" 
+                             class="w-8 shrink-0 text-center text-xs border-r p-1"
+                             :class="{'bg-gray-100': day.isWeekend, 'bg-blue-50 font-bold': day.date.date() === 1}">
+                            {{ day.label }}
+                        </div>
                     </div>
                 </div>
             </div>

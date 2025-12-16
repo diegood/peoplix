@@ -141,12 +141,16 @@ const openVacations = (project) => {
                 </div>
             
                 <div class="flex flex-wrap gap-2 mb-3" v-if="project.requiredRoles && project.requiredRoles.length > 0">
-                    <span v-for="req in project.requiredRoles" :key="req.id" class="pl-2 pr-2 py-1 bg-purple-50 text-purple-700 rounded text-xs flex items-center gap-1 group/skill border border-purple-100">
-                        {{ req.role.name }} 
-                        <span class="bg-white px-1 rounded text-[10px] text-gray-500 border border-gray-100">{{ req.resourceCount }}</span>
-                    </span>
+                    <div v-for="req in project.requiredRoles" :key="req.id" class="pl-2 pr-2 py-1 bg-purple-50 text-purple-700 rounded text-xs flex flex-wrap items-center gap-1 border border-purple-100">
+                        <span class="font-bold">{{ req.role.name }}</span>
+                        <span class="bg-purple-100 px-1 rounded text-[10px] text-purple-800 border border-purple-200">{{ req.resourceCount }}</span>
+                        <!-- Skills -->
+                        <span v-for="skill in req.skills" :key="skill.id" class="ml-1 text-[10px] px-1 py-0.5 bg-white border border-purple-100 text-gray-500 rounded">
+                            {{ skill.name }}
+                        </span>
+                    </div>
                 </div>
-                <div class="text-sm text-gray-400 italic mb-3">Sin requerimientos de roles</div>
+                <div class="text-sm text-gray-400 italic mb-3" v-else>Sin requerimientos de roles</div>
             </div>
             
             <!-- Vacation Gantt Button -->

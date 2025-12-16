@@ -351,10 +351,8 @@ const ganttRows = computed(() => {
           </div>
       </div>
 
-      <!-- Work Packages List -->
       <div class="space-y-4">
           <div v-for="wp in workPackages" :key="wp.id" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <!-- Header -->
               <div class="p-4 bg-gray-50 flex justify-between items-center cursor-pointer" @click="expandedWP[wp.id] = !expandedWP[wp.id]">
                   <div class="flex items-center gap-3">
                       <button class="text-gray-400">
