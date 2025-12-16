@@ -4,21 +4,30 @@ defineProps({
     milestones: { type: Array, default: () => [] }
 })
 
-const getTypeColor = (milestoneOrType) => {
+const getMilestoneStyle = (milestoneOrType) => {
     let color = null
-    if (milestoneOrType && typeof milestoneOrType === 'object' && milestoneOrType.milestoneType) {
+    // If it's the milestone object directly
+    if (milestoneOrType?.milestoneType?.color) {
         color = milestoneOrType.milestoneType.color
     }
-    
-    if (color) {
-        if (color.startsWith('#') || color.startsWith('rgb')) {
-            return `bg-[${color}]`
-        }
-        return color
+
+    if (color && (color.startsWith('#') || color.startsWith('rgb'))) {
+        return { backgroundColor: color }
     }
     
+    // Fallback
     const str = typeof milestoneOrType === 'string' ? milestoneOrType : (milestoneOrType?.type || '?')
-    return `bg-[${stringToColor(str)}]`
+     // Check if we didn't find a color but have a string to hash
+    if (!color) return { backgroundColor: stringToColor(str) }
+    return {} 
+}
+
+const getMilestoneClass = (milestoneOrType) => {
+     let color = milestoneOrType?.milestoneType?.color
+     if (color && !color.startsWith('#') && !color.startsWith('rgb')) {
+         return color
+     }
+     return ''
 }
 </script>
 
@@ -29,7 +38,8 @@ const getTypeColor = (milestoneOrType) => {
             <div class="flex -space-x-1">
                     <div v-for="m in g.milestones" :key="m.id" 
                         class="w-2.5 h-2.5 rounded-full border border-white" 
-                        :class="getTypeColor(m.type)" 
+                        :class="getMilestoneClass(m)" 
+                        :style="getMilestoneStyle(m)"
                         :title="m.name + ' (' + m.date + ')'">
                     </div>
             </div>

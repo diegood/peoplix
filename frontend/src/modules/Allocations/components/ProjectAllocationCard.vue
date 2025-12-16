@@ -1,9 +1,7 @@
 <script setup>
 import { Network, GripVertical, CheckCircle, AlertCircle, Trash2, X, Plus, Calculator } from 'lucide-vue-next'
 import draggable from 'vuedraggable'
-import ProjectMilestones from '@/components/ProjectMilestones.vue' // Keeping this shared component relative for now, or update if we move it. Assuming global 'components' folder stays for generic stuff.
-// Actually, ProjectMilestones seems specific to projects, let's assume it stays in src/components for now or we update import path later if we move it to shared.
-// UPDATE: user didn't ask to move ProjectMilestones, so we import from relative path. Wait, our new path is src/modules/Allocations/components, so ../../../components/ProjectMilestones.vue
+import ProjectMilestones from '@/components/ProjectMilestones.vue'
 import { ref } from 'vue'
 
 const props = defineProps({
@@ -11,7 +9,8 @@ const props = defineProps({
     currentWeek: String,
     dragging: Boolean,
     absences: Array,
-    getSkillMatch: Function // Passing helper function or we duplicate logic? Passing is easier for now.
+    getSkillMatch: Function,
+    getGlobalOccupation: Function
 })
 
 const emit = defineEmits([
@@ -53,6 +52,20 @@ const doesOverlap = (absence, weekStr) => {
     return aStart.isBefore(wEnd.add(1, 'day')) && aEnd.isAfter(wStart.subtract(1, 'day'))
 }
 
+import { computed } from 'vue'
+
+const totalAllocatedHours = computed(() => {
+    if (!props.project.allocations) return 0
+    const total = props.project.allocations.reduce((acc, alloc) => {
+        //TODO las 40  tendrian que ser configurables
+        const contractHours = alloc.collaborator?.contractedHours || 40
+        const percentage = alloc.dedicationPercentage || 0
+        const hours = contractHours * (percentage / 100)
+        return acc + hours
+    }, 0)
+    return Math.round(total * 10) / 10
+})
+
 </script>
 
 <template>
@@ -68,7 +81,10 @@ const doesOverlap = (absence, weekStr) => {
                        <Calculator size="16"/>
                    </router-link>
                </div>
-               <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">{{ project.contractedHours }} h</span>
+               <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold"
+                     :class="{'bg-red-100 text-red-700': totalAllocatedHours > project.contractedHours, 'bg-green-100 text-green-700': totalAllocatedHours <= project.contractedHours && totalAllocatedHours > 0}">
+                   {{ totalAllocatedHours }} / {{ project.contractedHours }} h
+               </span>
              </div>
               <div class="flex flex-wrap gap-1">
                <template v-for="req in project.requiredRoles" :key="req.id">
@@ -81,7 +97,7 @@ const doesOverlap = (absence, weekStr) => {
           
           <ProjectMilestones :project="project" :currentWeek="currentWeek" />
 
-          <div class="flex-1 p-3 bg-gray-50/30">
+          <div class="flex-1 p-3 bg-gray-50/30 overflow-y-auto max-h-[500px]">
             <draggable 
               :list="project.allocations || []" 
               group="people" 
@@ -95,7 +111,7 @@ const doesOverlap = (absence, weekStr) => {
                     
                     <div class="flex items-center gap-3">
                       <GripVertical class="text-gray-300 cursor-grab active:cursor-grabbing" size="14" />
-                       <div class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-xs">
+                       <div class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-xs shrink-0">
                          {{ (element.collaborator?.firstName || element.collaborator?.name || element.name || '?').charAt(0) }}
                        </div>
                        <div class="flex-1">
@@ -106,6 +122,8 @@ const doesOverlap = (absence, weekStr) => {
                             <span v-if="!element.collaborator?.firstName && !element.collaborator?.lastName" class="text-gray-400 text-xs">
                                 {{ element.collaborator?.name || element.name || 'Sin nombre' }}
                             </span>
+                            
+
 
                             <span v-if="getAbsenceInWeek(element.collaborator?.id)" 
                                    class="px-1.5 py-0.5 rounded text-[8px] font-bold border truncate max-w-[100px]"
@@ -165,9 +183,13 @@ const doesOverlap = (absence, weekStr) => {
                            <input type="number" 
                                   :value="element.dedicationPercentage || 50" 
                                   @change="(e) => emit('update-allocation-percentage', element, e.target.value)"
-                                  class="w-10 border rounded px-1 py-0.5 text-xs text-center focus:ring-1 focus:ring-green-500 outline-none"
+                                  class="w-11 border rounded px-1 py-0.5 text-xs text-center focus:ring-1 focus:ring-green-500 outline-none"
                                   min="0" max="100" />
-                           %
+                           % <span v-if="getGlobalOccupation && element.collaborator?.id" 
+                                   class="text-gray-400 font-normal ml-1"
+                                   :class="{'text-red-500 font-bold': getGlobalOccupation(element.collaborator.id) > 100}">
+                               / {{ getGlobalOccupation(element.collaborator.id) }}%
+                           </span>
                         </div>
                     </div>
                     

@@ -59,20 +59,25 @@ const upcomingMilestones = computed(() => {
         .sort((a, b) => a.date.localeCompare(b.date))
 })
 
-const getTypeColor = (milestoneOrType) => {
-    // If it's a milestone object with a rich type
-    let color = milestoneOrType?.milestoneType?.color
-    
+const getMilestoneStyle = (milestoneOrType) => {
+    const color = milestoneOrType?.milestoneType?.color
     if (color) {
-        if (color.startsWith('#') || color.startsWith('rgb')) {
-            return `bg-[${color}]`
-        }
-        return color // Assume it is a Tailwind class like 'bg-red-400'
+         if (color.startsWith('#') || color.startsWith('rgb')) {
+             return { backgroundColor: color }
+         }
+         return {}
     }
-    
-    // Fallback/Legacy
-    const typeStr = typeof milestoneOrType === 'string' ? milestoneOrType : (milestoneOrType?.type || milestoneOrType?.name || '?')
-    return `bg-[${stringToColor(typeStr)}]`
+    // Fallback
+    const typeStr = typeof milestoneOrType === 'string' ? milestoneOrType : (milestoneOrType?.milestoneType?.name || milestoneOrType?.type || milestoneOrType?.name || '?')
+    return { backgroundColor: stringToColor(typeStr) }
+}
+
+const getMilestoneClass = (milestoneOrType) => {
+    const color = milestoneOrType?.milestoneType?.color
+    if (color && !color.startsWith('#') && !color.startsWith('rgb')) {
+        return color
+    }
+    return ''
 }
 
 const handleCreate = async () => {
@@ -141,7 +146,8 @@ const handleDelete = async (id) => {
               <div class="flex flex-col gap-0.5 mt-1 w-full">
                   <div v-for="m in weekMilestones.filter(x => x.date === day.date)" :key="m.id"
                        class="h-1.5 w-full rounded-full"
-                       :class="getTypeColor(m)"
+                       :class="getMilestoneClass(m)"
+                       :style="getMilestoneStyle(m)"
                        :title="m.name + ' (' + (m.milestoneType?.name || m.type) + ')'">
                   </div>
               </div>
@@ -153,7 +159,8 @@ const handleDelete = async (id) => {
           <div v-for="m in upcomingMilestones.slice(0, 3)" :key="m.id" class="flex items-center justify-between group">
               <div class="flex items-center gap-2">
                    <div class="w-2 h-2 rounded-full" 
-                        :class="getTypeColor(m)"></div>
+                        :class="getMilestoneClass(m)"
+                        :style="getMilestoneStyle(m)"></div>
                    <span class="text-xs text-gray-600 truncate max-w-[120px]" :title="m.name">{{ m.name }}</span>
               </div>
               <div class="flex items-center gap-2">

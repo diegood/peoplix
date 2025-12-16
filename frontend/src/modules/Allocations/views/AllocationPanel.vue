@@ -146,6 +146,18 @@ const getSkillMatch = (collab, project) => {
   return hasSkill ? { score: 100, status: 'good' } : { score: 0, status: 'bad' }
 }
 
+const getGlobalOccupation = (collaboratorId) => {
+    if (!collaboratorId || !availableCollaborators.value) return 0
+    // Look up the full collaborator record from the master list (which has all allocations)
+    const collab = availableCollaborators.value.find(c => c.id === collaboratorId)
+    if (!collab || !collab.allocations) return 0
+    
+    return collab.allocations.reduce((acc, alloc) => {
+         const isActive = alloc.startWeek <= selectedWeek.value && (!alloc.endWeek || alloc.endWeek >= selectedWeek.value)
+         return isActive ? acc + (alloc.dedicationPercentage || 0) : acc
+    }, 0)
+}
+
 const gotToWeek = (direction) => {
     const operation = direction === 'prev' ? 'subtract' : 'add'
     const [y, w] = selectedWeek.value.split('-W').map(Number)
@@ -304,6 +316,7 @@ const handleRemoveRole = async (allocation, roleId) => {
             :currentWeek="selectedWeek"
             :dragging="dragging"
             :getSkillMatch="getSkillMatch"
+            :getGlobalOccupation="getGlobalOccupation"
             :absences="absences"
             @drop="handleDrop"
             @delete-allocation="handleDeleteAllocation"

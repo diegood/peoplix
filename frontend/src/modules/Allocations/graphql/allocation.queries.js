@@ -52,6 +52,7 @@ export const GET_PROJECTS = gql`
 
           firstName
           lastName
+          contractedHours
           skills {
             id
             level
@@ -121,6 +122,9 @@ export const GET_COLLABORATORS = gql`
     }
     allocations {
       id
+      dedicationPercentage
+      startWeek
+      endWeek
       project {
         id
         name
