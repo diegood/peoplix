@@ -87,9 +87,9 @@ const chartEnd = computed(() => {
     return dayjs(chartStart.value).add(3, 'month').format('YYYY-MM-DD HH:mm')
 })
 
-const handleUpdateTaskDate = async ({ taskId, newDate }) => {
+const handleUpdateTaskDate = async ({ taskId, startDate, endDate }) => {
     try {
-        await updateTask({ id: taskId, startDate: newDate })
+        await updateTask({ id: taskId, startDate, endDate })
         await refetchWP()
         notificationStore.showToast('Fecha actualizada', 'success')
     } catch (err) {

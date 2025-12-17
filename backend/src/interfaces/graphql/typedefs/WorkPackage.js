@@ -50,7 +50,7 @@ export const WorkPackageSchema = gql`
     deleteWorkPackage(id: ID!): Boolean
 
     createTask(workPackageId: ID, name: String!, description: String, startDate: String, collaboratorId: ID): Task
-    updateTask(id: ID!, name: String, description: String, startDate: String, collaboratorId: ID): Task
+    updateTask(id: ID!, name: String, description: String, startDate: String, endDate: String, collaboratorId: ID): Task
     deleteTask(id: ID!): Boolean
 
     estimateTask(taskId: ID!, roleId: ID!, hours: Float!): Task

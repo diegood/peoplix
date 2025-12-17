@@ -394,8 +394,8 @@ export const REMOVE_TASK_DEPENDENCY = gql`
 `
 
 export const UPDATE_TASK = gql`
-  mutation UpdateTask($id: ID!, $name: String, $description: String, $startDate: String, $collaboratorId: ID) {
-    updateTask(id: $id, name: $name, description: $description, startDate: $startDate, collaboratorId: $collaboratorId) {
+  mutation UpdateTask($id: ID!, $name: String, $description: String, $startDate: String, $collaboratorId: ID, $endDate: String) {
+    updateTask(id: $id, name: $name, description: $description, startDate: $startDate, collaboratorId: $collaboratorId, endDate: $endDate) {
        ...TaskFields
     }
   }
