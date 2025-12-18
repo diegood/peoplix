@@ -64,6 +64,17 @@ export class PrismaProjectRepository {
         })
     }
 
+    async updateRequirement(id, data) {
+        return prisma.projectRequirement.update({
+            where: { id },
+            data: {
+                resourceCount: data.resourceCount,
+                monthlyHours: data.monthlyHours
+            },
+            include: { role: true, skills: { include: { skill: true } } }
+        })
+    }
+
     async removeRequirement(id) {
         await prisma.projectRequirement.delete({ where: { id } })
         return true

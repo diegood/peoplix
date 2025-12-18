@@ -66,7 +66,7 @@ const chartStart = computed(() => {
     })
     
     if (earliest) {
-        return earliest.format(FORMAT)
+        return earliest.subtract(3, 'day').format(FORMAT)
     }
     return dayjs().startOf('month').format(FORMAT)
 })
@@ -83,7 +83,9 @@ const setTaskDate = (taskId, dates) => {
 
 const handleDragEndBar = (e) => {
     const { bar } = e
-    console.log('[DEBUG Gantt] handleDragEndBar', bar)
+    
+    if (bar.ganttBarConfig.id.startsWith('vacation|')) return
+
     const [taskId, roleId] = bar.ganttBarConfig.id.split('|')
     
     let hours = 0
@@ -96,18 +98,12 @@ const handleDragEndBar = (e) => {
         }
     }
 
-    // Enforce business days for Start Date
-    let newStartDate = dayjs(bar.from)
+    let newStartDate = dayjs(bar.from).startOf('day')
     while (newStartDate.day() === 0 || newStartDate.day() === 6) {
         newStartDate = newStartDate.add(1, 'day')
     }
 
-    // Recalculate End Date based on hours to maintain duration consistency
-    // Note: addBusinessDays expects 'days' (hours/3), but here we might just want to shift the end date?
-    // User requested "no puede comenzar un sabado ni domingo".
-    // If we shift start, we should shift end to keep duration.
-    // Using addBusinessDays ensures the duration respects business days too.
-    const days = hours / 3
+    const days = hours / 8
     const newEndDate = addBusinessDays(newStartDate, days)
 
     console.log('[DEBUG Gantt] Adjusted Dates:', { 
@@ -131,50 +127,143 @@ const ganttRows = computed(() => {
     return props.workPackages.map(wp => ({
         id: wp.id,
         label: wp.name,
-        children: props.project.requiredRoles.map(role => {
-            return {
-                id: role.id+wp.id,
-                label: role.role.name,
-                bars: wp.tasks.map(task => {
-                        const estimation = task.estimations?.find(e => e.role.id === role.role.id)
+        children: Array.from(new Set(props.project.requiredRoles.map(r => r.role.id)))
+            .map(roleId => props.project.requiredRoles.find(r => r.role.id === roleId))
+            .filter(Boolean)
+            .flatMap(role => {
+                const roleAllocations = props.project.allocations?.filter(a => a.roles?.some(r => r.id === role.role.id)) || []
+                const collaborators = roleAllocations.map(a => a.collaborator).filter(Boolean)
+                
+                const uniqueCollaborators = []
+                const seen = new Set()
+                collaborators.forEach(c => {
+                    if(!seen.has(c.id)) {
+                        seen.add(c.id)
+                        uniqueCollaborators.push(c)
+                    }
+                })
+
+                const rows = []
+                
+                uniqueCollaborators.forEach(col => {
+                    rows.push({
+                        id: `${role.role.id}|${col.id}|${wp.id}`,
+                        label: `${role.role.name} - ${col.firstName} ${col.lastName}`,
+                        roleId: role.role.id,
+                        collaboratorId: col.id
+                    })
+                })
+                
+                const singleCollaborator = uniqueCollaborators.length === 1 ? uniqueCollaborators[0] : null
+                
+                if (!singleCollaborator) {
+                    rows.push({
+                        id: `${role.role.id}|unassigned|${wp.id}`,
+                        label: `${role.role.name} - Sin asignar`,
+                        roleId: role.role.id,
+                        collaboratorId: null
+                    })
+                }
+                
+                return rows.map(rowDef => {
+                    const rowTasks = wp.tasks.filter(task => {
+                        const est = task.estimations?.find(e => e.role.id === rowDef.roleId)
+                        if (!est) return false
                         
-                        let start = estimation?.startDate ? parseDateSafe(estimation.startDate) : (task.startDate ? parseDateSafe(task.startDate) : parseDateSafe(wp.startDate))
-                        let end = estimation?.endDate ? parseDateSafe(estimation.endDate) : (start ? start.add(1, 'day') : null)
-                        
-                        if (!start || !start.isValid()) {
-                             start = dayjs(wp.startDate)
-                        }
-                        if (!end || !end.isValid()) {
-                             end = start.add(1, 'day')
-                        }
-                        
-                        if (estimation?.hours && !estimation.endDate) {
-                             end = addBusinessDays(start, estimation.hours / 3) 
+                        if (singleCollaborator && rowDef.collaboratorId === singleCollaborator.id) {
+                             const isAssignedToMe = est.collaborator?.id === rowDef.collaboratorId
+                             const isUnassigned = !est.collaborator
+                             return isAssignedToMe || isUnassigned
                         }
 
-                        return {
-                            id: task.id + '|' + role.role.id,
-                            label: task.name,
-                            from: start.format(FORMAT),
-                            to: end.format(FORMAT),
-                            ganttBarConfig: {
-                                id: task.id + '|' + role.role.id,
+                        if (rowDef.collaboratorId) {
+                            return est.collaborator?.id === rowDef.collaboratorId
+                        }
+                        return !est.collaborator
+                    })
+
+                    if (!rowDef.collaboratorId && rowTasks.length === 0) return null 
+                    if (rowTasks.length === 0) return null
+
+                    const bars = rowTasks.map(task => {
+                            const estimation = task.estimations?.find(e => e.role.id === rowDef.roleId)
+                            
+                            let start = estimation?.startDate ? parseDateSafe(estimation.startDate) : (task.startDate ? parseDateSafe(task.startDate) : parseDateSafe(wp.startDate))
+                            let end = estimation?.endDate ? parseDateSafe(estimation.endDate) : (start ? start.add(1, 'day') : null)
+                            
+                            if (!start || !start.isValid()) {
+                                 start = dayjs(wp.startDate)
+                            }
+                            if (!end || !end.isValid()) {
+                                 end = start.add(1, 'day')
+                            }
+                            
+                            if (estimation?.hours && !estimation.endDate) {
+                                 end = addBusinessDays(start, estimation.hours / 8) 
+                            }
+
+                            const isUnassigned = !estimation.collaborator
+                            const barColor = isUnassigned ? '#9ca3af' : stringToColor(task.name+rowDef.roleId)
+
+                            return {
+                                id: task.id + '|' + rowDef.roleId,
                                 label: task.name,
-                                style: { 
-                                    background: stringToColor(task.name+role.role.name),
-                                    borderRadius: '4px',
-                                    fontSize: '10px',
-                                    color: invertColor(stringToColor(task.name+role.role.name))
+                                from: start.format(FORMAT),
+                                to: end.format(FORMAT),
+                                ganttBarConfig: {
+                                    id: task.id + '|' + rowDef.roleId,
+                                    label: task.name,
+                                    style: { 
+                                        background: barColor,
+                                        borderRadius: '4px',
+                                        fontSize: '10px',
+                                        color: invertColor(barColor),
+                                        border: isUnassigned ? '1px dashed #4b5563' : 'none'
+                                    }
                                 }
                             }
+                        })
+                        
+                    if (rowDef.collaboratorId) {
+                        const col = uniqueCollaborators.find(c => c.id === rowDef.collaboratorId)
+                        if (col && col.absences) {
+                            col.absences.forEach(absence => {
+                                bars.push({
+                                    id: `vacation|${absence.id}|${rowDef.id}`,
+                                    label: 'Vacaciones', 
+                                    from: dayjs(absence.startDate).format(FORMAT),
+                                    to: dayjs(absence.endDate).format(FORMAT),
+                                    ganttBarConfig: {
+                                        id: `vacation|${absence.id}|${rowDef.id}`,
+                                        label: absence.type?.name || 'Ausencia',
+                                        immobile: true, 
+                                        style: {
+                                            background: `repeating-linear-gradient(
+                                                45deg,
+                                                #e5e7eb,
+                                                #e5e7eb 10px,
+                                                #f3f4f6 10px,
+                                                #f3f4f6 20px
+                                            )`,
+                                            color: '#6b7280',
+                                            fontSize: '10px',
+                                            borderRadius: '4px',
+                                            border: '1px solid #d1d5db',
+                                            opacity: 0.8
+                                        }
+                                    }
+                                })
+                            })
                         }
-                }).filter(bar => {
-                    const task = wp.tasks.find(t => t.id === bar.id.split('|')[0])
-                    return task?.estimations?.some(e => e.role.id === role.role.id)
-                })
-            }
-        })
-    }))
+                    }
 
+                    return {
+                        id: rowDef.id,
+                        label: rowDef.label,
+                        bars
+                    }
+                }).filter(Boolean)
+            })
+    }))
 })
 </script>

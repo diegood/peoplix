@@ -1,8 +1,11 @@
 <script setup>
-import { Network, GripVertical, CheckCircle, AlertCircle, Trash2, X, Plus, Calculator } from 'lucide-vue-next'
+import { Network, GripVertical, CheckCircle, AlertCircle, Trash2, X, Plus, Calculator, Settings } from 'lucide-vue-next'
 import draggable from 'vuedraggable'
 import ProjectMilestones from '@/components/ProjectMilestones.vue'
+import ProjectConfigurationModal from './ProjectConfigurationModal.vue'
 import { ref } from 'vue'
+
+const showConfigModal = ref(false)
 
 const props = defineProps({
     project: Object,
@@ -77,6 +80,9 @@ const totalAllocatedHours = computed(() => {
                    <button @click="emit('open-hierarchy', project)" class="p-1 px-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition" title="Jerarquía">
                        <Network size="16"/>
                    </button>
+                   <button @click="showConfigModal = true" class="p-1 px-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition" title="Configuración de Recursos">
+                       <Settings size="16"/>
+                   </button>
                    <router-link :to="{ name: 'project-estimation', params: { id: project.id } }" class="p-1 px-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition" title="Estimación">
                        <Calculator size="16"/>
                    </router-link>
@@ -88,8 +94,13 @@ const totalAllocatedHours = computed(() => {
              </div>
               <div class="flex flex-wrap gap-1">
                <template v-for="req in project.requiredRoles" :key="req.id">
-                   <span v-for="skill in req.skills" :key="skill.id" class="text-[10px] px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded" :title="req.role.name">
-                     {{ skill.name }}
+                   <span v-for="skill in req.skills" :key="skill.id" 
+                         class="text-[10px] px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded flex items-center gap-1 cursor-default group transition hover:bg-gray-300" 
+                         :title="req.role.name">
+                     {{ skill.name }} 
+                     <span v-if="req.resourceCount > 1" class="bg-gray-500 text-white rounded-full px-1 text-[9px] min-w-[14px] text-center group-hover:bg-gray-700" title="Recursos requeridos">
+                         {{ req.resourceCount }}
+                     </span>
                    </span>
                </template>
               </div>
@@ -202,5 +213,6 @@ const totalAllocatedHours = computed(() => {
                </template>
             </draggable>
           </div>
+          <ProjectConfigurationModal v-if="showConfigModal" :show="showConfigModal" :project="project" @close="showConfigModal = false" />
         </div>
 </template>

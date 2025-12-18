@@ -15,6 +15,7 @@ export const projectResolver = {
         return true
     },
     addProjectRequirement: (_, args) => service.addRequirement(args),
+    updateProjectRequirement: (_, args) => service.updateRequirement(args.requirementId, args),
     removeProjectRequirement: (_, { projectId, requirementId }) => service.removeRequirement(requirementId),
     addRequirementSkill: (_, { requirementId, skillName, level }) => service.addRequirementSkill(requirementId, skillName, level),
     removeRequirementSkill: (_, { requirementId, skillId }) => service.removeRequirementSkill(requirementId, skillId),

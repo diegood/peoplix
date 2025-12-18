@@ -29,6 +29,10 @@ export class ProjectService {
         return this.repository.addRequirement(data)
     }
 
+    async updateRequirement(id, data) {
+        return this.repository.updateRequirement(id, data)
+    }
+
     async removeRequirement(id) {
         return this.repository.removeRequirement(id)
     }

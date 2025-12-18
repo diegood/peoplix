@@ -469,14 +469,65 @@ const handleSaveDraft = async () => {
                  const matchingAllocations = props.projectAllocations.filter(a => 
                     a.roles?.some(r => r.id === roleId)
                  )
-                 if (matchingAllocations.length === 1) {
-                     collaboratorId = matchingAllocations[0].collaborator.id
+                 if (matchingAllocations.length > 0) {
+                     // Round Robin: Use current task count to cycle through collaborators
+                     // We use props.wp.tasks.length because the new task isn't in the list yet
+                     // If multiple tasks are added, this index needs to be offset, but for manual entry it's fine.
+                     const index = (props.wp.tasks?.length || 0) % matchingAllocations.length
+                     collaboratorId = matchingAllocations[index].collaborator.id
                  }
                  
-                 // Simple Date Logic for draft
-                 const estStart = dayjs(wpStartDateFormatted)
-                 const days = Math.ceil(hours / 8)
-                 const estEnd = estStart.add(days, 'day')
+                 // Sequential Logic: Find the latest end date for this role to schedule after
+                 let estStart = dayjs(wpStartDateFormatted)
+                 
+                 // Look for the last task that has an estimation for this role
+                 let lastEndDateForRole = null
+                 if(props.wp.tasks && props.wp.tasks.length > 0) {
+                     // Check in reverse order to find the last one
+                     for (let i = props.wp.tasks.length - 1; i >= 0; i--) {
+                         const t = props.wp.tasks[i]
+                         const prevEst = t.estimations?.find(e => e.role.id === roleId)
+                         
+                         // Check if this previous task belongs to the SAME collaborator (or both unassigned)
+                         const prevCollabId = prevEst?.collaborator?.id || null
+                         if (prevEst && prevEst.endDate && prevCollabId === collaboratorId) {
+                             const prevEnd = parseDateSafe(prevEst.endDate)
+                             if (prevEnd && prevEnd.isValid()) {
+                                 lastEndDateForRole = prevEnd
+                                 break
+                             }
+                         }
+                     }
+                 }
+
+                 if (lastEndDateForRole) {
+                     estStart = lastEndDateForRole
+                     // If it ended on Friday, next start should be Monday? 
+                     // Or if it ended at 17:00, next starts next day?
+                     // Currently end dates are usually end of day? Or calculated.
+                     // Let's assuming end date is inclusive of the work. So we start AFTER it.
+                     // But if prev task ends at standard time, we might want next day.
+                     // For simplicity in Gantt, let's say we start immediately after (consecutive).
+                     // But strictly speaking, if prev ends 2024-01-01, new starts 2024-01-02?
+                     // My Gantt logic usually sets end date same as start if < 8h?
+                     // Let's try adding 0 days (starts same time? No)
+                     // Safest is to start the NEXT business day if the previous task took the whole day.
+                     // But we don't know if it took whole day easily.
+                     // Let's assume sequential means next business second/day.
+                     // Given formatting YYYY-MM-DD HH:mm, if we copy the date we overlap?
+                     // Let's use `addBusinessDays(lastEndDateForRole, 0)` which just adjusts for weekends.
+                     // Actually, if we want them to be sequential bars, start should = previous end.
+                     // Overlap is fine if it's "finish-to-start".
+                     estStart = lastEndDateForRole
+                 }
+
+                 // Ensure start is business day check
+                 while (estStart.day() === 0 || estStart.day() === 6) {
+                     estStart = estStart.add(1, 'day')
+                 }
+
+                 const days = hours / 8 // Using corrected 8h factor
+                 const estEnd = addBusinessDays(estStart, days)
 
                  return estimateTask({ 
                      taskId: newTask.id, 

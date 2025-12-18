@@ -44,6 +44,9 @@ type ProjectRequirementSkill {
 
   addProjectRequirement(projectId: ID!, roleId: ID!, resourceCount: Int, monthlyHours: Int): ProjectRequirement!
 
+  updateProjectRequirement(requirementId: ID!, resourceCount: Int, monthlyHours: Int): ProjectRequirement!
+
+
   removeProjectRequirement(projectId: ID!, requirementId: ID!): Boolean
 
   addRequirementSkill(projectId: ID!, requirementId: ID!, skillName: String!, level: Int!): ProjectRequirementSkill!

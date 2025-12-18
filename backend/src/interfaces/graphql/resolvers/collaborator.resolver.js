@@ -1,3 +1,4 @@
+import { prisma } from '../../../infrastructure/database/client.js'
 import { CollaboratorService } from '../../../application/services/CollaboratorService.js'
 
 const service = new CollaboratorService()
@@ -47,6 +48,13 @@ export const collaboratorResolver = {
       isActive: (parent) => parent.isActive ?? true,
       hardware: (parent) => parent.hardware || [],
       holidayCalendar: (parent) => parent.holidayCalendar,
-      customFields: (parent) => parent.customFieldValues || []
+      customFields: (parent) => parent.customFieldValues || [],
+      absences: async (parent) => {
+          if (parent.absences) return parent.absences
+          return prisma.absence.findMany({
+              where: { collaboratorId: parent.id },
+              include: { type: true }
+          })
+      }
   }
 }
