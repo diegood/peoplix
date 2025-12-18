@@ -9,13 +9,13 @@
               <div>
                   <h4 class="font-bold text-gray-800">{{ wp.name }}</h4>
                   <span class="text-xs text-gray-500" v-if="wp.highLevelEstimation">Estimación Alta: {{ wp.highLevelEstimation }}h</span>
-                  <span class="text-gray-300 mx-2">|</span>
                   <input type="date" 
-                         :value="formatDate(wp.startDate)" 
-                         @change="handleUpdateWPDate"
-                         @click.stop
-                         class="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 focus:ring-2 focus:ring-blue-500 outline-none" 
+                  :value="formatDate(wp.startDate)" 
+                  @change="handleUpdateWPDate"
+                  @click.stop
+                  class="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 focus:ring-2 focus:ring-blue-500 outline-none" 
                   />
+                  <span class="text-xs text-gray-500 ml-2">| {{ wpEndDate || '-'}}</span>
               </div>
           </div>
           <div class="flex items-center gap-4">
@@ -41,17 +41,41 @@
               </thead>
               <tbody>
                   <tr v-for="task in wp.tasks" :key="task.id" class="border-b border-gray-50 hover:bg-gray-50">
-                       <td class="py-2 pl-2 font-medium relative group">
-                           <div class="flex items-center gap-2">
-                               <button @click="descriptionEditing = descriptionEditing === task.id ? null : task.id" 
-                                       class="text-gray-400 hover:text-blue-600 transition-colors"
-                                       :class="{'text-blue-600': task.description}">
-                                   <FileText :size="14" />
-                               </button>
+                       <td class="py-2 pl-2 font-medium relative group align-top">
+                           <div class="flex flex-col gap-1">
+                               <div class="flex items-center gap-2">
+                                   <div class="relative">
+                                       <button @click="descriptionEditing = descriptionEditing === task.id ? null : task.id" 
+                                               class="text-gray-400 hover:text-blue-600 transition-colors"
+                                               :class="{'text-blue-600': task.description}">
+                                           <FileText :size="14" />
+                                       </button>
 
-                               <input :value="task.name" 
-                                      class="w-full bg-transparent border-none outline-none focus:ring-0 font-medium text-gray-700"
-                                      @change="(e) => handleUpdateTaskName(task.id, e.target.value)" />
+                                       <!-- Description Popover -->
+                                       <div v-if="descriptionEditing === task.id" 
+                                            class="absolute top-8 left-0 z-50 bg-white border shadow-lg rounded p-3 w-72">
+                                           <textarea 
+                                               :value="task.description" 
+                                               @change="(e) => handleUpdateTaskDesc(task.id, e.target.value)"
+                                               class="w-full text-xs border rounded p-2 h-24 focus:ring-2 focus:ring-blue-500 outline-none resize-none mb-2"
+                                               placeholder="Añadir descripción..."
+                                           ></textarea>
+                                           <div class="flex justify-end gap-2">
+                                               <button @click="descriptionEditing = null" class="text-xs text-gray-500 hover:text-gray-800">Cerrar</button>
+                                           </div>
+                                       </div>
+                                   </div>
+
+                                   <input :value="task.name" 
+                                          class="w-full bg-transparent border-none outline-none focus:ring-0 font-medium text-gray-700"
+                                          @change="(e) => handleUpdateTaskName(task.id, e.target.value)" />
+                               </div>
+                               <!-- Task Totals -->
+                               <div class="pl-6 text-[10px] text-gray-400 flex items-center gap-2" v-if="getTaskSummary(task).totalHours > 0">
+                                   <span class="font-bold text-gray-500">{{ getTaskSummary(task).totalHours }}h</span>
+                                   <span>|</span>
+                                   <span>{{ getTaskSummary(task).dateRange }}</span>
+                               </div>
                            </div>
                        </td>
 
@@ -479,5 +503,56 @@ const handleSaveDraft = async () => {
 
 
 
+// Helper to get task summary (hours + dates)
+const getTaskSummary = (task) => {
+    if (!task.estimations || task.estimations.length === 0) return { totalHours: 0, dateRange: '-' }
+    
+    let total = 0
+    let minDate = null
+    let maxDate = null
+
+    task.estimations.forEach(est => {
+        total += est.hours
+        if (est.startDate) {
+            const d = parseDateSafe(est.startDate)
+            if (d && d.isValid()) {
+                if (!minDate || d.isBefore(minDate)) minDate = d
+            }
+        }
+        if (est.endDate) {
+            const d = parseDateSafe(est.endDate)
+            if (d && d.isValid()) {
+                if (!maxDate || d.isAfter(maxDate)) maxDate = d
+            }
+        }
+    })
+
+    let dateRange = '-'
+    if (minDate) {
+        dateRange = minDate.format('DD/MM')
+        if (maxDate && !maxDate.isSame(minDate, 'day')) {
+            dateRange += ` - ${maxDate.format('DD/MM')}`
+        }
+    }
+    
+    return { totalHours: total, dateRange }
+}
+// Work Package End Date Calculation
+const wpEndDate = computed(() => {
+    if (!props.wp.tasks || props.wp.tasks.length === 0) return '-'
+    let maxDate = null
+    
+    props.wp.tasks.forEach(task => {
+        task.estimations?.forEach(est => {
+            if (est.endDate) {
+                const d = parseDateSafe(est.endDate)
+                if (d && d.isValid()) {
+                    if (!maxDate || d.isAfter(maxDate)) maxDate = d
+                }
+            }
+        })
+    })
+    return maxDate ? maxDate.format('DD/MM/YYYY') : '-'
+})
 
 </script>
