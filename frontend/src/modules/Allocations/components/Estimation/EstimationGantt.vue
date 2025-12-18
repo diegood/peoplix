@@ -43,6 +43,7 @@ import { computed } from 'vue'
 import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
 import dayjs from '@/config/dayjs'
 import { stringToColor, invertColor } from '@/helper/Colors'
+import { parseDateSafe, addBusinessDays } from '@/helper/Date'
 
 const FORMAT = 'YYYY-MM-DD HH:mm'
 
@@ -52,14 +53,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update-task-date'])
-
-const parseDateSafe = (val) => {
-    if (!isFinite(val)) return null
-    if (!isNaN(val) && !isNaN(parseFloat(val))) {
-        return dayjs.utc(parseInt(val))
-    }
-    return dayjs(val)
-}
 
 const chartStart = computed(() => {
     let earliest = null
@@ -82,46 +75,7 @@ const chartEnd = computed(() => {
     return dayjs(chartStart.value).add(3, 'month').format(FORMAT)
 })
 
-/**
- * Funcion que calcula la fecha final de una tarea
- * @param {String} startDate 
- * @param {Number} hours 
- * @returns {String} endDate
- */
-const addBusinessDays = (startDate, hours) => {
-    let cursor = dayjs(startDate)
-    //TODO magic number refactorizar ese *3 tendra que ser parametrizable por que puede ser jornadas de por ejemplo 6 horas  y varia el calculo
-    let visualHoursRemaining = hours * 3
-    
-    if (visualHoursRemaining <= 0) visualHoursRemaining = 3
-    
-    let loops = 0
-    const MAX_LOOPS = 1000 
 
-    while (visualHoursRemaining > 0.1 && loops < MAX_LOOPS) {
-        loops++
-        const dayOfWeek = cursor.day()
-        
-        if (dayOfWeek === 0 || dayOfWeek === 6) {
-             cursor = cursor.add(1, 'day').startOf('day')
-             continue
-        }
-
-        const nextDayStart = cursor.add(1, 'day').startOf('day')
-        const hoursUntilOvernight = nextDayStart.diff(cursor, 'minute') / 60.0
-        
-        if (hoursUntilOvernight < 0.1) {
-             cursor = nextDayStart
-             continue
-        }
-
-        const chunk = Math.min(visualHoursRemaining, hoursUntilOvernight)
-        
-        cursor = cursor.add(chunk, 'hour')
-        visualHoursRemaining -= chunk
-    }
-    return cursor
-}
 
 const setTaskDate = (taskId, dates) => {
     emit('update-task-date', { taskId, ...dates })
@@ -129,10 +83,46 @@ const setTaskDate = (taskId, dates) => {
 
 const handleDragEndBar = (e) => {
     const { bar } = e
+    console.log('[DEBUG Gantt] handleDragEndBar', bar)
     const [taskId, roleId] = bar.ganttBarConfig.id.split('|')
-    const newStartDate = addBusinessDays(dayjs(bar.from).format(FORMAT), dayjs(bar.to).diff(bar.from, 'hour') / 3)
+    
+    let hours = 0
+    for (const wp of props.workPackages) {
+        const task = wp.tasks?.find(t => t.id === taskId)
+        if (task) {
+            const est = task.estimations?.find(est => est.role.id === roleId)
+            if (est) hours = est.hours
+            break
+        }
+    }
 
-    emit('update-task-date', { taskId, startDate: newStartDate.format(FORMAT), endDate: bar.to })
+    // Enforce business days for Start Date
+    let newStartDate = dayjs(bar.from)
+    while (newStartDate.day() === 0 || newStartDate.day() === 6) {
+        newStartDate = newStartDate.add(1, 'day')
+    }
+
+    // Recalculate End Date based on hours to maintain duration consistency
+    // Note: addBusinessDays expects 'days' (hours/3), but here we might just want to shift the end date?
+    // User requested "no puede comenzar un sabado ni domingo".
+    // If we shift start, we should shift end to keep duration.
+    // Using addBusinessDays ensures the duration respects business days too.
+    const days = hours / 3
+    const newEndDate = addBusinessDays(newStartDate, days)
+
+    console.log('[DEBUG Gantt] Adjusted Dates:', { 
+        originalFrom: bar.from, 
+        newStart: newStartDate.format(FORMAT), 
+        newEnd: newEndDate.format(FORMAT) 
+    })
+
+    emit('update-task-date', { 
+        taskId, 
+        roleId, 
+        hours, 
+        startDate: newStartDate.format(FORMAT), 
+        endDate: newEndDate.format(FORMAT) 
+    })
 }
 
 const ganttRows = computed(() => {
@@ -142,36 +132,46 @@ const ganttRows = computed(() => {
         id: wp.id,
         label: wp.name,
         children: props.project.requiredRoles.map(role => {
-            let lastEndDate = dayjs(Number(wp.startDate)).set('hour', 0)
-            const calculateEndDate = (startDate, hours, taskId) => {
-                const endDate = addBusinessDays(startDate, hours)
-                lastEndDate = endDate
-                // setTaskDate(taskId, {endDate: endDate.format(FORMAT), startDate: startDate.format(FORMAT)})
-                return endDate
-            }
             return {
                 id: role.id+wp.id,
                 label: role.role.name,
-                bars: wp.tasks.map(task => ({
-                        id: task.id+role.id,
-                        label: task.name,
-                        from: lastEndDate.format(FORMAT),
-                        to: calculateEndDate(
-                            lastEndDate,
-                            task.estimations.find(e => e.role.id === role.role.id)?.hours,
-                            task.id
-                        ).format(FORMAT),
-                        ganttBarConfig: {
-                            id: task.id+role.role.id,
+                bars: wp.tasks.map(task => {
+                        const estimation = task.estimations?.find(e => e.role.id === role.role.id)
+                        
+                        let start = estimation?.startDate ? parseDateSafe(estimation.startDate) : (task.startDate ? parseDateSafe(task.startDate) : parseDateSafe(wp.startDate))
+                        let end = estimation?.endDate ? parseDateSafe(estimation.endDate) : (start ? start.add(1, 'day') : null)
+                        
+                        if (!start || !start.isValid()) {
+                             start = dayjs(wp.startDate)
+                        }
+                        if (!end || !end.isValid()) {
+                             end = start.add(1, 'day')
+                        }
+                        
+                        if (estimation?.hours && !estimation.endDate) {
+                             end = addBusinessDays(start, estimation.hours / 3) 
+                        }
+
+                        return {
+                            id: task.id + '|' + role.role.id,
                             label: task.name,
-                            style: { 
-                                background: stringToColor(task.name+role.role.name),
-                                borderRadius: '4px',
-                                fontSize: '10px',
-                                color: invertColor(stringToColor(task.name+role.role.name))
+                            from: start.format(FORMAT),
+                            to: end.format(FORMAT),
+                            ganttBarConfig: {
+                                id: task.id + '|' + role.role.id,
+                                label: task.name,
+                                style: { 
+                                    background: stringToColor(task.name+role.role.name),
+                                    borderRadius: '4px',
+                                    fontSize: '10px',
+                                    color: invertColor(stringToColor(task.name+role.role.name))
+                                }
                             }
                         }
-                }))
+                }).filter(bar => {
+                    const task = wp.tasks.find(t => t.id === bar.id.split('|')[0])
+                    return task?.estimations?.some(e => e.role.id === role.role.id)
+                })
             }
         })
     }))

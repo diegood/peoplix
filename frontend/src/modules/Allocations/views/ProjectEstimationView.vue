@@ -3,9 +3,10 @@ import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_PROJECT_WORK_PACKAGES, GET_PROJECTS } from '@/graphql/queries'
-import { CREATE_WORK_PACKAGE, UPDATE_TASK } from '@/graphql/mutations'
+import { CREATE_WORK_PACKAGE, ESTIMATE_TASK } from '@/graphql/mutations'
 import { useNotificationStore } from '@/stores/notificationStore'
 import dayjs from '@/config/dayjs'
+import { parseDateSafe } from '@/helper/Date'
 
 import EstimationHeader from '@/modules/Allocations/components/Estimation/EstimationHeader.vue'
 import EstimationWorkPackage from '@/modules/Allocations/components/Estimation/EstimationWorkPackage.vue'
@@ -25,7 +26,7 @@ const project = computed(() => {
 const workPackages = computed(() => wpResult.value?.projectWorkPackages || [])
 
 const { mutate: createWorkPackage } = useMutation(CREATE_WORK_PACKAGE)
-const { mutate: updateTask } = useMutation(UPDATE_TASK)
+const { mutate: estimateTask } = useMutation(ESTIMATE_TASK)
 
 const newWPName = ref('')
 
@@ -39,14 +40,6 @@ const handleCreateWP = async () => {
     } catch (e) {
         notificationStore.showToast(e.message, 'error')
     }
-}
-
-const parseDateSafe = (val) => {
-    if (!val) return null
-    if (!isNaN(val) && !isNaN(parseFloat(val))) {
-        return dayjs.utc(parseInt(val))
-    }
-    return dayjs(val)
 }
 
 const roleColumns = computed(() => {
@@ -87,9 +80,10 @@ const chartEnd = computed(() => {
     return dayjs(chartStart.value).add(3, 'month').format('YYYY-MM-DD HH:mm')
 })
 
-const handleUpdateTaskDate = async ({ taskId, startDate, endDate }) => {
+const handleUpdateTaskDate = async ({ taskId, roleId, hours, startDate, endDate }) => {
+    console.log('[DEBUG View] handleUpdateTaskDate', { taskId, roleId, hours, startDate, endDate })
     try {
-        await updateTask({ id: taskId, startDate, endDate })
+        await estimateTask({ taskId, roleId, hours: parseFloat(hours), startDate, endDate })
         await refetchWP()
         notificationStore.showToast('Fecha actualizada', 'success')
     } catch (err) {

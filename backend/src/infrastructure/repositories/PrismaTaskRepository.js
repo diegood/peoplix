@@ -46,13 +46,17 @@ export class PrismaTaskRepository {
         return true
     }
 
-    async saveEstimation({ taskId, roleId, hours }) {
+    async saveEstimation({ taskId, roleId, hours, startDate, endDate }) {
+        const data = { hours }
+        if (startDate) data.startDate = startDate
+        if (endDate) data.endDate = endDate
+
         return prisma.taskEstimation.upsert({
             where: {
                 taskId_roleId: { taskId, roleId }
             },
-            update: { hours },
-            create: { taskId, roleId, hours },
+            update: data,
+            create: { taskId, roleId, hours, startDate, endDate },
             include: { role: true }
         })
     }

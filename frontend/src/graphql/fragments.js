@@ -121,6 +121,8 @@ export const TASK_ESTIMATION_FRAGMENT = gql`
   fragment TaskEstimationFields on TaskEstimation {
     id
     hours
+    startDate
+    endDate
     role {
       ...RoleFields
     }

@@ -129,6 +129,7 @@ import {
 import { Trash, ChevronDown, ChevronRight, Link, X } from 'lucide-vue-next'
 import dayjs from '@/config/dayjs'
 import { useNotificationStore } from '@/stores/notificationStore'
+import { parseDateSafe, formatDate, addBusinessDays } from '@/helper/Date'
 
 const props = defineProps({
   wp: { type: Object, required: true },
@@ -146,7 +147,6 @@ const addingDepFor = ref(null)
 const draftName = ref('')
 const draftEstimations = ref({})
 
-// Mutations
 const { mutate: updateTask } = useMutation(UPDATE_TASK)
 const { mutate: estimateTask } = useMutation(ESTIMATE_TASK)
 const { mutate: deleteWorkPackage } = useMutation(DELETE_WORK_PACKAGE)
@@ -155,7 +155,6 @@ const { mutate: createTask } = useMutation(CREATE_TASK)
 const { mutate: addTaskDependency } = useMutation(ADD_TASK_DEPENDENCY)
 const { mutate: removeTaskDependency } = useMutation(REMOVE_TASK_DEPENDENCY)
 
-// Handlers
 const handleUpdateTaskName = async (id, name) => {
     try {
         await updateTask({ id, name })
@@ -164,11 +163,65 @@ const handleUpdateTaskName = async (id, name) => {
     }
 }
 
-const handleUpdateEst = async (taskId, roleId, hours) => {
+const handleUpdateEst = async (taskId, roleId, hoursStr) => {
     try {
-        await estimateTask({ taskId, roleId, hours: parseFloat(hours) || 0 })
+        const hours = parseFloat(hoursStr) || 0
+        
+        let startDateStr = undefined
+        let endDateStr = undefined
+        
+        if (hours > 0) {
+             let lastEndDateForRole = null
+             const taskIndex = props.wp.tasks.findIndex(t => t.id === taskId)
+             
+             if (taskIndex >= 0) {
+                 for (let i = taskIndex - 1; i >= 0; i--) {
+                     const t = props.wp.tasks[i]
+                     const prevEst = t.estimations?.find(e => e.role.id === roleId)
+                     if (prevEst) {
+                         if (prevEst.endDate) {
+                             lastEndDateForRole = parseDateSafe(prevEst.endDate)
+                             break
+                         }
+                         if (prevEst.startDate) {
+                             lastEndDateForRole = parseDateSafe(prevEst.startDate)
+                             break
+                         }
+                     }
+                 }
+             }
+             
+             let estStart
+             if (lastEndDateForRole) {
+                 estStart = lastEndDateForRole
+             } else {
+                 const parsedWPDate = parseDateSafe(props.wp?.startDate)
+                 estStart = parsedWPDate && parsedWPDate.isValid() ? parsedWPDate : dayjs().startOf('day')
+             }
+             
+             // Ensure start date is a business day
+             while (estStart.day() === 0 || estStart.day() === 6) {
+                 estStart = estStart.add(1, 'day')
+             }
+             
+             const days = hours / 3
+             const estEnd = addBusinessDays(estStart, days)
+             
+             startDateStr = estStart.format('YYYY-MM-DD HH:mm')
+             endDateStr = estEnd.format('YYYY-MM-DD HH:mm')
+        }
+
+        await estimateTask({ 
+            taskId, 
+            roleId, 
+            hours,
+            startDate: startDateStr,
+            endDate: endDateStr
+        })
+        emit('refetch')
     } catch (e) {
         console.error(e)
+        notificationStore.showToast('Error al actualizar estimación', 'error')
     }
 }
 
@@ -214,48 +267,65 @@ const handleSaveDraft = async () => {
     if(!draftName.value) return
     
     try {
-        // Logic to append after last task
-        let defaultDate = null
-        if (props.wp.tasks && props.wp.tasks.length > 0) {
-            // Find the latest start date among existing tasks to append after
-            // Or ideally, find the latest END date, but we only store task.startDate in DB + estimation hours
-            // For simplicity/continuity with "adding behind previous ones", let's take the last task's startDate 
-            // and maybe add a day, or just use the same start date if we don't calculate duration here.
-            // User said "behind previous ones", implying order.
-            
-            // Let's find the max start date
-            const lastTask = props.wp.tasks.reduce((latest, current) => {
-                 const lDate = dayjs(latest.startDate)
-                 const cDate = dayjs(current.startDate)
-                 return cDate.isAfter(lDate) ? current : latest
-            }, props.wp.tasks[0])
-            
-            if (lastTask && lastTask.startDate) {
-                // If we want to append "after", we could add 1 day, or just use the same date and let them drag it.
-                // Usually "behind" means "after in the list" (which is visual) or "after in time".
-                // Given Gantt context, likely "after in time".
-                defaultDate = dayjs(lastTask.startDate).format('YYYY-MM-DD')
-            }
-        }
-
         const parsedWPDate = parseDateSafe(props.wp?.startDate)
-        
-        if (!defaultDate) {
-             defaultDate = parsedWPDate && parsedWPDate.isValid() 
-            ? parsedWPDate.format('YYYY-MM-DD') 
-            : dayjs().format('YYYY-MM-DD')
-        }
-        
+        const wpStartDateFormatted = parsedWPDate && parsedWPDate.isValid() 
+            ? parsedWPDate.format('YYYY-MM-DD HH:mm') 
+            : dayjs().startOf('day').format('YYYY-MM-DD HH:mm')
+
         const { data } = await createTask({ 
             workPackageId: props.wp.id, 
             name: draftName.value, 
-            startDate: defaultDate 
+            startDate: wpStartDateFormatted
         })
         const newTask = data.createTask
         
-        const estimationPromises = Object.entries(draftEstimations.value).map(([roleId, hours]) => {
+        const estimationPromises = Object.entries(draftEstimations.value).map(([roleId, hoursStr]) => {
+            const hours = parseFloat(hoursStr)
             if (hours > 0) {
-               return estimateTask({ taskId: newTask.id, roleId, hours: parseFloat(hours) })
+                 let lastEndDateForRole = null
+                 
+                 if (props.wp.tasks && props.wp.tasks.length > 0) {
+                     for (let i = props.wp.tasks.length - 1; i >= 0; i--) {
+                         const t = props.wp.tasks[i]
+                         const prevEst = t.estimations?.find(e => e.role.id === roleId)
+                         if (prevEst) {
+                             if (prevEst.endDate) {
+                                 lastEndDateForRole = parseDateSafe(prevEst.endDate)
+                                 break
+                             }
+                             if (prevEst.startDate) {
+                                 lastEndDateForRole = parseDateSafe(prevEst.startDate)
+                                 break
+                             }
+                         }
+                     }
+                 }
+
+                 let estStart
+                 if (lastEndDateForRole) {
+                     estStart = lastEndDateForRole
+                 } else {
+                     estStart = dayjs(wpStartDateFormatted)
+                 }
+
+                 // Ensure start date is a business day
+                 while (estStart.day() === 0 || estStart.day() === 6) {
+                     estStart = estStart.add(1, 'day')
+                 }
+
+                 // Logic: hours / 3 (hours per day) = days needed
+                 const days = hours / 3
+                 const estEnd = addBusinessDays(estStart, days)
+
+                 console.log(`[DEBUG] Role ${roleId}: Start=${estStart.format('YYYY-MM-DD HH:mm')}, End=${estEnd.format('YYYY-MM-DD HH:mm')}, Days=${days}`)
+
+                 return estimateTask({ 
+                     taskId: newTask.id, 
+                     roleId, 
+                     hours,
+                     startDate: estStart.format('YYYY-MM-DD HH:mm'),
+                     endDate: estEnd.format('YYYY-MM-DD HH:mm')
+                })
             }
             return Promise.resolve()
         })
@@ -271,17 +341,7 @@ const handleSaveDraft = async () => {
     }
 }
 
-// Utils
-const parseDateSafe = (val) => {
-    if (!val) return null
-    if (!isNaN(val) && !isNaN(parseFloat(val))) {
-        return dayjs.utc(parseInt(val))
-    }
-    return dayjs(val)
-}
 
-const formatDate = (dateVal) => {
-    const d = parseDateSafe(dateVal)
-    return d && d.isValid() ? d.format('YYYY-MM-DD') : ''
-}
+
+
 </script>

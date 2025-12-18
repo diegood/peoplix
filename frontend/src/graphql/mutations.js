@@ -367,8 +367,8 @@ export const CREATE_TASK = gql`
 `
 
 export const ESTIMATE_TASK = gql`
-  mutation EstimateTask($taskId: ID!, $roleId: ID!, $hours: Float!) {
-    estimateTask(taskId: $taskId, roleId: $roleId, hours: $hours) {
+  mutation EstimateTask($taskId: ID!, $roleId: ID!, $hours: Float!, $startDate: String, $endDate: String) {
+    estimateTask(taskId: $taskId, roleId: $roleId, hours: $hours, startDate: $startDate, endDate: $endDate) {
        ...TaskFields
     }
   }

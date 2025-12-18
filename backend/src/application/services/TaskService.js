@@ -39,8 +39,12 @@ export class TaskService {
         return this.repository.delete(id)
     }
 
-    async estimateTask({ taskId, roleId, hours }) {
-        await this.repository.saveEstimation({ taskId, roleId, hours })
+    async estimateTask({ taskId, roleId, hours, startDate, endDate }) {
+        const payload = { taskId, roleId, hours }
+        if (startDate) payload.startDate = new Date(startDate)
+        if (endDate) payload.endDate = new Date(endDate)
+        
+        await this.repository.saveEstimation(payload)
         await this.recalculateEndDate(taskId)
         return this.repository.findById(taskId)
     }
