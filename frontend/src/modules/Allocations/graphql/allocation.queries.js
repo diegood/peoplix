@@ -188,8 +188,8 @@ export const UPDATE_ALLOCATION = gql`
 `
 
 export const DELETE_ALLOCATION = gql`
-  mutation DeleteAllocation($allocationId: ID!) {
-    deleteAllocation(allocationId: $allocationId)
+  mutation DeleteAllocation($id: ID!) {
+    deleteAllocation(id: $id)
   }
 `
 

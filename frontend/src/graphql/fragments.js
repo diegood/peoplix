@@ -126,8 +126,12 @@ export const TASK_ESTIMATION_FRAGMENT = gql`
     role {
       ...RoleFields
     }
+    collaborator {
+      ...CollaboratorFields
+    }
   }
   ${ROLE_FRAGMENT}
+  ${COLLABORATOR_FRAGMENT}
 `
 
 export const TASK_FRAGMENT = gql`

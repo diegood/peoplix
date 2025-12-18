@@ -39,6 +39,8 @@ export const WorkPackageSchema = gql`
     hours: Float!
     startDate: String
     endDate: String
+    collaboratorId: String
+    collaborator: Collaborator
   }
 
   extend type Query {
@@ -55,7 +57,7 @@ export const WorkPackageSchema = gql`
     updateTask(id: ID!, name: String, description: String, startDate: String, endDate: String, collaboratorId: ID): Task
     deleteTask(id: ID!): Boolean
 
-    estimateTask(taskId: ID!, roleId: ID!, hours: Float!, startDate: String, endDate: String): Task
+    estimateTask(taskId: ID!, roleId: ID!, hours: Float!, startDate: String, endDate: String, collaboratorId: ID): Task
     
     addTaskDependency(taskId: ID!, predecessorId: ID!): Task
     removeTaskDependency(taskId: ID!, predecessorId: ID!): Task

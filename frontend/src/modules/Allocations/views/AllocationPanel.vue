@@ -205,7 +205,7 @@ const handleConfirmAssignment = async (data) => {
 
 const handleDeleteAllocation = async (allocationId) => {
     if (await notificationStore.showDialog("¿Eliminar registro completo? (Para finalizar asignación, edita el porcentaje)")) {
-        await deleteAllocation({ allocationId })
+        await deleteAllocation({ id: allocationId })
     }
 }
 

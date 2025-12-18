@@ -39,10 +39,25 @@ export class TaskService {
         return this.repository.delete(id)
     }
 
-    async estimateTask({ taskId, roleId, hours, startDate, endDate }) {
+    async estimateTask({ taskId, roleId, hours, startDate, endDate, collaboratorId }) {
+        console.log(`[TaskService] estimateTask: taskId=${taskId} roleId=${roleId} hours=${hours} coll=${collaboratorId}`)
+        console.log(`[TaskService] Dates: start=${startDate} (${typeof startDate}), end=${endDate} (${typeof endDate})`)
+
         const payload = { taskId, roleId, hours }
-        if (startDate) payload.startDate = new Date(startDate)
-        if (endDate) payload.endDate = new Date(endDate)
+        
+        const parseDate = (d) => {
+            if (!d) return undefined
+            if (d instanceof Date) return d
+            // If string contains only digits, treat as timestamp
+            if (typeof d === 'string' && /^\d+$/.test(d)) {
+                return new Date(parseInt(d))
+            }
+            return new Date(d)
+        }
+
+        if (startDate) payload.startDate = parseDate(startDate)
+        if (endDate) payload.endDate = parseDate(endDate)
+        if (collaboratorId) payload.collaboratorId = collaboratorId
         
         await this.repository.saveEstimation(payload)
         await this.recalculateEndDate(taskId)

@@ -47,6 +47,21 @@ const roleColumns = computed(() => {
     return project.value.requiredRoles.map(rr => rr.role)
 })
 
+const projectAllocations = computed(() => {
+    return project.value?.allocations || []
+})
+
+const projectCollaborators = computed(() => {
+    if (!project.value?.allocations) return []
+    const unique = new Map()
+    project.value.allocations.forEach(a => {
+        if (a.collaborator && !unique.has(a.collaborator.id)) {
+            unique.set(a.collaborator.id, a.collaborator)
+        }
+    })
+    return Array.from(unique.values())
+})
+
 const summary = computed(() => {
     let totalHours = 0
     workPackages.value.forEach(wp => {
@@ -115,10 +130,13 @@ const handleUpdateTaskDate = async ({ taskId, roleId, hours, startDate, endDate 
 
       <div class="space-y-4">
           <EstimationWorkPackage 
-            v-for="wp in workPackages" 
+            v-for="(wp, index) in workPackages" 
             :key="wp.id" 
             :wp="wp"
-            :roleColumns="roleColumns"
+            :role-columns="roleColumns"
+            :initially-expanded="index === 0"
+            :project-collaborators="projectCollaborators"
+            :project-allocations="projectAllocations"
             @refetch="refetchWP"
           />
       </div>

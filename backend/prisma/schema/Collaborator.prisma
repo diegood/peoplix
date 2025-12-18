@@ -16,6 +16,7 @@ model Collaborator {
   customFieldValues   CustomFieldValue[]
   absences            Absence[]
   assignedTasks       Task[]
+  taskEstimations     TaskEstimation[]
   vacationDaysPerYear Json? // Stores { "2024": 23, "2025": 25 }
 
   workCenterId String?

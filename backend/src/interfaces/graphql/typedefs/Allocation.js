@@ -24,9 +24,9 @@ type Allocation {
   deleteAllocation(id: ID!): Boolean!
 
   
-  addAllocationRole(allocationId: ID!, roleId: ID!): Allocation!
+  addAllocationRole(allocationId: ID!, roleId: ID!): Role!
 
-  removeAllocationRole(allocationId: ID!, roleId: ID!): Allocation!
+  removeAllocationRole(allocationId: ID!, roleId: ID!): Boolean!
   }
 
 `;

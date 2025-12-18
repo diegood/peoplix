@@ -58,6 +58,15 @@ export const GET_PROJECTS = gql`
               level
           }
       }
+      allocations {
+        id
+        collaborator {
+            ...CollaboratorFields
+        }
+        roles {
+            ...RoleFields
+        }
+      }
       sprints {
         id
         name
@@ -133,8 +142,8 @@ export const GET_MILESTONE_TYPES = gql`
 `
 
 export const GET_COLLABORATORS = gql`
-  query GetCollaborators {
-    collaborators {
+  query GetCollaborators($search: String) {
+    collaborators(search: $search) {
       ...CollaboratorFields
       roles {
         ...RoleFields

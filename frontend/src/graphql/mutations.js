@@ -85,8 +85,8 @@ export const UPDATE_ALLOCATION = gql`
 `
 
 export const DELETE_ALLOCATION = gql`
-  mutation DeleteAllocation($allocationId: ID!) {
-    deleteAllocation(allocationId: $allocationId)
+  mutation DeleteAllocation($id: ID!) {
+    deleteAllocation(id: $id)
   }
 `
 
@@ -367,8 +367,8 @@ export const CREATE_TASK = gql`
 `
 
 export const ESTIMATE_TASK = gql`
-  mutation EstimateTask($taskId: ID!, $roleId: ID!, $hours: Float!, $startDate: String, $endDate: String) {
-    estimateTask(taskId: $taskId, roleId: $roleId, hours: $hours, startDate: $startDate, endDate: $endDate) {
+  mutation EstimateTask($taskId: ID!, $roleId: ID!, $hours: Float!, $startDate: String, $endDate: String, $collaboratorId: ID) {
+    estimateTask(taskId: $taskId, roleId: $roleId, hours: $hours, startDate: $startDate, endDate: $endDate, collaboratorId: $collaboratorId) {
        ...TaskFields
     }
   }
@@ -400,4 +400,10 @@ export const UPDATE_TASK = gql`
     }
   }
   ${TASK_FRAGMENT}
+`
+
+export const DELETE_TASK = gql`
+  mutation DeleteTask($id: ID!) {
+    deleteTask(id: $id)
+  }
 `

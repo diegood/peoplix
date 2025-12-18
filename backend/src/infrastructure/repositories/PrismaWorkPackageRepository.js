@@ -7,7 +7,7 @@ export class PrismaWorkPackageRepository {
             include: {
                 tasks: {
                     include: {
-                        estimations: { include: { role: true } },
+                        estimations: { include: { role: true, collaborator: true } },
                         collaborator: true
                     }
                 }
@@ -22,7 +22,7 @@ export class PrismaWorkPackageRepository {
              include: {
                 tasks: {
                     include: {
-                        estimations: { include: { role: true } },
+                        estimations: { include: { role: true, collaborator: true } },
                         collaborator: true
                     }
                 }
