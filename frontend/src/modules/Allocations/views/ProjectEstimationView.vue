@@ -95,17 +95,31 @@ const chartEnd = computed(() => {
     return dayjs(chartStart.value).add(3, 'month').format('YYYY-MM-DD HH:mm')
 })
 
+const debounceMap = ref(new Map())
+
 const handleUpdateTaskDate = async ({ taskId, roleId, hours, startDate, endDate }) => {
-    console.log('[DEBUG View] handleUpdateTaskDate', { taskId, roleId, hours, startDate, endDate })
-    try {
-        await estimateTask({ taskId, roleId, hours: parseFloat(hours), startDate, endDate })
-        await refetchWP()
-        notificationStore.showToast('Fecha actualizada', 'success')
-    } catch (err) {
-        notificationStore.showToast('Error al mover tarea', 'error')
-        refetchWP()
-        console.error(err)
+    // Clear existing timeout for this task
+    if (debounceMap.value.has(taskId)) {
+        clearTimeout(debounceMap.value.get(taskId))
     }
+
+    // Set new timeout
+    const timeoutId = setTimeout(async () => {
+        console.log('[DEBUG View] Debounced Update', { taskId, roleId, hours, startDate, endDate })
+        try {
+            await estimateTask({ taskId, roleId, hours: parseFloat(hours), startDate, endDate })
+            await refetchWP()
+            notificationStore.showToast('Fecha actualizada', 'success')
+        } catch (err) {
+            notificationStore.showToast('Error al mover tarea', 'error')
+            refetchWP() // Revert UI if possible (refetch checks server state)
+            console.error(err)
+        } finally {
+            debounceMap.value.delete(taskId)
+        }
+    }, 1000) // 1 second debounce
+
+    debounceMap.value.set(taskId, timeoutId)
 }
 </script>
 

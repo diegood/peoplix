@@ -27,3 +27,35 @@ export const addBusinessDays = (startDate, days) => {
     
     return current
 }
+
+
+export const addWorkingDays = (startDate, durationHours, blockedDates = []) => {
+    // Scaling factor: 1 work hour = 3 visual hours (8h = 24h)
+    let hoursRemaining = durationHours * 3
+    let current = dayjs(startDate)
+    const blockedSet = new Set(blockedDates)
+
+    // Ensure start date is valid (skip weekends/blocked)
+    while (current.day() === 0 || current.day() === 6 || blockedSet.has(current.format('YYYY-MM-DD'))) {
+        current = current.add(1, 'day').startOf('day')
+    }
+    
+    while (hoursRemaining > 0) {
+        // Ensure current day is valid (in case we wrapped into one)
+        while (current.day() === 0 || current.day() === 6 || blockedSet.has(current.format('YYYY-MM-DD'))) {
+             current = current.add(1, 'day').startOf('day')
+        }
+
+        const endOfDay = current.endOf('day')
+        const hoursInDay = endOfDay.diff(current, 'hour', true)
+
+        if (hoursRemaining <= hoursInDay) {
+            current = current.add(hoursRemaining, 'hour')
+            hoursRemaining = 0
+        } else {
+            hoursRemaining -= hoursInDay
+            current = current.add(1, 'day').startOf('day')
+        }
+    }
+    return current
+}

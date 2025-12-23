@@ -8,7 +8,6 @@
                 :precision="'day'"
                 bar-start="from"
                 bar-end="to"
-                push-on-overlap
                 :auto-scroll-to-today="true"
                 :date-format="FORMAT"
                 locale="es"
@@ -18,10 +17,13 @@
                 :highlighted-days-in-week="[0, 6]"
                 label-column-title="Nombre"
                 :current-time="true"
+                currentTimeLabel="Ahora"
                 :show-group-label="false"
                 :show-progress="true"
                 :default-progress-resizable="true"
                 @dragend-bar="handleDragEndBar"
+                :utc="true"
+                :noOverlap="false"
             >
                 <g-gantt-row
                     v-for="row in ganttRows"
@@ -84,7 +86,7 @@ const setTaskDate = (taskId, dates) => {
 const handleDragEndBar = (e) => {
     const { bar } = e
     
-    if (bar.ganttBarConfig.id.startsWith('vacation|')) return
+    if (bar.ganttBarConfig.id.startsWith('vacation|') || bar.ganttBarConfig.id.startsWith('holiday|')) return
 
     const [taskId, roleId] = bar.ganttBarConfig.id.split('|')
     
@@ -105,12 +107,6 @@ const handleDragEndBar = (e) => {
 
     const days = hours / 8
     const newEndDate = addBusinessDays(newStartDate, days)
-
-    console.log('[DEBUG Gantt] Adjusted Dates:', { 
-        originalFrom: bar.from, 
-        newStart: newStartDate.format(FORMAT), 
-        newEnd: newEndDate.format(FORMAT) 
-    })
 
     emit('update-task-date', { 
         taskId, 
@@ -223,39 +219,102 @@ const ganttRows = computed(() => {
                                 }
                             }
                         })
-                        
-                    if (rowDef.collaboratorId) {
-                        const col = uniqueCollaborators.find(c => c.id === rowDef.collaboratorId)
-                        if (col && col.absences) {
-                            col.absences.forEach(absence => {
-                                bars.push({
-                                    id: `vacation|${absence.id}|${rowDef.id}`,
-                                    label: 'Vacaciones', 
-                                    from: dayjs(absence.startDate).format(FORMAT),
-                                    to: dayjs(absence.endDate).format(FORMAT),
-                                    ganttBarConfig: {
-                                        id: `vacation|${absence.id}|${rowDef.id}`,
-                                        label: absence.type?.name || 'Ausencia',
-                                        immobile: true, 
-                                        style: {
-                                            background: `repeating-linear-gradient(
-                                                45deg,
-                                                #e5e7eb,
-                                                #e5e7eb 10px,
-                                                #f3f4f6 10px,
-                                                #f3f4f6 20px
-                                            )`,
-                                            color: '#6b7280',
-                                            fontSize: '10px',
-                                            borderRadius: '4px',
-                                            border: '1px solid #d1d5db',
-                                            opacity: 0.8
-                                        }
+                            if (rowDef.collaboratorId) {
+                                const col = uniqueCollaborators.find(c => c.id === rowDef.collaboratorId)
+                                if (col) {
+                                    if (col.absences) {
+                                        col.absences.forEach(absence => {
+                                            bars.push({
+                                                id: `vacation|${absence.id}|${rowDef.id}`,
+                                                label: 'Vacaciones', 
+                                                from: dayjs(absence.startDate).format(FORMAT),
+                                                to: dayjs(absence.endDate).format(FORMAT),
+                                                ganttBarConfig: {
+                                                    id: `vacation|${absence.id}|${rowDef.id}`,
+                                                    label: absence.type?.name || 'Ausencia',
+                                                    immobile: true, 
+                                                    style: {
+                                                        background: `repeating-linear-gradient(
+                                                            45deg,
+                                                            #e5e7eb,
+                                                            #e5e7eb 10px,
+                                                            #f3f4f6 10px,
+                                                            #f3f4f6 20px
+                                                        )`,
+                                                        color: '#6b7280',
+                                                        fontSize: '10px',
+                                                        borderRadius: '4px',
+                                                        border: '1px solid #d1d5db',
+                                                        opacity: 0.8
+                                                    }
+                                                }
+                                            })
+                                        })
                                     }
-                                })
-                            })
-                        }
-                    }
+
+                                    let holidays = []
+                                    if (col.holidayCalendar && col.holidayCalendar.holidays) {
+                                        let hList = col.holidayCalendar.holidays
+                                        if (typeof hList === 'string') {
+                                           try { hList = JSON.parse(hList) } catch(e) {}
+                                        }
+                                        if (Array.isArray(hList)) holidays = [...holidays, ...hList]
+                                    } 
+                                    
+                                    if (col.workCenter && col.workCenter.publicHolidayCalendars) {
+                                        col.workCenter.publicHolidayCalendars.forEach(cal => {
+                                            if (cal.holidays && Array.isArray(cal.holidays)) {
+                                                holidays = [...holidays, ...cal.holidays]
+                                            }
+                                        })
+                                    }
+                                    
+                                    const uniqueHolidays = []
+                                    const seenDates = new Set()
+                                    holidays.forEach(h => {
+                                        const d = h.date || h
+                                        if (!seenDates.has(d)) {
+                                            seenDates.add(d)
+                                            uniqueHolidays.push(h)
+                                        }
+                                    })
+                                    holidays = uniqueHolidays
+
+                                    holidays.forEach((h, idx) => {
+                                        const dateStr = h.date || h
+                                        if (!dateStr) return
+                                        
+                                        const hDate = dayjs(dateStr)
+                                        if (!hDate.isValid()) return
+
+                                        bars.push({
+                                            id: `holiday|${col.id}|${dateStr}|${idx}|${rowDef.id}`,
+                                            label: h.name || 'Festivo',
+                                            from: hDate.format(FORMAT),
+                                            to: hDate.add(1, 'day').subtract(1, 'minute').format(FORMAT),
+                                            ganttBarConfig: {
+                                                id: `holiday|${col.id}|${dateStr}|${idx}|${rowDef.id}`,
+                                                label: h.name || 'Festivo',
+                                                immobile: true,
+                                                style: {
+                                                    background: `repeating-linear-gradient(
+                                                        45deg,
+                                                        #fee2e2,
+                                                        #fee2e2 10px,
+                                                        #fecaca 10px,
+                                                        #fecaca 20px
+                                                    )`,
+                                                    color: '#991b1b',
+                                                    fontSize: '9px',
+                                                    borderRadius: '4px',
+                                                    border: '1px solid #f87171',
+                                                    opacity: 0.8
+                                                }
+                                            }
+                                        })
+                                    })
+                                }
+                            }
 
                     return {
                         id: rowDef.id,

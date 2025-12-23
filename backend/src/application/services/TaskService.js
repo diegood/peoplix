@@ -40,15 +40,12 @@ export class TaskService {
     }
 
     async estimateTask({ taskId, roleId, hours, startDate, endDate, collaboratorId }) {
-        console.log(`[TaskService] estimateTask: taskId=${taskId} roleId=${roleId} hours=${hours} coll=${collaboratorId}`)
-        console.log(`[TaskService] Dates: start=${startDate} (${typeof startDate}), end=${endDate} (${typeof endDate})`)
 
         const payload = { taskId, roleId, hours }
         
         const parseDate = (d) => {
             if (!d) return undefined
             if (d instanceof Date) return d
-            // If string contains only digits, treat as timestamp
             if (typeof d === 'string' && /^\d+$/.test(d)) {
                 return new Date(parseInt(d))
             }
@@ -100,25 +97,93 @@ export class TaskService {
                      nextDay = nextDay.add(1, 'day')
                  }
                  calculatedStartDate = nextDay
-                 await this.repository.update(taskId, { startDate: calculatedStartDate.toDate() })
              }
         }
 
-        if (!calculatedStartDate) return
+        if (!calculatedStartDate) {
+            return
+        }
 
+        const blockedDates = new Set()
+        if (task.collaboratorId) {
+             const { prisma } = await import('../../infrastructure/database/client.js') 
+             
+             const col = await prisma.collaborator.findUnique({
+                 where: { id: task.collaboratorId },
+                 include: {
+                     absences: { include: { type: true } },
+                     holidayCalendar: true,
+                     workCenter: { include: { publicHolidayCalendars: { include: { holidays: true } } } }
+                 }
+             })
+
+             if (col) {
+                 if (col.absences) {
+                     col.absences.forEach(a => {
+                         let d = dayjs(a.startDate)
+                         const end = dayjs(a.endDate)
+                         while (d.isBefore(end) || d.isSame(end, 'day')) {
+                             blockedDates.add(d.format('YYYY-MM-DD'))
+                             d = d.add(1, 'day')
+                         }
+                     })
+                 }
+                 let holidays = []
+                 if (col.holidayCalendar && col.holidayCalendar.holidays) {
+                     let hList = col.holidayCalendar.holidays
+                     try {
+                        if (typeof hList === 'string') hList = JSON.parse(hList)
+                     } catch(e) {}
+                     if (Array.isArray(hList)) holidays = [...holidays, ...hList]
+                 }
+                 if (col.workCenter && col.workCenter.publicHolidayCalendars) {
+                     col.workCenter.publicHolidayCalendars.forEach(cal => {
+                        if (cal.holidays && Array.isArray(cal.holidays)) {
+                            holidays = [...holidays, ...cal.holidays]
+                        }
+                     })
+                 }
+                 holidays.forEach(h => blockedDates.add(h.date || h))
+
+                 const otherTasks = await prisma.task.findMany({
+                     where: {
+                         collaboratorId: task.collaboratorId,
+                         id: { not: taskId },
+                         endDate: { gte: calculatedStartDate.toISOString() } 
+                     }
+                 })
+                 
+                 otherTasks.forEach(t => {
+                     if (t.startDate && t.endDate) {
+                         let d = dayjs(t.startDate)
+                         const end = dayjs(t.endDate)
+                         while (d.isBefore(end) || d.isSame(end, 'day')) {
+                             blockedDates.add(d.format('YYYY-MM-DD'))
+                             d = d.add(1, 'day')
+                         }
+                     }
+                 })
+             }
+        }
         
+        while (calculatedStartDate.day() === 0 || calculatedStartDate.day() === 6 || blockedDates.has(calculatedStartDate.format('YYYY-MM-DD'))) {
+             calculatedStartDate = calculatedStartDate.add(1, 'day')
+        }
+        
+        await this.repository.update(taskId, { startDate: calculatedStartDate.toDate() })
+
+
         const hoursPerRole = task.estimations.map(e => e.hours)
         const maxHours = hoursPerRole.length > 0 ? Math.max(...hoursPerRole) : 0
         
         const daysNeeded = Math.ceil(maxHours / 8)
+
         let endDate = calculatedStartDate.clone()
         
         if (daysNeeded > 0) {
-            let addedDays = 0
-            let daysToProcess = daysNeeded
             for (let i = 1; i < daysNeeded; i++) {
                  endDate = endDate.add(1, 'day')
-                 while (endDate.day() === 0 || endDate.day() === 6) {
+                 while (endDate.day() === 0 || endDate.day() === 6 || blockedDates.has(endDate.format('YYYY-MM-DD'))) {
                      endDate = endDate.add(1, 'day')
                  }
             }

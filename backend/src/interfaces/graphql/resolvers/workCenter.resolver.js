@@ -14,7 +14,10 @@ export const workCenterResolver = {
     savePublicHolidayCalendar: (_, args) => service.savePublicHolidayCalendar(args)
   },
   WorkCenter: {
-      publicHolidayCalendars: (parent) => service.getPublicHolidayCalendars(parent.id)
+      publicHolidayCalendars: (parent) => {
+          if (parent.publicHolidayCalendars) return parent.publicHolidayCalendars
+          return service.getPublicHolidayCalendars(parent.id)
+      }
   },
   PublicHolidayCalendar: {
       holidays: (parent) => {

@@ -25,6 +25,15 @@ export const SKILL_WITH_LEVEL_FRAGMENT = gql`
   ${SKILL_FRAGMENT}
 `
 
+export const HOLIDAY_CALENDAR_FRAGMENT = gql`
+  fragment HolidayCalendarFields on HolidayCalendar {
+    id
+    year
+    holidays
+    lastModified
+  }
+`
+
 export const COLLABORATOR_FRAGMENT = gql`
   fragment CollaboratorFields on Collaborator {
     id
@@ -57,7 +66,11 @@ export const COLLABORATOR_FRAGMENT = gql`
         color
       }
     }
+    holidayCalendar {
+      ...HolidayCalendarFields
+    }
   }
+  ${HOLIDAY_CALENDAR_FRAGMENT}
 `
 
 export const PROJECT_FRAGMENT = gql`
@@ -92,15 +105,6 @@ export const HARDWARE_FRAGMENT = gql`
     type
     serialNumber
     assignedDate
-  }
-`
-
-export const HOLIDAY_CALENDAR_FRAGMENT = gql`
-  fragment HolidayCalendarFields on HolidayCalendar {
-    id
-    year
-    holidays
-    lastModified
   }
 `
 
@@ -152,7 +156,7 @@ export const TASK_FRAGMENT = gql`
     startDate
     endDate
     collaborator {
-        ...CollaboratorFields
+      ...CollaboratorFields
     }
     estimations {
       ...TaskEstimationFields
