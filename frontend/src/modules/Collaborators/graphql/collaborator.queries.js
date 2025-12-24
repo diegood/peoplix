@@ -182,3 +182,132 @@ export const SET_CUSTOM_FIELD_VALUE = gql`
     }
   }
 `
+
+export const ADD_COLLABORATOR_CAREER_OBJECTIVE = gql`
+  mutation AddCollaboratorCareerObjective($collaboratorId: ID!, $year: Int!, $quarter: Int!, $description: String!, $skillId: ID, $targetLevel: Int) {
+    addCollaboratorCareerObjective(collaboratorId: $collaboratorId, year: $year, quarter: $quarter, description: $description, skillId: $skillId, targetLevel: $targetLevel) {
+      id
+      year
+      quarter
+      description
+      status
+      skill { id name }
+      targetLevel
+    }
+  }
+`
+
+export const UPDATE_COLLABORATOR_CAREER_OBJECTIVE = gql`
+  mutation UpdateCollaboratorCareerObjective($id: ID!, $status: String!) {
+    updateCollaboratorCareerObjective(id: $id, status: $status) {
+       id
+       status
+    }
+  }
+`
+
+export const DELETE_COLLABORATOR_CAREER_OBJECTIVE = gql`
+  mutation DeleteCollaboratorCareerObjective($id: ID!) {
+    deleteCollaboratorCareerObjective(id: $id)
+  }
+`
+
+export const ADD_COLLABORATOR_MEETING = gql`
+  mutation AddCollaboratorMeeting($collaboratorId: ID!, $date: String!, $notes: String) {
+    addCollaboratorMeeting(collaboratorId: $collaboratorId, date: $date, notes: $notes) {
+      id
+      date
+      notes
+      actionItems { id description status }
+    }
+  }
+`
+
+export const UPDATE_COLLABORATOR_MEETING = gql`
+  mutation UpdateCollaboratorMeeting($id: ID!, $date: String, $notes: String) {
+    updateCollaboratorMeeting(id: $id, date: $date, notes: $notes) {
+      id
+      date
+      notes
+    }
+  }
+`
+
+export const DELETE_COLLABORATOR_MEETING = gql`
+  mutation DeleteCollaboratorMeeting($id: ID!) {
+    deleteCollaboratorMeeting(id: $id)
+  }
+`
+
+export const ADD_MEETING_ACTION_ITEM = gql`
+  mutation AddMeetingActionItem($meetingId: ID!, $description: String!) {
+    addMeetingActionItem(meetingId: $meetingId, description: $description) {
+      id
+      description
+      status
+    }
+  }
+`
+
+export const UPDATE_MEETING_ACTION_ITEM = gql`
+  mutation UpdateMeetingActionItem($id: ID!, $status: String, $description: String) {
+    updateMeetingActionItem(id: $id, status: $status, description: $description) {
+      id
+      status
+      description
+    }
+  }
+`
+
+export const DELETE_MEETING_ACTION_ITEM = gql`
+  mutation DeleteMeetingActionItem($id: ID!) {
+     deleteMeetingActionItem(id: $id)
+  }
+`
+
+export const GET_COLLABORATOR_CAREER_PLAN = gql`
+  query GetCollaboratorCareerPlan($id: ID!) {
+    collaborator(id: $id) {
+      id
+      firstName
+      lastName
+      userName
+      contractedHours
+      joinDate
+      skills {
+        id
+        level
+        skill { id name }
+      }
+      skillHistory {
+        id
+        level
+        createdAt
+        skill { id name }
+      }
+      careerObjectives {
+        id
+        year
+        quarter
+        description
+        status
+        skill { id name }
+        targetLevel
+      }
+      projectSkills {
+         id
+         name
+      }
+      meetings {
+        id
+        date
+        notes
+        actionItems { 
+            id 
+            description 
+            status 
+        }
+      }
+    }
+  }
+`

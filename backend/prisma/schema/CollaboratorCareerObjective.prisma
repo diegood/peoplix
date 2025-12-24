@@ -1,0 +1,14 @@
+model CollaboratorCareerObjective {
+  id          String @id @default(uuid())
+  year        Int
+  quarter     Int
+  description String
+  status      String @default("PENDING")
+
+  skillId     String?
+  skill       Skill?  @relation(fields: [skillId], references: [id])
+  targetLevel Int?
+
+  collaboratorId String
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,11 @@
+model CollaboratorSkillHistory {
+  id        String   @id @default(uuid())
+  level     Int
+  createdAt DateTime @default(now())
+
+  collaboratorId String
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+
+  skillId String
+  skill   Skill  @relation(fields: [skillId], references: [id])
+}

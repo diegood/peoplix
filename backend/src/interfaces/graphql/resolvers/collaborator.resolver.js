@@ -5,7 +5,8 @@ const service = new CollaboratorService()
 
 export const collaboratorResolver = {
   Query: {
-    collaborators: () => service.getAll()
+    collaborators: () => service.getAll(),
+    collaborator: (_, { id }) => service.getById(id)
   },
   Mutation: {
     createCollaborator: (_, args) => service.create(args),
@@ -19,7 +20,19 @@ export const collaboratorResolver = {
     
     addHardware: (_, args) => service.addHardware(args),
     removeHardware: (_, { id }) => service.removeHardware(id),
-    updateHolidayCalendar: (_, args) => service.updateHolidayCalendar(args)
+    updateHolidayCalendar: (_, args) => service.updateHolidayCalendar(args),
+
+    addCollaboratorCareerObjective: (_, { collaboratorId, year, quarter, description, skillId, targetLevel }) => service.addCareerObjective(collaboratorId, year, quarter, description, skillId, targetLevel),
+    updateCollaboratorCareerObjective: (_, { id, status }) => service.updateCareerObjective(id, status),
+    deleteCollaboratorCareerObjective: (_, { id }) => service.deleteCareerObjective(id),
+    
+    addCollaboratorMeeting: (_, { collaboratorId, date, notes }) => service.addMeeting(collaboratorId, date, notes),
+    updateCollaboratorMeeting: (_, { id, ...data }) => service.updateMeeting(id, data),
+    deleteCollaboratorMeeting: (_, { id }) => service.deleteMeeting(id),
+
+    addMeetingActionItem: (_, { meetingId, description }) => service.addMeetingActionItem(meetingId, description),
+    updateMeetingActionItem: (_, { id, ...data }) => service.updateMeetingActionItem(id, data),
+    deleteMeetingActionItem: (_, { id }) => service.deleteMeetingActionItem(id)
   },
   HolidayCalendar: {
       holidays: (parent) => {
@@ -96,6 +109,65 @@ export const collaboratorResolver = {
               where: { collaboratorId: parent.id },
               include: { type: true }
           })
+      },
+      skillHistory: (parent) => prisma.collaboratorSkillHistory.findMany({ where: { collaboratorId: parent.id }, orderBy: { createdAt: 'desc' }, include: { skill: true } }),
+      careerObjectives: (parent) => prisma.collaboratorCareerObjective.findMany({ where: { collaboratorId: parent.id }, orderBy: [{ year: 'asc' }, { quarter: 'asc' }] }),
+      projectSkills: async (parent) => {
+          const allocations = await prisma.allocation.findMany({
+              where: { collaboratorId: parent.id },
+              include: {
+                  project: {
+                      include: {
+                          requiredRoles: {
+                              include: {
+                                  skills: {
+                                      include: { skill: true }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          })
+          
+          const skillsMap = new Map()
+          allocations.forEach(alloc => {
+              if (alloc.project && alloc.project.requiredRoles) {
+                  alloc.project.requiredRoles.forEach(req => {
+                       if (req.skills) {
+                           req.skills.forEach(rs => {
+                               if (rs.skill && !skillsMap.has(rs.skill.id)) {
+                                   skillsMap.set(rs.skill.id, rs.skill)
+                               }
+                           })
+                       }
+                  })
+              }
+          })
+          
+          return Array.from(skillsMap.values())
+      },
+      meetings: (parent) => prisma.collaboratorMeeting.findMany({ 
+          where: { collaboratorId: parent.id }, 
+          orderBy: { date: 'desc' },
+          include: { actionItems: true }
+      })
+  },
+  CollaboratorSkillHistory: {
+      createdAt: (parent) => parent.createdAt.toISOString()
+  },
+  CollaboratorCareerObjective: {
+      skill: (parent) => {
+          if (parent.skill) return parent.skill
+          if (parent.skillId) return prisma.skill.findUnique({ where: { id: parent.skillId } })
+          return null
+      }
+  },
+  CollaboratorMeeting: {
+      date: (parent) => parent.date.toISOString(),
+      actionItems: (parent) => {
+          if (parent.actionItems) return parent.actionItems
+          return prisma.meetingActionItem.findMany({ where: { meetingId: parent.id } })
       }
   }
 }

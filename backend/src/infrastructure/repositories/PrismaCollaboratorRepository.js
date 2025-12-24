@@ -66,6 +66,16 @@ export class PrismaCollaboratorRepository {
             update: { level },
             create: { collaboratorId, skillId, level }
         })
+        
+        // Record history
+        await prisma.collaboratorSkillHistory.create({
+            data: {
+                collaboratorId,
+                skillId,
+                level
+            }
+        })
+
         return this.findById(collaboratorId)
     }
 
@@ -104,5 +114,60 @@ export class PrismaCollaboratorRepository {
         return prisma.holidayCalendar.create({
             data: { collaboratorId, year, holidays: holidaysJson }
         })
+    }
+
+    // Career Objectives
+    async addCareerObjective(data) {
+        return prisma.collaboratorCareerObjective.create({ data })
+    }
+
+    async updateCareerObjective(id, data) {
+        return prisma.collaboratorCareerObjective.update({
+            where: { id },
+            data
+        })
+    }
+
+    async deleteCareerObjective(id) {
+        await prisma.collaboratorCareerObjective.delete({ where: { id } })
+        return true
+    }
+
+    // Meetings
+    async addMeeting(data) {
+        return prisma.collaboratorMeeting.create({ 
+            data,
+            include: { actionItems: true }
+        })
+    }
+
+    async updateMeeting(id, data) {
+        return prisma.collaboratorMeeting.update({
+            where: { id },
+            data,
+            include: { actionItems: true }
+        })
+    }
+
+    async deleteMeeting(id) {
+        await prisma.collaboratorMeeting.delete({ where: { id } })
+        return true
+    }
+
+    // Action Items
+    async addActionItem(data) {
+        return prisma.meetingActionItem.create({ data })
+    }
+
+    async updateActionItem(id, data) {
+        return prisma.meetingActionItem.update({
+            where: { id },
+            data
+        })
+    }
+
+    async deleteActionItem(id) {
+        await prisma.meetingActionItem.delete({ where: { id } })
+        return true
     }
 }

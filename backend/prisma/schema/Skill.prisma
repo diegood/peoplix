@@ -2,6 +2,8 @@ model Skill {
   id   String @id @default(uuid())
   name String @unique
 
-  collaborators CollaboratorSkill[]
-  requirements  RequirementSkill[]
+  collaborators       CollaboratorSkill[]
+  requirements        RequirementSkill[]
+  collaboratorHistory CollaboratorSkillHistory[]
+  careerObjectives    CollaboratorCareerObjective[]
 }

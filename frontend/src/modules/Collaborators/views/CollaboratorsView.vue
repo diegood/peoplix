@@ -6,30 +6,30 @@ import {
   UPDATE_COLLABORATOR,
   DELETE_COLLABORATOR,
 } from '@/modules/Collaborators/graphql/collaborator.queries'
-import { GET_CUSTOM_FIELD_DEFINITIONS } from '@/graphql/queries' // Keep global or move? Keeping global for now as it's settings.
+import { GET_CUSTOM_FIELD_DEFINITIONS } from '@/graphql/queries'
 import { useNotificationStore } from '@/stores/notificationStore'
 
-// Components
 import CollaboratorFilter from '../components/CollaboratorFilter.vue'
 import CollaboratorList from '../components/CollaboratorList.vue'
+
 import CollaboratorFormModal from '../forms/CollaboratorFormModal.vue'
+import CollaboratorProfileModal from '../components/CollaboratorProfileModal.vue'
 
 const notificationStore = useNotificationStore()
 
-// Queries
 const { result, loading, error } = useQuery(GET_COLLABORATORS)
 const { result: customFieldsResult } = useQuery(GET_CUSTOM_FIELD_DEFINITIONS)
 
-// Mutations
 const { mutate: updateCollaborator } = useMutation(UPDATE_COLLABORATOR, { refetchQueries: ['GetCollaborators'] })
 const { mutate: deleteCollaborator } = useMutation(DELETE_COLLABORATOR, { refetchQueries: ['GetCollaborators'] })
 
-// State
+
 const showModal = ref(false)
+const showProfileModal = ref(false)
 const selectedCollaborator = ref(null)
+const selectedProfileId = ref(null)
 const searchQuery = ref('')
 
-// Computed
 const filteredCollaborators = computed(() => {
     if (!result.value?.collaborators) return []
     if (!searchQuery.value) return result.value.collaborators
@@ -41,7 +41,6 @@ const filteredCollaborators = computed(() => {
     )
 })
 
-// Actions
 const openCreateModal = () => {
     selectedCollaborator.value = null
     showModal.value = true
@@ -50,6 +49,11 @@ const openCreateModal = () => {
 const openEditModal = (collab) => {
     selectedCollaborator.value = collab
     showModal.value = true
+}
+
+const openProfileModal = (collab) => {
+    selectedProfileId.value = collab.id
+    showProfileModal.value = true
 }
 
 const handleDelete = async (collabId) => {
@@ -90,6 +94,7 @@ const toggleActive = async (collab) => {
         @toggle-active="toggleActive"
         @delete="handleDelete"
         @edit="openEditModal"
+        @view-profile="openProfileModal"
     />
 
     <CollaboratorFormModal 
@@ -97,6 +102,12 @@ const toggleActive = async (collab) => {
         :collaborator="selectedCollaborator"
         :custom-field-definitions="customFieldsResult?.customFieldDefinitions || []"
         @close="showModal = false"
+    />
+
+    <CollaboratorProfileModal 
+        :show="showProfileModal"
+        :collaborator-id="selectedProfileId"
+        @close="showProfileModal = false"
     />
   </div>
 </template>

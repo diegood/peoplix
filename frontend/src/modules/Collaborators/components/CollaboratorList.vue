@@ -8,7 +8,7 @@ defineProps({
     error: Object
 })
 
-const emit = defineEmits(['toggle-active', 'delete', 'edit'])
+const emit = defineEmits(['toggle-active', 'delete', 'edit', 'view-profile'])
 </script>
 
 <template>
@@ -37,6 +37,7 @@ const emit = defineEmits(['toggle-active', 'delete', 'edit'])
           @toggle-active="(c) => emit('toggle-active', c)"
           @delete="(id) => emit('delete', id)"
           @edit="(c) => emit('edit', c)"
+          @view-profile="(c) => emit('view-profile', c)"
       />
     </div>
 </template>

@@ -20,6 +20,41 @@ type Collaborator {
   workCenter: WorkCenter
   vacationDaysPerYear: JSON
   absences: [Absence]
+  skillHistory: [CollaboratorSkillHistory!]!
+  careerObjectives: [CollaboratorCareerObjective!]!
+  projectSkills: [Skill!]!
+  meetings: [CollaboratorMeeting!]!
+}
+
+type CollaboratorMeeting {
+  id: ID!
+  date: String!
+  notes: String
+  actionItems: [MeetingActionItem!]!
+}
+
+type MeetingActionItem {
+  id: ID!
+  description: String!
+  status: String!
+  meetingId: ID!
+}
+
+type CollaboratorSkillHistory {
+  id: ID!
+  level: Int!
+  createdAt: String!
+  skill: Skill!
+}
+
+type CollaboratorCareerObjective {
+  id: ID!
+  year: Int!
+  quarter: Int!
+  description: String!
+  status: String!
+  skill: Skill
+  targetLevel: Int
 }
 
 type CollaboratorSkill {
@@ -29,8 +64,8 @@ type CollaboratorSkill {
 }
 
   extend type Query {
-
-  collaborators(search: String): [Collaborator!]!
+    collaborator(id: ID!): Collaborator
+    collaborators(search: String): [Collaborator!]!
   }
 
   extend type Mutation {
@@ -51,6 +86,18 @@ type CollaboratorSkill {
   addCollaboratorRole(collaboratorId: ID!, roleId: ID!): Collaborator!
 
   removeCollaboratorRole(collaboratorId: ID!, roleId: ID!): Collaborator!
+  
+  addCollaboratorCareerObjective(collaboratorId: ID!, year: Int!, quarter: Int!, description: String!, skillId: ID, targetLevel: Int): CollaboratorCareerObjective!
+  updateCollaboratorCareerObjective(id: ID!, status: String!): CollaboratorCareerObjective!
+  deleteCollaboratorCareerObjective(id: ID!): Boolean!
+  
+  addCollaboratorMeeting(collaboratorId: ID!, date: String!, notes: String): CollaboratorMeeting!
+  updateCollaboratorMeeting(id: ID!, date: String, notes: String): CollaboratorMeeting!
+  deleteCollaboratorMeeting(id: ID!): Boolean!
+
+  addMeetingActionItem(meetingId: ID!, description: String!): MeetingActionItem!
+  updateMeetingActionItem(id: ID!, status: String, description: String): MeetingActionItem!
+  deleteMeetingActionItem(id: ID!): Boolean!
   }
 
 `;

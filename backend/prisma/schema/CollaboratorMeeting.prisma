@@ -1,0 +1,13 @@
+model CollaboratorMeeting {
+  id    String   @id @default(uuid())
+  date  DateTime
+  notes String?  @db.Text
+
+  collaboratorId String
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+
+  actionItems MeetingActionItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

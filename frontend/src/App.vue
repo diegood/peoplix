@@ -9,8 +9,7 @@ import ConfirmDialog from './components/ConfirmDialog.vue'
   <div class="flex h-screen bg-gray-50 text-gray-900 font-sans">
     <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
       <div class="p-6 border-b border-gray-100 flex items-center gap-2">
-        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">W</div>
-        <span class="text-xl font-bold text-gray-800">WorkArround</span>
+        <img src="@/assets/logo.png" alt="PEOPLIX" class="h-8">
       </div>
 
       <nav class="flex-1 p-4 space-y-1">

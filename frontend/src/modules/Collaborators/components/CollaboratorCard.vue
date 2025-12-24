@@ -5,7 +5,7 @@ defineProps({
     collab: Object
 })
 
-const emit = defineEmits(['toggle-active', 'delete', 'edit'])
+const emit = defineEmits(['toggle-active', 'delete', 'edit', 'view-profile'])
 
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
@@ -18,7 +18,7 @@ const formatDate = (dateStr) => {
         <div class="p-4 flex items-center justify-between" 
              :class="{ 'opacity-60 bg-gray-50': !collab.isActive }">
             
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" @click="emit('view-profile', collab)">
               <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shrink-0"
                    :class="collab.isActive ? 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600' : 'bg-gray-200 text-gray-400'">
                 {{ collab.firstName?.charAt(0) || collab.name?.charAt(0) }}
