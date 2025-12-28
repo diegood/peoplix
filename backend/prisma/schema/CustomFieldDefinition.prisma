@@ -2,10 +2,13 @@ model CustomFieldDefinition {
   id          String  @id @default(uuid())
   fieldName   String  @unique
   fieldLabel  String
-  fieldType   String // "text", "number", "date", "select", "textarea", "checkbox", "radio"
-  fieldConfig String // JSON for FormKit schema (options, validation, etc.)
+  fieldType   String // "text", "number", "date", "select", "textarea", "checkbox", "radio" TODO [refactor][low] usar un enum
+  fieldConfig String // JSON esta configurado para FormKit schema (options, validation, etc.)
   isRequired  Boolean @default(false)
   order       Int     @default(0)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
 
   values CustomFieldValue[]
 

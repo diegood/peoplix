@@ -156,7 +156,7 @@ const handleDelete = async (id) => {
             </div>
             
             <div>
-               <label class="block text-sm font-medium mb-1 text-gray-700">Usuario (Login)</label>
+               <label class="block text-sm font-medium mb-1 text-gray-700">Email (Login)</label>
                <input v-model="formData.userName" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" required />
             </div>
 

@@ -1,9 +1,8 @@
 model Milestone {
   id   String @id @default(uuid())
   name String
-  date String // ISO Date string
+  date String
 
-  // Legacy string field (optional during migration)
   type String?
 
   projectId String

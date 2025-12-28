@@ -1,8 +1,10 @@
 import { prisma } from '../database/client.js'
 
 export class PrismaCollaboratorRepository {
-    async findAll() {
+    async findAll(organizationId) {
+        if (!organizationId) throw new Error("Organization Context Required");
         return prisma.collaborator.findMany({
+            where: { organizationId },
             include: {
                 skills: { include: { skill: true } },
                 allocations: { include: { project: true } },
@@ -57,7 +59,6 @@ export class PrismaCollaboratorRepository {
         return true
     }
 
-    // Relation management methods
     async addSkill(collaboratorId, skillId, level) {
          await prisma.collaboratorSkill.upsert({
             where: {
@@ -67,7 +68,6 @@ export class PrismaCollaboratorRepository {
             create: { collaboratorId, skillId, level }
         })
         
-        // Record history
         await prisma.collaboratorSkillHistory.create({
             data: {
                 collaboratorId,
@@ -88,7 +88,6 @@ export class PrismaCollaboratorRepository {
         return true
     }
 
-    // Hardware
     async addHardware(data) {
         return prisma.hardware.create({ data })
     }
@@ -98,7 +97,6 @@ export class PrismaCollaboratorRepository {
         return true
     }
 
-    // Holiday Calendar
     async updateHolidayCalendar({ collaboratorId, year, holidays }) {
         const holidaysJson = JSON.stringify(holidays)
         const existing = await prisma.holidayCalendar.findUnique({
@@ -116,7 +114,6 @@ export class PrismaCollaboratorRepository {
         })
     }
 
-    // Career Objectives
     async addCareerObjective(data) {
         return prisma.collaboratorCareerObjective.create({ data })
     }
@@ -133,7 +130,6 @@ export class PrismaCollaboratorRepository {
         return true
     }
 
-    // Meetings
     async addMeeting(data) {
         return prisma.collaboratorMeeting.create({ 
             data,
@@ -154,7 +150,6 @@ export class PrismaCollaboratorRepository {
         return true
     }
 
-    // Action Items
     async addActionItem(data) {
         return prisma.meetingActionItem.create({ data })
     }

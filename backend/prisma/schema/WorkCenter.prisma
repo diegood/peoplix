@@ -1,8 +1,11 @@
 model WorkCenter {
   id          String  @id @default(uuid())
   name        String  @unique
-  regionCode  String? // e.g. "MD" (Community code) or empty
-  countryCode String // e.g. "ES"
+  regionCode  String? // Ej: "MD" Comunidad de Madrid
+  countryCode String
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
 
   collaborators          Collaborator[]
   publicHolidayCalendars PublicHolidayCalendar[]

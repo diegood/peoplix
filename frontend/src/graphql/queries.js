@@ -278,6 +278,7 @@ export const GET_ME = gql`
   query MeProfile {
     me {
       id
+      email
       userName
       firstName
       lastName

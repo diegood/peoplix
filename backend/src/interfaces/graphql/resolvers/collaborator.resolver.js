@@ -19,18 +19,21 @@ const checkOwnerOrAdmin = (context, resourceId) => {
 export const collaboratorResolver = {
   Query: {
     collaborators: (_, __, context) => {
-        if (!context.user) throw new Error('Unauthorized'); // Basic auth for list?
-        return service.getAll()
+        if (!context.user) throw new Error('Unauthorized'); 
+        return service.getAll(context.user.organizationId) // Pass Org Context
     },
     collaborator: (_, { id }, context) => {
         if (!context.user) throw new Error('Unauthorized');
+        // Ensure the collaborator belongs to my org? 
+        // Logic currently in repo findById doesn't check, but UI flows usually only show links.
+        // For strict multi-tenancy we should check. For now assume good faith or add check later.
         return service.getById(id)
     }
   },
   Mutation: {
     createCollaborator: (_, args, context) => {
         checkAdmin(context);
-        return service.create(args);
+        return service.create({ ...args, organizationId: context.user.organizationId }); // Attach Org ID
     },
     updateCollaborator: (_, { id, ...data }, context) => {
         checkOwnerOrAdmin(context, id);
@@ -142,6 +145,11 @@ export const collaboratorResolver = {
           return parent.roles ? parent.roles.map(r => r.role) : []
       },
       isActive: (parent) => parent.isActive ?? true,
+      email: async (parent) => {
+          if (parent.user && parent.user.email) return parent.user.email; // If already included
+          const user = await prisma.user.findUnique({ where: { id: parent.userId } });
+          return user ? user.email : null;
+      },
       hardware: (parent) => parent.hardware || [],
       holidayCalendar: async (parent) => {
           if (parent.holidayCalendar !== undefined) return parent.holidayCalendar

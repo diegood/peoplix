@@ -12,7 +12,6 @@ const adapter = new PrismaPg(pool)
 
 export const prisma = new PrismaClient({ adapter })
 
-// Verify critical models presence on startup
 if (process.env.NODE_ENV !== 'production') {
     if (!prisma.collaborator) console.error('CRITICAL: prisma.collaborator is missing!')
 }

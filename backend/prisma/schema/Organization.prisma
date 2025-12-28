@@ -1,0 +1,17 @@
+model Organization {
+  id   String @id @default(uuid())
+  name String
+
+  projects               Project[]
+  collaborators          Collaborator[]
+  roles                  Role[]
+  skills                 Skill[]
+  milestoneTypes         MilestoneType[]
+  technologies           Technology[]
+  workCenters            WorkCenter[]
+  customFieldDefinitions CustomFieldDefinition[]
+  hierarchyTypes         HierarchyType[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

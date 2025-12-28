@@ -1,12 +1,13 @@
 import { PrismaCollaboratorRepository } from '../../infrastructure/repositories/PrismaCollaboratorRepository.js'
+import { prisma } from '../../infrastructure/database/client.js'
 
 export class CollaboratorService {
     constructor() {
         this.repository = new PrismaCollaboratorRepository()
     }
     
-    async getAll() {
-        return this.repository.findAll()
+    async getAll(organizationId) {
+        return this.repository.findAll(organizationId)
     }
     
     async getById(id) {
@@ -14,10 +15,46 @@ export class CollaboratorService {
     }
     
     async create(data) {
+        const email = data.userName;
+        if (!email) throw new Error("Email (userName) is required");
+        
+        let userId;
+
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        
+        if (existingUser) {
+            userId = existingUser.id;
+        } else {
+            const newUser = await prisma.user.create({
+                data: {
+                    email,
+                    password: data.password || '123456'
+                }
+            });
+            userId = newUser.id;
+        }
+
+        const existingMember = await prisma.collaborator.findFirst({
+            where: {
+                userId,
+                organizationId: data.organizationId
+            }
+        });
+
+        if (existingMember) {
+            throw new Error(`User ${email} is already a member of this organization.`);
+        }
+
         if (data.joinDate) {
              data.joinDate = new Date(data.joinDate).toISOString()
         }
-        return this.repository.create(data)
+        
+        const { password, ...collaboratorData } = data;
+
+        return this.repository.create({
+            ...collaboratorData,
+            userId
+        })
     }
     
     async update(id, data) {

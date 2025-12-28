@@ -1,6 +1,6 @@
 model CustomFieldValue {
   id    String @id @default(uuid())
-  value String // JSON value
+  value String // Aca viene un Json ojaldre
 
   collaboratorId String
   collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)

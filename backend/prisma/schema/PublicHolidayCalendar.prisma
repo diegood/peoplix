@@ -1,7 +1,7 @@
 model PublicHolidayCalendar {
   id       String @id @default(uuid())
   year     Int
-  holidays String // JSON array of holidays
+  holidays String // JSON array de fechas festivas
 
   workCenterId String
   workCenter   WorkCenter @relation(fields: [workCenterId], references: [id], onDelete: Cascade)

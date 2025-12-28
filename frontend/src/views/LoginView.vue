@@ -37,12 +37,12 @@ const handleLogin = async () => {
       
       <form @submit.prevent="handleLogin" class="space-y-6">
         <div>
-          <label class="block text-sm font-medium mb-1">Usuario</label>
+          <label class="block text-sm font-medium mb-1">Email</label>
           <input 
             v-model="username"
             type="text" 
             class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded focus:border-blue-500 focus:outline-none"
-            placeholder="Enter username"
+            placeholder="tu@email.com"
             required
           />
         </div>

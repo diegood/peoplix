@@ -4,6 +4,9 @@ model Project {
   contractedHours Int
   startDate       String?
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
   allocations   Allocation[]
   milestones    Milestone[]
   sprints       Sprint[]

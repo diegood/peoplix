@@ -1,7 +1,7 @@
 model MeetingActionItem {
   id          String @id @default(uuid())
   description String
-  status      String @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  status      String @default("PENDING")
 
   meetingId String
   meeting   CollaboratorMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)

@@ -6,11 +6,11 @@ const workPackageService = new WorkPackageService()
 
 export const projectResolver = {
   Query: {
-    projects: (_, args) => service.getAll(args),
+    projects: (_, args, { user }) => service.getAll(user.organizationId, args),
     project: (_, { id }) => service.getById(id)
   },
   Mutation: {
-    createProject: (_, { name, contractedHours, startDate }) => service.create({ name, contractedHours, startDate }),
+    createProject: (_, { name, contractedHours, startDate }, { user }) => service.create({ name, contractedHours, startDate, organizationId: user.organizationId }),
     updateProject: (_, { id, name, contractedHours, startDate }) => service.update(id, { name, contractedHours, startDate }),
     deleteProject: async (_, { id }) => {
         await service.delete(id)
@@ -19,7 +19,7 @@ export const projectResolver = {
     addProjectRequirement: (_, args) => service.addRequirement(args),
     updateProjectRequirement: (_, args) => service.updateRequirement(args.requirementId, args),
     removeProjectRequirement: (_, { projectId, requirementId }) => service.removeRequirement(requirementId),
-    addRequirementSkill: (_, { requirementId, skillName, level }) => service.addRequirementSkill(requirementId, skillName, level),
+    addRequirementSkill: (_, { requirementId, skillName, level }, { user }) => service.addRequirementSkill(requirementId, skillName, level, user.organizationId),
     removeRequirementSkill: (_, { requirementId, skillId }) => service.removeRequirementSkill(requirementId, skillId),
     createMilestone: (_, args) => service.createMilestone(args),
     deleteMilestone: async (_, { id }) => {

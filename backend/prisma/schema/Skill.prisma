@@ -1,9 +1,14 @@
 model Skill {
   id   String @id @default(uuid())
-  name String @unique
+  name String
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
 
   collaborators       CollaboratorSkill[]
   requirements        RequirementSkill[]
   collaboratorHistory CollaboratorSkillHistory[]
   careerObjectives    CollaboratorCareerObjective[]
+
+  @@unique([name, organizationId])
 }

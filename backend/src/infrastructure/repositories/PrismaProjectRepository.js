@@ -1,8 +1,10 @@
 import { prisma } from '../database/client.js'
 
 export class PrismaProjectRepository {
-    async findAll(args = {}) {
+    async findAll(organizationId, args = {}) {
+        if (!organizationId) throw new Error("Organization Context Required");
         return prisma.project.findMany({
+            where: { organizationId, ...args },
             include: {
                 allocations: {
                     include: {
@@ -19,7 +21,6 @@ export class PrismaProjectRepository {
                     }
                 }
             },
-            ...args
         })
     }
 
@@ -38,9 +39,9 @@ export class PrismaProjectRepository {
         })
     }
 
-    async create({ name, contractedHours }) {
+    async create({ name, contractedHours, organizationId }) {
         return prisma.project.create({
-            data: { name, contractedHours }
+            data: { name, contractedHours, organizationId }
         })
     }
 
@@ -56,7 +57,6 @@ export class PrismaProjectRepository {
         return true
     }
 
-    // Requirements
     async addRequirement({ projectId, roleId, resourceCount, monthlyHours }) {
         return prisma.projectRequirement.create({
             data: { projectId, roleId, resourceCount, monthlyHours },
@@ -80,11 +80,13 @@ export class PrismaProjectRepository {
         return true
     }
 
-    async addRequirementSkill(requirementId, skillName, level) {
-         // Upsert logic from original resolver
-        let skill = await prisma.skill.findUnique({ where: { name: skillName } })
+    async addRequirementSkill(requirementId, skillName, level, organizationId) {
+        let skill = await prisma.skill.findUnique({ 
+            where: { name_organizationId: { name: skillName, organizationId } } 
+        })
+        
         if (!skill) {
-            skill = await prisma.skill.create({ data: { name: skillName } })
+            skill = await prisma.skill.create({ data: { name: skillName, organizationId } })
         }
         
         const existing = await prisma.requirementSkill.findFirst({

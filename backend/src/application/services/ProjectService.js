@@ -5,8 +5,8 @@ export class ProjectService {
         this.repository = new PrismaProjectRepository()
     }
     
-    async getAll(args) {
-        return this.repository.findAll(args)
+    async getAll(orgId, args) {
+        return this.repository.findAll(orgId, args)
     }
     
     async getById(id) {
@@ -14,7 +14,7 @@ export class ProjectService {
     }
     
     async create(data) {
-        return this.repository.create(data)
+        return this.repository.create(data) // data contains orgId
     }
     
     async update(id, data) {
@@ -37,8 +37,8 @@ export class ProjectService {
         return this.repository.removeRequirement(id)
     }
 
-    async addRequirementSkill(requirementId, skillName, level) {
-        return this.repository.addRequirementSkill(requirementId, skillName, level)
+    async addRequirementSkill(requirementId, skillName, level, orgId) {
+        return this.repository.addRequirementSkill(requirementId, skillName, level, orgId)
     }
 
     async removeRequirementSkill(requirementId, skillId) {

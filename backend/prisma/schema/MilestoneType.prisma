@@ -1,7 +1,12 @@
 model MilestoneType {
   id    String @id @default(uuid())
-  name  String @unique
+  name  String
   color String @default("bg-gray-400")
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
   milestones Milestone[]
+
+  @@unique([name, organizationId])
 }

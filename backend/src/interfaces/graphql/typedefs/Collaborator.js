@@ -3,6 +3,7 @@ import gql from 'graphql-tag';
 export const CollaboratorSchema = gql`
 type Collaborator {
   id: ID!
+  email: String
   userName: String
   firstName: String!
   lastName: String!

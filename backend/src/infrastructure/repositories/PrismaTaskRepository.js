@@ -50,7 +50,7 @@ export class PrismaTaskRepository {
         const data = { hours }
         if (startDate) data.startDate = startDate
         if (endDate) data.endDate = endDate
-        if (collaboratorId !== undefined) data.collaboratorId = collaboratorId // Allow null/undefined handling
+        if (collaboratorId !== undefined) data.collaboratorId = collaboratorId
 
         return prisma.taskEstimation.upsert({
             where: {

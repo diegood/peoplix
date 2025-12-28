@@ -1,8 +1,13 @@
 model HierarchyType {
-  id    String @id @default(uuid())
-  name  String @unique
-  color String @default("bg-gray-100 text-gray-700 border-gray-200")
-  rank  Int    @default(0)
+  id   String @id @default(uuid())
+  name String
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  color          String       @default("bg-gray-100 text-gray-700 border-gray-200") // TODO [refactor] usar algun objecto o alguna otra cosa para no tener acoplado Tailwind
+  rank           Int          @default(0)
 
   hierarchies AllocationHierarchy[]
+
+  @@unique([name, organizationId])
 }

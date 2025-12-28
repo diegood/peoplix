@@ -1,6 +1,6 @@
 model Collaborator {
   id        String  @id @default(uuid())
-  userName  String? @unique
+  userName  String?
   firstName String  @default("")
   lastName  String  @default("")
 
@@ -8,8 +8,13 @@ model Collaborator {
   joinDate        DateTime @default(now())
   isActive        Boolean  @default(true)
 
-  password   String?
-  systemRole Int     @default(2) // 1: Admin, 2: User
+  systemRole Int @default(2)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
 
   allocations         Allocation[]
   skills              CollaboratorSkill[]

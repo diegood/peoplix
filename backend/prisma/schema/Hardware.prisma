@@ -1,7 +1,7 @@
 model Hardware {
   id           String   @id @default(uuid())
   name         String
-  type         String // e.g., "Laptop", "Monitor", "Phone"
+  type         String //TODO [definir][low] esto ahora es texto libre deberia estar tipificado? Ej: "Laptop", "Monitor", "Tablet" 
   serialNumber String?
   assignedDate DateTime @default(now())
 

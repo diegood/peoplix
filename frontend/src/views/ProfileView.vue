@@ -75,8 +75,13 @@ const handleSave = async () => {
                   </div>
               </div>
 
+              <div class="mb-4">
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Email (Login)</label>
+                  <input :value="result?.me?.email" disabled class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed" />
+              </div>
+
               <div>
-                  <label class="block text-sm font-semibold text-gray-700 mb-2">Usuario</label>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Alias (Nombre en Pantalla)</label>
                   <input v-model="formData.userName" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition" />
               </div>
 

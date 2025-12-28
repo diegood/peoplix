@@ -8,28 +8,48 @@ export const authResolvers = {
     login: async (_, { input }) => {
       const { username, password } = input;
       
-      const user = await prisma.collaborator.findFirst({
-        where: { userName: username }
+      // 1. Find Global User (Treat username as email)
+      const user = await prisma.user.findUnique({
+        where: { email: username }
       });
 
       if (!user) {
         throw new Error('Invalid credentials');
       }
 
-      // TODO: Use bcrypt for password comparison in production
+      // 2. Check Password
+      // TODO: Use bcrypt in production
       if (user.password !== password) {
         throw new Error('Invalid credentials');
       }
 
+      // 3. Find Collaborator profiles (Organization Memberships)
+      const collaborators = await prisma.collaborator.findMany({
+        where: { userId: user.id },
+        include: { organization: true }
+      });
+
+      if (!collaborators.length) {
+         throw new Error('User is not associated with any organization');
+      }
+
+      // 4. Select Default Organization (First one for now)
+      // Future: Allow user to select org if multiple (Multi-step login or header selection)
+      const activeProfile = collaborators[0];
+
       const token = jwt.sign(
-        { userId: user.id, role: user.systemRole },
+        { 
+            userId: user.id, 
+            organizationId: activeProfile.organizationId,
+            role: activeProfile.systemRole 
+        },
         JWT_SECRET,
         { expiresIn: '7d' }
       );
 
       return {
         token,
-        user
+        user: activeProfile // Return the Collaborator profile the frontend expects
       };
     }
   },
