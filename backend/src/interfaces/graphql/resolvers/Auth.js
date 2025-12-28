@@ -8,10 +8,22 @@ export const authResolvers = {
     login: async (_, { input }) => {
       const { username, password } = input;
       
-      // 1. Find Global User (Treat username as email)
-      const user = await prisma.user.findUnique({
+      let user = await prisma.user.findUnique({
         where: { email: username }
       });
+
+      if (!user) {
+          // If not found by email, try finding by Collaborator userName
+          // Note: userName is not unique in schema, but we'll take the first one or ensure logic elsewhere
+          const collaborator = await prisma.collaborator.findFirst({
+              where: { userName: username },
+              include: { user: true }
+          });
+          
+          if (collaborator && collaborator.user) {
+              user = collaborator.user;
+          }
+      }
 
       if (!user) {
         throw new Error('Invalid credentials');
