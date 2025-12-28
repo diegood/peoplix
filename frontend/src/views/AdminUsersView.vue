@@ -33,12 +33,13 @@ const openModal = (user = null) => {
         firstName: user.firstName, 
         lastName: user.lastName,
         contractedHours: user.contractedHours,
-        systemRole: user.systemRole || 2
+        systemRole: user.systemRole || 2,
+        password: '' // Reset password field
     }
   } else {
     isEditing.value = false
     currentUser.value = {}
-    formData.value = { userName: '', firstName: '', lastName: '', contractedHours: 40, systemRole: 2 }
+    formData.value = { userName: '', firstName: '', lastName: '', contractedHours: 40, systemRole: 2, password: '' }
   }
   isModalOpen.value = true
 }
@@ -52,12 +53,14 @@ const handleSubmit = async () => {
         if (isEditing.value) {
             await updateCollaborator({ 
                 id: currentUser.value.id,
-                ...formData.value
+                ...formData.value,
+                password: formData.value.password || undefined
             })
         } else {
             await createCollaborator({
                 ...formData.value,
-                joinDate: new Date().toISOString()
+                joinDate: new Date().toISOString(),
+                password: formData.value.password || '123456' // Default if not provided
             })
         }
         refetch()
@@ -136,7 +139,7 @@ const handleDelete = async (id) => {
     <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 transform transition-all scale-100">
          <div class="flex justify-between items-center mb-6">
-           <h3 class="text-xl font-bold text-gray-800">{{ isEditing ? 'Edit User' : 'New User' }}</h3>
+           <h3 class="text-xl font-bold text-gray-800">{{ isEditing ? 'Editar usuario' : 'Nuevo usuario' }}</h3>
            <button @click="closeModal" class="p-1 rounded-full hover:bg-gray-100 transition"><X size="20" class="text-gray-500"/></button>
          </div>
          
@@ -155,6 +158,11 @@ const handleDelete = async (id) => {
             <div>
                <label class="block text-sm font-medium mb-1 text-gray-700">Usuario (Login)</label>
                <input v-model="formData.userName" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" required />
+            </div>
+
+            <div>
+               <label class="block text-sm font-medium mb-1 text-gray-700">Contraseña <span class="text-xs text-gray-400 font-normal">(Opcional para edición)</span></label>
+               <input v-model="formData.password" type="password" placeholder="Establecer contraseña" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" />
             </div>
 
             <div>

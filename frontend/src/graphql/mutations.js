@@ -249,8 +249,8 @@ export const REMOVE_COLLABORATOR_SKILL = gql`
 `
 
 export const CREATE_COLLABORATOR = gql`
-  mutation CreateCollaborator($userName: String, $firstName: String!, $lastName: String!, $contractedHours: Int!, $joinDate: String) {
-    createCollaborator(userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate) {
+  mutation CreateCollaborator($userName: String, $firstName: String!, $lastName: String!, $contractedHours: Int!, $joinDate: String, $password: String, $systemRole: Int) {
+    createCollaborator(userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, password: $password, systemRole: $systemRole) {
       ...CollaboratorFields
     }
   }
@@ -258,8 +258,8 @@ export const CREATE_COLLABORATOR = gql`
 `
 
 export const UPDATE_COLLABORATOR = gql`
-  mutation UpdateCollaborator($id: ID!, $userName: String, $firstName: String, $lastName: String, $contractedHours: Int, $joinDate: String, $isActive: Boolean) {
-    updateCollaborator(id: $id, userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, isActive: $isActive) {
+  mutation UpdateCollaborator($id: ID!, $userName: String, $firstName: String, $lastName: String, $contractedHours: Int, $joinDate: String, $isActive: Boolean, $password: String, $systemRole: Int) {
+    updateCollaborator(id: $id, userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, isActive: $isActive, password: $password, systemRole: $systemRole) {
       ...CollaboratorFields
       skills {
         ...SkillWithLevelFields

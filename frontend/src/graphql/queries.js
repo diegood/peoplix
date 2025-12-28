@@ -273,3 +273,16 @@ export const GET_PLANNING_PROJECTS = gql`
   }
   ${WORK_PACKAGE_FRAGMENT}
 `
+
+export const GET_ME = gql`
+  query MeProfile {
+    me {
+      id
+      userName
+      firstName
+      lastName
+      contractedHours
+      systemRole
+    }
+  }
+`

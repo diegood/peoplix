@@ -1,38 +1,15 @@
 <script setup>
 import { ref, watchEffect } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import gql from 'graphql-tag'
+import { GET_ME } from '../graphql/queries'
+import { UPDATE_COLLABORATOR } from '../graphql/mutations'
 import { useAuthStore } from '../stores/auth'
 import { Check, Loader2 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 
-const ME_QUERY = gql`
-  query MeProfile {
-    me {
-      id
-      userName
-      firstName
-      lastName
-      contractedHours
-      systemRole
-    }
-  }
-`
-
-const UPDATE_PROFILE = gql`
-  mutation UpdateMyProfile($id: ID!, $userName: String, $firstName: String, $lastName: String, $password: String) {
-    updateCollaborator(id: $id, userName: $userName, firstName: $firstName, lastName: $lastName, password: $password) {
-       id
-       firstName
-       lastName
-       userName
-    }
-  }
-`
-
-const { result, loading, refetch } = useQuery(ME_QUERY)
-const { mutate: updateProfile, loading: saving } = useMutation(UPDATE_PROFILE)
+const { result, loading, refetch } = useQuery(GET_ME)
+const { mutate: updateProfile, loading: saving } = useMutation(UPDATE_COLLABORATOR)
 
 const formData = ref({
     firstName: '',
@@ -56,7 +33,7 @@ const success = ref(false)
 const handleSave = async () => {
     success.value = false
     try {
-        await updateProfile({
+        const mutationResult = await updateProfile({
             id: result.value.me.id,
             firstName: formData.value.firstName,
             lastName: formData.value.lastName,
@@ -65,9 +42,8 @@ const handleSave = async () => {
         })
         success.value = true
         
-        // Update local auth store so sidebar updates immediately
-        if (result.value?.updateCollaborator) {
-            authStore.updateUser(result.value.updateCollaborator)
+        if (mutationResult?.data?.updateCollaborator) {
+            authStore.updateUser(mutationResult.data.updateCollaborator)
         }
         
         setTimeout(() => success.value = false, 3000)
@@ -106,7 +82,7 @@ const handleSave = async () => {
 
               <div>
                   <label class="block text-sm font-semibold text-gray-700 mb-2">Contraseña <span class="text-xs text-gray-400 font-normal">(Opcional)</span></label>
-                  <input v-model="formData.password" type="password" placeholder="Leave blank to keep current password" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition" />
+                  <input v-model="formData.password" type="password" placeholder="Deja en blanco para mantener la contraseña actual" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition" />
               </div>
 
                <div class="pt-4">
