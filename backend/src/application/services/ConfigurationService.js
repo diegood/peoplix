@@ -10,14 +10,14 @@ import {
 import { PrismaCollaboratorRepository } from '../../infrastructure/repositories/PrismaCollaboratorRepository.js'
 
 export class ConfigurationService {
-    constructor() {
-        this.roles = new PrismaRoleRepository()
-        this.skills = new PrismaSkillRepository()
-        this.technologies = new PrismaTechnologyRepository()
-        this.milestoneTypes = new PrismaMilestoneTypeRepository()
-        this.hierarchyTypes = new PrismaHierarchyTypeRepository()
-        this.customFields = new PrismaCustomFieldRepository()
-        this.collaboratorRepository = new PrismaCollaboratorRepository()
+    constructor(repositories = {}) {
+        this.roles = repositories.roles || new PrismaRoleRepository()
+        this.skills = repositories.skills || new PrismaSkillRepository()
+        this.technologies = repositories.technologies || new PrismaTechnologyRepository()
+        this.milestoneTypes = repositories.milestoneTypes || new PrismaMilestoneTypeRepository()
+        this.hierarchyTypes = repositories.hierarchyTypes || new PrismaHierarchyTypeRepository()
+        this.customFields = repositories.customFields || new PrismaCustomFieldRepository()
+        this.collaboratorRepository = repositories.collaboratorRepository || new PrismaCollaboratorRepository()
     }
     
     // Roles

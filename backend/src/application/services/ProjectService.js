@@ -1,8 +1,8 @@
 import { PrismaProjectRepository } from '../../infrastructure/repositories/PrismaProjectRepository.js'
 
 export class ProjectService {
-    constructor() {
-        this.repository = new PrismaProjectRepository()
+    constructor(repository) {
+        this.repository = repository || new PrismaProjectRepository()
     }
     
     async getAll(orgId, args) {

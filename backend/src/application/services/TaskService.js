@@ -1,9 +1,11 @@
 import { PrismaTaskRepository } from '../../infrastructure/repositories/PrismaTaskRepository.js'
+import { prisma } from '../../infrastructure/database/client.js'
 import dayjs from 'dayjs'
 
 export class TaskService {
-    constructor() {
-        this.repository = new PrismaTaskRepository()
+    constructor(repository, prismaClient) {
+        this.repository = repository || new PrismaTaskRepository()
+        this.prisma = prismaClient || prisma
     }
 
     async getById(id) {
@@ -105,10 +107,8 @@ export class TaskService {
         }
 
         const blockedDates = new Set()
-        if (task.collaboratorId) {
-             const { prisma } = await import('../../infrastructure/database/client.js') 
-             
-             const col = await prisma.collaborator.findUnique({
+         if (task.collaboratorId) {
+             const col = await this.prisma.collaborator.findUnique({
                  where: { id: task.collaboratorId },
                  include: {
                      absences: { include: { type: true } },
@@ -145,7 +145,7 @@ export class TaskService {
                  }
                  holidays.forEach(h => blockedDates.add(h.date || h))
 
-                 const otherTasks = await prisma.task.findMany({
+                 const otherTasks = await this.prisma.task.findMany({
                      where: {
                          collaboratorId: task.collaboratorId,
                          id: { not: taskId },

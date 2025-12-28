@@ -1,8 +1,8 @@
 import { PrismaWorkPackageRepository } from '../../infrastructure/repositories/PrismaWorkPackageRepository.js'
 
 export class WorkPackageService {
-    constructor() {
-        this.repository = new PrismaWorkPackageRepository()
+    constructor(repository) {
+        this.repository = repository || new PrismaWorkPackageRepository()
     }
 
     async get(id) {

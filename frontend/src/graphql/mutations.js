@@ -249,7 +249,7 @@ export const REMOVE_COLLABORATOR_SKILL = gql`
 `
 
 export const CREATE_COLLABORATOR = gql`
-  mutation CreateCollaborator($userName: String, $firstName: String!, $lastName: String!, $contractedHours: Int!, $joinDate: String, $password: String, $systemRole: Int) {
+  mutation CreateCollaborator($userName: String, $firstName: String!, $lastName: String!, $contractedHours: Int!, $joinDate: String!, $password: String, $systemRole: Int) {
     createCollaborator(userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, password: $password, systemRole: $systemRole) {
       ...CollaboratorFields
     }

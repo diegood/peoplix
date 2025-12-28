@@ -2,8 +2,8 @@ import { PrismaCollaboratorRepository } from '../../infrastructure/repositories/
 import { prisma } from '../../infrastructure/database/client.js'
 
 export class CollaboratorService {
-    constructor() {
-        this.repository = new PrismaCollaboratorRepository()
+    constructor(repository) {
+        this.repository = repository || new PrismaCollaboratorRepository()
     }
     
     async getAll(organizationId) {

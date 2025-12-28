@@ -56,8 +56,11 @@ export const authResolvers = {
   Query: {
     me: async (_, __, context) => {
       if (!context.user) return null;
-      return prisma.collaborator.findUnique({
-        where: { id: context.user.userId }
+      return prisma.collaborator.findFirst({
+        where: { 
+            userId: context.user.userId,
+            organizationId: context.user.organizationId
+        }
       });
     }
   }
