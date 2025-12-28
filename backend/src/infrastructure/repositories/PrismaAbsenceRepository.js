@@ -12,9 +12,6 @@ export class PrismaAbsenceRepository {
         const where = {}
         if (collaboratorId) where.collaboratorId = collaboratorId
         if (projectId) {
-            // Find collaborators in this project (using implicit Relation or allocations?)
-            // Absence -> Collaborator. Collaborator -> Allocations -> Project.
-            // Prisma "some" filter:
             where.collaborator = {
                 allocations: {
                     some: { projectId }

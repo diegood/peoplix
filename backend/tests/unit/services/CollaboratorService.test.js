@@ -34,6 +34,18 @@ describe('CollaboratorService', () => {
             delete: vi.fn(),
             addSkill: vi.fn(),
             removeSkill: vi.fn(),
+            addHardware: vi.fn(),
+            removeHardware: vi.fn(),
+            updateHolidayCalendar: vi.fn(),
+            addCareerObjective: vi.fn(),
+            updateCareerObjective: vi.fn(),
+            deleteCareerObjective: vi.fn(),
+            addMeeting: vi.fn(),
+            updateMeeting: vi.fn(),
+            deleteMeeting: vi.fn(),
+            addActionItem: vi.fn(),
+            updateActionItem: vi.fn(),
+            deleteActionItem: vi.fn(),
         };
 
         // Inject the mock repository
@@ -121,6 +133,101 @@ describe('CollaboratorService', () => {
             const orgId = 'org-abc';
             await service.getAll(orgId);
             expect(mockRepository.findAll).toHaveBeenCalledWith(orgId);
+        });
+    });
+
+    describe('Basic CRUD', () => {
+        it('update should convert dates and delegate', async () => {
+            const id = 'c1';
+            const data = { joinDate: '2025-01-01', firstName: 'Jane' };
+            await service.update(id, data);
+            expect(mockRepository.update).toHaveBeenCalledWith(id, expect.objectContaining({
+                firstName: 'Jane',
+                joinDate: expect.any(String) // or Date depending on impl, service uses toISOString() -> String
+            }));
+        });
+        
+        it('delete should delegate', async () => {
+            await service.delete('c1');
+            expect(mockRepository.delete).toHaveBeenCalledWith('c1');
+        });
+        
+        it('getById should delegate', async () => {
+            await service.getById('c1');
+            expect(mockRepository.findById).toHaveBeenCalledWith('c1');
+        });
+    });
+
+    describe('Skills & Hardware', () => {
+        it('Skills Delegation', async () => {
+            await service.addSkill('c1', 's1', 5);
+            expect(mockRepository.addSkill).toHaveBeenCalledWith('c1', 's1', 5);
+            
+            await service.removeSkill('c1', 's1');
+            expect(mockRepository.removeSkill).toHaveBeenCalledWith('c1', 's1');
+        });
+
+        it('Hardware Delegation', async () => {
+            const data = { name: 'Laptop' };
+            await service.addHardware(data);
+            expect(mockRepository.addHardware).toHaveBeenCalledWith(data);
+            
+            await service.removeHardware('h1');
+            expect(mockRepository.removeHardware).toHaveBeenCalledWith('h1');
+        });
+
+        it('Holiday Calendar Delegation', async () => {
+            const data = { calendarId: 'cal1' };
+            await service.updateHolidayCalendar(data);
+            expect(mockRepository.updateHolidayCalendar).toHaveBeenCalledWith(data);
+        });
+    });
+
+    describe('Career Objectives', () => {
+        it('CRUD Delegation', async () => {
+            await service.addCareerObjective('c1', 2025, 1, 'Goal', 'skill1', 5);
+            expect(mockRepository.addCareerObjective).toHaveBeenCalledWith(expect.objectContaining({
+                 collaboratorId: 'c1',
+                 year: 2025,
+                 status: 'PENDING'
+             }));
+
+             await service.updateCareerObjective('obj1', 'ACHIEVED');
+             expect(mockRepository.updateCareerObjective).toHaveBeenCalledWith('obj1', { status: 'ACHIEVED' });
+
+             await service.deleteCareerObjective('obj1');
+             expect(mockRepository.deleteCareerObjective).toHaveBeenCalledWith('obj1');
+        });
+    });
+
+    describe('Meetings & Action Items', () => {
+        it('Meeting CRUD', async () => {
+            await service.addMeeting('c1', '2025-01-01', 'Notes');
+            expect(mockRepository.addMeeting).toHaveBeenCalledWith(expect.objectContaining({
+                date: expect.any(Date)
+            }));
+
+            await service.updateMeeting('m1', { date: '2025-01-02' });
+            expect(mockRepository.updateMeeting).toHaveBeenCalledWith('m1', expect.objectContaining({
+                date: expect.any(Date)
+            }));
+
+            await service.deleteMeeting('m1');
+            expect(mockRepository.deleteMeeting).toHaveBeenCalledWith('m1');
+        });
+
+        it('Action Item CRUD', async () => {
+            await service.addMeetingActionItem('m1', 'Do this');
+            expect(mockRepository.addActionItem).toHaveBeenCalledWith(expect.objectContaining({
+                meetingId: 'm1',
+                status: 'PENDING'
+            }));
+
+            await service.updateMeetingActionItem('ai1', { status: 'DONE' });
+            expect(mockRepository.updateActionItem).toHaveBeenCalledWith('ai1', { status: 'DONE' });
+            
+            await service.deleteMeetingActionItem('ai1');
+            expect(mockRepository.deleteActionItem).toHaveBeenCalledWith('ai1');
         });
     });
 });

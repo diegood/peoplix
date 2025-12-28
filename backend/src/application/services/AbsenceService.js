@@ -3,10 +3,10 @@ import { PrismaCollaboratorRepository } from '../../infrastructure/repositories/
 import { PrismaWorkCenterRepository } from '../../infrastructure/repositories/PrismaWorkCenterRepository.js'
 
 export class AbsenceService {
-    constructor() {
-        this.repository = new PrismaAbsenceRepository()
-        this.collaboratorRepo = new PrismaCollaboratorRepository()
-        this.workCenterRepo = new PrismaWorkCenterRepository()
+    constructor(repositories = {}) {
+        this.repository = repositories.absence || new PrismaAbsenceRepository()
+        this.collaboratorRepo = repositories.collaborator || new PrismaCollaboratorRepository()
+        this.workCenterRepo = repositories.workCenter || new PrismaWorkCenterRepository()
     }
 
     async getAbsenceTypes() { return this.repository.findAllTypes() }

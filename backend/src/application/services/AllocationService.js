@@ -1,8 +1,8 @@
 import { PrismaAllocationRepository } from '../../infrastructure/repositories/PrismaAllocationRepository.js'
 
 export class AllocationService {
-    constructor() {
-        this.repository = new PrismaAllocationRepository()
+    constructor(repository) {
+        this.repository = repository || new PrismaAllocationRepository()
     }
     
     async create(data) {

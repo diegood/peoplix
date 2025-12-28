@@ -2,9 +2,9 @@ import { PrismaWorkCenterRepository } from '../../infrastructure/repositories/Pr
 import { HolidayApiClient } from '../../infrastructure/external/HolidayApiClient.js'
 
 export class WorkCenterService {
-    constructor() {
-        this.repository = new PrismaWorkCenterRepository()
-        this.holidayApi = new HolidayApiClient()
+    constructor(repository, holidayApi) {
+        this.repository = repository || new PrismaWorkCenterRepository()
+        this.holidayApi = holidayApi || new HolidayApiClient()
     }
     
     async getAll() {
