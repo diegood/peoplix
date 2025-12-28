@@ -10,10 +10,28 @@ await app.register(cors, {
   origin: true 
 })
 
+import jwt from 'jsonwebtoken'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey'
+
 app.register(mercurius, {
   schema,
   resolvers,
-  graphiql: true
+  graphiql: true,
+  context: (request) => {
+    const token = request.headers.authorization || ''
+    try {
+      if (token) {
+        // Bearer token
+        const cleanToken = token.replace('Bearer ', '')
+        const decoded = jwt.verify(cleanToken, JWT_SECRET)
+        return { user: decoded }
+      }
+    } catch (e) {
+      console.error('Invalid token', e.message)
+    }
+    return { user: null }
+  }
 })
 
 app.get('/', async function (req, reply) {

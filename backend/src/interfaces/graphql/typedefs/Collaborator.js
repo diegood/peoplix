@@ -6,6 +6,7 @@ type Collaborator {
   userName: String
   firstName: String!
   lastName: String!
+  systemRole: Int
 
   avatar: String
   roles: [Role!]!
@@ -71,9 +72,9 @@ type CollaboratorSkill {
   extend type Mutation {
 
   
-  createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID): Collaborator!
+  createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID, password: String, systemRole: Int): Collaborator!
 
-  updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean, workCenterId: ID): Collaborator!
+  updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean, workCenterId: ID, password: String, systemRole: Int): Collaborator!
 
   deleteCollaborator(id: ID!): Boolean!
 

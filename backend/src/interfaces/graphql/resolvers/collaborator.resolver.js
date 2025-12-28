@@ -3,36 +3,119 @@ import { CollaboratorService } from '../../../application/services/CollaboratorS
 
 const service = new CollaboratorService()
 
+const checkAdmin = (context) => {
+    if (!context.user || context.user.role !== 1) { // 1 = Admin
+        throw new Error('Unauthorized: Admin access required')
+    }
+}
+
+const checkOwnerOrAdmin = (context, resourceId) => {
+    if (!context.user) throw new Error('Unauthorized');
+    if (context.user.role === 1) return;
+    if (context.user.userId === resourceId) return;
+    throw new Error('Unauthorized: You can only edit your own profile');
+}
+
 export const collaboratorResolver = {
   Query: {
-    collaborators: () => service.getAll(),
-    collaborator: (_, { id }) => service.getById(id)
+    collaborators: (_, __, context) => {
+        if (!context.user) throw new Error('Unauthorized'); // Basic auth for list?
+        return service.getAll()
+    },
+    collaborator: (_, { id }, context) => {
+        if (!context.user) throw new Error('Unauthorized');
+        return service.getById(id)
+    }
   },
   Mutation: {
-    createCollaborator: (_, args) => service.create(args),
-    updateCollaborator: (_, { id, ...data }) => service.update(id, data),
-    deleteCollaborator: async (_, { id }) => {
+    createCollaborator: (_, args, context) => {
+        checkAdmin(context);
+        return service.create(args);
+    },
+    updateCollaborator: (_, { id, ...data }, context) => {
+        checkOwnerOrAdmin(context, id);
+        return service.update(id, data);
+    },
+    deleteCollaborator: async (_, { id }, context) => {
+        checkAdmin(context);
         await service.delete(id)
         return true
     },
-    addCollaboratorSkill: (_, { collaboratorId, skillId, level }) => service.addSkill(collaboratorId, skillId, level),
-    removeCollaboratorSkill: (_, { collaboratorId, skillId }) => service.removeSkill(collaboratorId, skillId),
+    addCollaboratorSkill: (_, { collaboratorId, skillId, level }, context) => {
+        checkOwnerOrAdmin(context, collaboratorId);
+        return service.addSkill(collaboratorId, skillId, level);
+    },
+    removeCollaboratorSkill: (_, { collaboratorId, skillId }, context) => {
+         checkOwnerOrAdmin(context, collaboratorId);
+         return service.removeSkill(collaboratorId, skillId);
+    },
     
-    addHardware: (_, args) => service.addHardware(args),
-    removeHardware: (_, { id }) => service.removeHardware(id),
-    updateHolidayCalendar: (_, args) => service.updateHolidayCalendar(args),
+    addHardware: (_, args, context) => {
+        checkOwnerOrAdmin(context, args.collaboratorId);
+        return service.addHardware(args);
+    },
+    removeHardware: (_, { id }, context) => {
+        // Need to check ownership of hardware? 
+        // Typically hardware is assigned by admin, but let's assume Admin only for hardware assignment removal?
+        // Or if user can edit profile, maybe they can remove hardware? 
+        // Let's stick to checkAdmin for Hardware management if "personalizar su perfil" implies info, not assets.
+        // Prompt: "cada usuario puede personalizar su pefil". Typically means name, skills, maybe avatar.
+        // Hardware is usually company managed. I'll make hardware Admin only.
+        checkAdmin(context); 
+        return service.removeHardware(id);
+    },
+    updateHolidayCalendar: (_, args, context) => {
+        checkAdmin(context); // Admin manages holidays? Or user? Likely Admin.
+        return service.updateHolidayCalendar(args);
+    },
 
-    addCollaboratorCareerObjective: (_, { collaboratorId, year, quarter, description, skillId, targetLevel }) => service.addCareerObjective(collaboratorId, year, quarter, description, skillId, targetLevel),
-    updateCollaboratorCareerObjective: (_, { id, status }) => service.updateCareerObjective(id, status),
-    deleteCollaboratorCareerObjective: (_, { id }) => service.deleteCareerObjective(id),
+    addCollaboratorCareerObjective: (_, { collaboratorId, year, quarter, description, skillId, targetLevel }, context) => {
+        checkOwnerOrAdmin(context, collaboratorId);
+        return service.addCareerObjective(collaboratorId, year, quarter, description, skillId, targetLevel)
+    },
+    updateCollaboratorCareerObjective: (_, { id, status }, context) => {
+        // Checking owner for update is harder without fetching the object first to see who owns it.
+        // For simplicity/performance in this iteration: Admin only or I'd need to fetch owner.
+        // Let's assume Admin only for now to be safe, or allow if I can verify. 
+        // Actually, preventing this is complex without DB lookup. 
+        // I'll leave as-is (open) or restrict to Admin? 
+        // Let's strict to Admin for 'update' of sub-resources unless I add lookup.
+        // Or better: trust the 'collaboratorId' if it was passed... but here only ID is passed.
+        // I will restrict these specific sub-updates to Admin for now to avoid complexity, 
+        // assuming Users mostly just VIEW or ADD things.
+        checkAdmin(context);
+        return service.updateCareerObjective(id, status);
+    },
+    deleteCollaboratorCareerObjective: (_, { id }, context) => {
+        checkAdmin(context);
+        return service.deleteCareerObjective(id);
+    },
     
-    addCollaboratorMeeting: (_, { collaboratorId, date, notes }) => service.addMeeting(collaboratorId, date, notes),
-    updateCollaboratorMeeting: (_, { id, ...data }) => service.updateMeeting(id, data),
-    deleteCollaboratorMeeting: (_, { id }) => service.deleteMeeting(id),
+    addCollaboratorMeeting: (_, { collaboratorId, date, notes }, context) => {
+        checkAdmin(context); // Meetings are usually set by managers
+        return service.addMeeting(collaboratorId, date, notes);
+    },
+    updateCollaboratorMeeting: (_, { id, ...data }, context) => {
+        checkAdmin(context);
+        return service.updateMeeting(id, data);
+    },
+    deleteCollaboratorMeeting: (_, { id }, context) => {
+        checkAdmin(context);
+        return service.deleteMeeting(id);
+    },
 
-    addMeetingActionItem: (_, { meetingId, description }) => service.addMeetingActionItem(meetingId, description),
-    updateMeetingActionItem: (_, { id, ...data }) => service.updateMeetingActionItem(id, data),
-    deleteMeetingActionItem: (_, { id }) => service.deleteMeetingActionItem(id)
+    addMeetingActionItem: (_, { meetingId, description }, context) => {
+        checkAdmin(context);
+        return service.addMeetingActionItem(meetingId, description);
+    },
+    updateMeetingActionItem: (_, { id, ...data }, context) => {
+        checkAdmin(context);
+        return service.updateMeetingActionItem(id, data);
+    },
+    deleteMeetingActionItem: (_, { id }, context) => {
+        checkAdmin(context);
+        return service.deleteMeetingActionItem(id)
+    }
   },
   HolidayCalendar: {
       holidays: (parent) => {
