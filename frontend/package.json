@@ -52,7 +52,6 @@
     "prettier": "3.6.2",
     "tailwindcss": "^4.1.18",
     "vite": "^7.2.4",
-    "vite-plugin-vue-devtools": "^8.0.5",
     "vitest": "^4.0.14",
     "vue-chartjs": "^5.3.3",
     "vuedraggable": "^4.1.0"

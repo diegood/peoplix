@@ -1,6 +1,8 @@
 import { ProjectService } from '../../../application/services/ProjectService.js'
+import { WorkPackageService } from '../../../application/services/WorkPackageService.js'
 
 const service = new ProjectService()
+const workPackageService = new WorkPackageService()
 
 export const projectResolver = {
   Query: {
@@ -40,5 +42,8 @@ export const projectResolver = {
   },
   ProjectRequirementSkill: {
       name: (parent) => parent.name || parent.skill?.name
+  },
+  Project: {
+      workPackages: (parent, { status }) => workPackageService.getByProject(parent.id, status)
   }
 }

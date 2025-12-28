@@ -22,6 +22,29 @@
                <div class="text-sm font-medium text-gray-600">
                    {{ wp.tasks?.reduce((acc, t) => acc + (t.estimations?.reduce((a,e)=>a+e.hours,0) || 0), 0) }}h
                </div>
+               
+               <div @click.stop class="relative z-10">
+                   <select 
+                       :value="wp.status || 'BACKLOG'" 
+                       @change="(e) => handleUpdateStatus(e.target.value)"
+                       class="text-xs border rounded-lg py-1.5 pl-3 pr-8 font-medium outline-none cursor-pointer appearance-none shadow-sm transition-all focus:ring-2 focus:ring-blue-500 hover:border-gray-300 w-32"
+                       :class="{
+                           'bg-white text-gray-700 border-gray-300': !wp.status || wp.status === 'BACKLOG',
+                           'bg-yellow-50 text-yellow-700 border-yellow-200': ['TO_DO', 'TODO', 'Por hacer'].includes(wp.status),
+                           'bg-blue-50 text-blue-700 border-blue-200': ['IN_PROGRESS', 'En Progreso'].includes(wp.status),
+                           'bg-green-50 text-green-700 border-green-200': ['DONE', 'Hecho'].includes(wp.status)
+                       }"
+                   >
+                       <option value="BACKLOG">Backlog</option>
+                       <option value="TO_DO">Por hacer</option>
+                       <option value="IN_PROGRESS">En Progreso</option>
+                       <option value="DONE">Hecho</option>
+                   </select> 
+                   <div class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                   </div>
+               </div>
+
               <button @click.stop="handleDeleteWP" class="text-red-400 hover:text-red-600">
                   <Trash size="18" />
               </button>
@@ -188,7 +211,7 @@
 
 <script setup>
 import { ref, computed } from 'vue' // Added computed
-import { useQuery, useMutation } from '@vue/apollo-composable'
+import { useMutation } from '@vue/apollo-composable'
 import { 
     CREATE_TASK, 
     UPDATE_TASK, 
@@ -199,8 +222,7 @@ import {
     REMOVE_TASK_DEPENDENCY,
     DELETE_TASK
 } from '@/graphql/mutations'
-import { GET_COLLABORATORS } from '@/graphql/queries'
-import { Trash, ChevronDown, ChevronRight, Link, X, User, FileText, Search } from 'lucide-vue-next'
+import { Trash, ChevronDown, ChevronRight, Link, X, User, FileText } from 'lucide-vue-next'
 import dayjs from '@/config/dayjs'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { parseDateSafe, formatDate, addBusinessDays } from '@/helper/Date'
@@ -354,6 +376,17 @@ const handleUpdateWPDate = async (e) => {
     }
 }
 
+const handleUpdateStatus = async (status) => {
+    try {
+        await updateWorkPackage({ id: props.wp.id, status })
+        emit('refetch')
+        notificationStore.showToast('Estado actualizado', 'success')
+    } catch (e) {
+        notificationStore.showToast('Error al actualizar estado', 'error')
+        console.error(e)
+    }
+}
+
 const handleAddDependency = async (taskId, predecessorId) => {
     if (!predecessorId) return
     try {
@@ -434,7 +467,6 @@ const handleUpdateEstCollaborator = async (task, roleId, collaboratorId) => {
             collaboratorId
         })
         emit('refetch')
-        collaboratorEditing.value = null
     } catch (e) {
         console.error(e)
         notificationStore.showToast('Error al asignar colaborador', 'error')

@@ -231,3 +231,45 @@ export const GET_PROJECT_WORK_PACKAGES = gql`
   }
   ${WORK_PACKAGE_FRAGMENT}
 `
+
+export const GET_PLANNING_PROJECTS = gql`
+  query GetPlanningProjects {
+    projects {
+      id
+      name
+      startDate
+      requiredRoles {
+        id
+        role {
+          id
+          name
+        }
+      }
+      workPackages {
+        ...WorkPackageFields
+        tasks {
+          id
+          name
+          startDate
+          endDate
+          estimations {
+             id
+             hours
+             startDate
+             endDate
+             role {
+               id
+               name
+             }
+             collaborator {
+               id
+               firstName
+               lastName
+             }
+          }
+        }
+      }
+    }
+  }
+  ${WORK_PACKAGE_FRAGMENT}
+`

@@ -9,8 +9,8 @@ export class WorkPackageService {
         return this.repository.findById(id)
     }
 
-    async getByProject(projectId) {
-        return this.repository.findByProjectId(projectId)
+    async getByProject(projectId, status = null) {
+        return this.repository.findByProjectId(projectId, status)
     }
 
     async create(data) {

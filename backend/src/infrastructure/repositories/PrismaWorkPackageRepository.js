@@ -1,9 +1,13 @@
 import { prisma } from '../database/client.js'
 
 export class PrismaWorkPackageRepository {
-    async findByProjectId(projectId) {
+    async findByProjectId(projectId, status = null) {
+        const where = { projectId }
+        if (status) {
+            where.status = status
+        }
         return prisma.workPackage.findMany({
-            where: { projectId },
+            where,
             include: {
                 tasks: {
                     include: {

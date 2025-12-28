@@ -10,6 +10,7 @@ type Project {
   requiredRoles: [ProjectRequirement!]
   sprints: [Sprint!]
   milestones: [Milestone!]
+  workPackages(status: String): [WorkPackage]
 }
 
 type ProjectRequirement {

@@ -6,8 +6,8 @@ export const allocationResolver = {
   Mutation: {
     createAllocation: (_, args) => service.create(args),
     updateAllocation: (_, { allocationId, ...data }) => service.update(allocationId, data),
-    deleteAllocation: async (_, { allocationId }) => {
-        await service.delete(allocationId)
+    deleteAllocation: async (_, { id }) => {
+        await service.delete(id)
         return true
     },
     addAllocationRole: (_, { allocationId, roleId }) => service.addRole(allocationId, roleId),

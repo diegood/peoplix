@@ -29,6 +29,11 @@ const router = createRouter({
       component: () => import('@/views/SettingsView.vue')
     },
     {
+      path: '/planning',
+      name: 'planning',
+      component: () => import('@/views/MonthlyPlanningView.vue')
+    },
+    {
       path: '/projects/:id/estimation',
       name: 'project-estimation',
       component: () => import('@/modules/Allocations/views/ProjectEstimationView.vue')

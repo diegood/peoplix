@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import { LayoutDashboard, Users, FolderKanban, BarChart3, Settings } from 'lucide-vue-next'
+import { LayoutDashboard, Users, FolderKanban, BarChart3, Settings, Calendar } from 'lucide-vue-next'
 import ToastNotification from './components/ToastNotification.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 </script>
@@ -21,6 +21,11 @@ import ConfirmDialog from './components/ConfirmDialog.vue'
           <RouterLink to="/projects" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
             <FolderKanban size="20" />
             <span>Proyectos</span>
+          </RouterLink>
+
+          <RouterLink to="/planning" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
+            <Calendar size="20" />
+            <span>Planificación</span>
           </RouterLink>
 
           <RouterLink to="/collaborators" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
