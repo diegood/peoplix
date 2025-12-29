@@ -3,7 +3,6 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import App from '../App.vue'
 
-// Mock router components
 const RouterLink = {
   template: '<a><slot /></a>'
 }
