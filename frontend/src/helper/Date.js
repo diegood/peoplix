@@ -55,7 +55,6 @@ export const addBusinessDays = (startDate, days, blockedDates = [], weeklySchedu
 
 export const getDailySchedule = (date, weeklySchedule) => {
     if (!weeklySchedule) {
-        // Default: Mon-Fri 09:00-17:00
         const isWork = date.day() !== 0 && date.day() !== 6
         return { active: isWork, start: '09:00', end: '17:00' }
     }
@@ -85,10 +84,8 @@ export const addWorkingDays = (startDate, durationHours, blockedDates = [], week
     while (hoursRemaining > 0 && loops < 1000) {
         loops++
         
-        // Skip non-working / blocked days
         while (!isWorkingDay(current, weeklySchedule) || blockedSet.has(current.format(DATE_FORMAT_API))) {
             current = current.add(1, 'day').startOf('day')
-            // Set to start time of the new day
             const sched = getDailySchedule(current, weeklySchedule)
             if (sched.active) {
                 const [h, m] = sched.start.split(':').map(Number)
@@ -96,7 +93,6 @@ export const addWorkingDays = (startDate, durationHours, blockedDates = [], week
             }
         }
 
-        // Available hours today
         const sched = getDailySchedule(current, weeklySchedule)
         const [startH, startM] = sched.start.split(':').map(Number)
         const [endH, endM] = sched.end.split(':').map(Number)
@@ -104,15 +100,12 @@ export const addWorkingDays = (startDate, durationHours, blockedDates = [], week
         const dayStartTime = dayjs(current).hour(startH).minute(startM || 0)
         const dayEndTime = dayjs(current).hour(endH).minute(endM || 0)
         
-        // If current is before start time, jump to start time
         if (current.isBefore(dayStartTime)) {
             current = dayStartTime
         }
 
-        // If current is after end time, skip to next day
         if (current.isAfter(dayEndTime) || current.isSame(dayEndTime)) {
              current = current.add(1, 'day').startOf('day')
-             // Logic at start of loop will handle finding next working day/time
              continue
         }
         

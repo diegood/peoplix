@@ -40,7 +40,7 @@ const handleLogin = async () => {
           <label class="block text-sm font-medium mb-1">Email</label>
           <input 
             v-model="username"
-            type="email" 
+            type="text" 
             class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded focus:border-blue-500 focus:outline-none"
             placeholder="tu@email.com"
             required
