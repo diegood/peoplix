@@ -1,5 +1,5 @@
 import dayjs from '@/config/dayjs'
-import { parseDateSafe, isWorkingDay } from '@/helper/Date'
+import { parseDateSafe, isWorkingDay, getDailySchedule } from '@/helper/Date'
 import { GANTT_VISUAL_FACTOR, DATE_TIME_FORMAT_API, DATE_FORMAT_API } from '@/config/constants'
 
 // Helper to get correct schedule (Custom vs Org override)
@@ -81,25 +81,33 @@ export const calculateSequentialStartDate = (roleId, previousTasks, defaultStart
     let lastEndDateForRole = null
 
     if(previousTasks && previousTasks.length > 0) {
-        for (let i = previousTasks.length - 1; i >= 0; i--) {
-            const t = previousTasks[i]
-            const prevEst = t.estimations?.find(e => e.role.id === roleId)
-            
-            if (prevEst) {
+
+        // Collect all potential end dates for this role/collaborator
+        let bestDate = null
+        
+        previousTasks.forEach(t => {
+            const est = t.estimations?.find(e => e.role.id === roleId)
+            if (est) {
+                // If filtering by specific collaborator, check ID
                 if (collaboratorId) {
-                    const prevCollabId = prevEst?.collaborator?.id || null
-                    if (prevCollabId !== collaboratorId) continue
+                    const cId = est.collaborator?.id
+                    if (cId !== collaboratorId) return
                 }
 
                 let d = null
-                if (prevEst.endDate) d = parseDateSafe(prevEst.endDate)
-                else if (prevEst.startDate) d = parseDateSafe(prevEst.startDate)
-
+                if (est.endDate) d = parseDateSafe(est.endDate)
+                else if (est.startDate) d = parseDateSafe(est.startDate)
+                
                 if (d && d.isValid()) {
-                    lastEndDateForRole = d
-                    break
+                    if (!bestDate || d.isAfter(bestDate)) {
+                        bestDate = d
+                    }
                 }
             }
+        })
+
+        if (bestDate) {
+            lastEndDateForRole = bestDate
         }
     }
 
@@ -115,20 +123,39 @@ export const calculateNextStartDate = (lastEndDate, blockedDates = [], weeklySch
     let nextStart = dayjs(lastEndDate)
     const blockedSet = new Set(blockedDates)
 
-    const hour = nextStart.hour()
+    const daySched = isWorkingDay(nextStart, weeklySchedule) 
+        ? getDailySchedule(nextStart, weeklySchedule) 
+        : { active: false }
+    
     const isBlocked = blockedSet.has(nextStart.format(DATE_FORMAT_API))
     
-    const notWorking = !isWorkingDay(nextStart, weeklySchedule)
+    // Default End if active undefined or string parsing fails
+    let endHour = 18
+    if (daySched.active && daySched.end) {
+        const [h] = daySched.end.split(':').map(Number)
+        endHour = h
+    }
+
+    const hour = nextStart.hour()
     
-    if (notWorking || isBlocked || hour >= 18) {
-        if (hour >= 18) {
-            nextStart = nextStart.add(1, 'day').startOf('day').hour(9)
+    // Check Tolerance: If current time is within 1 hour of schedule end, move to next day
+    // This aligns with "Full Day" visual logic (8h task in 9h schedule ends 1hr early but counts as full day)
+    const isNearEndOfDay = hour >= (endHour - 1)
+
+    if (!daySched.active || isBlocked || isNearEndOfDay) {
+        if (daySched.active && isNearEndOfDay) {
+            // Move to next day
+            nextStart = nextStart.add(1, 'day')
         }
         
+        // Find next valid working day
         while (!isWorkingDay(nextStart, weeklySchedule) || blockedSet.has(nextStart.format(DATE_FORMAT_API))) {
             nextStart = nextStart.add(1, 'day')
         }
-        nextStart = nextStart.startOf('day').hour(9)
+        
+        // Set start time to 00:00 (Start of Day) for visual consistency
+        // addWorkingDays will handle skipping non-working hours (00:00-09:00) during calculation
+        nextStart = nextStart.startOf('day')
     }
     return nextStart
 }
