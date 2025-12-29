@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import SkillSelector from './SkillSelector.vue'
+import SkillSelector from '@/components/SkillSelector.vue'
 import { X, Trash2, Plus, Users, Clock, Briefcase } from 'lucide-vue-next'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_ROLES } from '@/graphql/queries'
@@ -16,14 +16,12 @@ const props = defineProps({
 
 defineEmits(['close'])
 
-// Data
 const { result: rolesResult } = useQuery(GET_ROLES)
 const { mutate: addRequirement } = useMutation(ADD_PROJECT_REQUIREMENT, { refetchQueries: ['GetProjects'] })
 const { mutate: removeRequirement } = useMutation(REMOVE_PROJECT_REQUIREMENT, { refetchQueries: ['GetProjects'] })
 const { mutate: addReqSkill } = useMutation(ADD_REQUIREMENT_SKILL, { refetchQueries: ['GetProjects'] })
 const { mutate: removeReqSkill } = useMutation(REMOVE_REQUIREMENT_SKILL, { refetchQueries: ['GetProjects'] })
 
-// Forms
 const requirementForm = ref({
     roleId: '',
     resourceCount: 1,
@@ -33,7 +31,6 @@ const requirementForm = ref({
 const addingSkillToReqId = ref(null)
 const newSkillForm = ref({ name: '', level: 1 })
 
-// Actions
 const handleAddRequirement = async () => {
     if (!requirementForm.value.roleId) return
     
@@ -44,7 +41,6 @@ const handleAddRequirement = async () => {
         monthlyHours: Number(requirementForm.value.monthlyHours)
     })
     
-    // Reset basic fields
     requirementForm.value.roleId = ''
 }
 

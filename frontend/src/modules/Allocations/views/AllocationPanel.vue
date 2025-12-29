@@ -21,7 +21,7 @@ import ProjectAllocationCard from '../components/ProjectAllocationCard.vue'
 import GanttTimelineView from '../components/GanttTimelineView.vue'
 import AssignmentModal from '../forms/AssignmentModal.vue'
 
-import MilestoneManager from '@/components/MilestoneManager.vue'
+import MilestoneManager from '@/modules/Configuration/components/MilestoneManager.vue'
 import HierarchyManager from '@/components/HierarchyManager.vue'
 
 const notificationStore = useNotificationStore()
@@ -148,7 +148,6 @@ const getSkillMatch = (collab, project) => {
 
 const getGlobalOccupation = (collaboratorId) => {
     if (!collaboratorId || !availableCollaborators.value) return 0
-    // Look up the full collaborator record from the master list (which has all allocations)
     const collab = availableCollaborators.value.find(c => c.id === collaboratorId)
     if (!collab || !collab.allocations) return 0
     

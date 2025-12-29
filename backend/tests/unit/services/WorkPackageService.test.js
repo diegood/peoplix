@@ -69,6 +69,10 @@ describe('WorkPackageService', () => {
         it('should convert startDate string to Date object', async () => {
             const id = 'wp-1';
             const data = { startDate: '2025-02-01' };
+            
+            mockRepository.findById.mockResolvedValue({ id, status: 'BACKLOG' });
+            mockRepository.update.mockResolvedValue({ id, startDate: new Date('2025-02-01') });
+
             await service.update(id, data);
             
             expect(mockRepository.update).toHaveBeenCalledWith(id, expect.objectContaining({
@@ -82,8 +86,33 @@ describe('WorkPackageService', () => {
          it('should pass data as is if no startDate provided', async () => {
             const id = 'wp-1';
             const data = { name: 'Updated Name' };
+            
+            mockRepository.findById.mockResolvedValue({ id, status: 'BACKLOG' });
+            mockRepository.update.mockResolvedValue({ id, ...data });
+
             await service.update(id, data);
             expect(mockRepository.update).toHaveBeenCalledWith(id, data);
+        });
+
+        it('should log history if status changes', async () => {
+            const id = 'wp-1';
+            const current = { id, status: 'BACKLOG' };
+            const data = { status: 'DONE' };
+            const userId = 'user-1';
+
+            mockRepository.findById.mockResolvedValue(current);
+            mockRepository.update.mockResolvedValue({ ...current, ...data });
+            mockRepository.createHistory = vi.fn(); // Mock this specific method on the fly if not in base mock
+
+            await service.update(id, data, userId);
+
+            expect(mockRepository.createHistory).toHaveBeenCalledWith({
+                workPackageId: id,
+                field: 'STATUS',
+                oldValue: 'BACKLOG',
+                newValue: 'DONE',
+                userId: userId
+            });
         });
     });
 

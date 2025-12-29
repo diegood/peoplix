@@ -7,12 +7,31 @@ export const WorkPackageSchema = gql`
     description: String
     projectId: String!
     tasks: [Task]
+    history: [WorkPackageHistory]
     startDate: String
     endDate: String
     highLevelEstimation: Int
     status: String
     createdAt: String
     updatedAt: String
+  }
+  
+  type WorkPackageHistory {
+      id: ID!
+      field: String
+      oldValue: String
+      newValue: String
+      userId: String
+      createdAt: String
+  }
+
+  type WorkPackageStatus {
+      id: ID!
+      name: String!
+      color: String
+      order: Int
+      isClosed: Boolean
+      organizationId: String!
   }
 
   type Task {
@@ -45,6 +64,7 @@ export const WorkPackageSchema = gql`
 
   extend type Query {
     projectWorkPackages(projectId: ID!): [WorkPackage]
+    workPackageStatuses(organizationId: ID!): [WorkPackageStatus]
     task(id: ID!): Task
   }
 
@@ -61,5 +81,9 @@ export const WorkPackageSchema = gql`
     
     addTaskDependency(taskId: ID!, predecessorId: ID!): Task
     removeTaskDependency(taskId: ID!, predecessorId: ID!): Task
+
+    createWorkPackageStatus(organizationId: ID!, name: String!, color: String, order: Int, isClosed: Boolean): WorkPackageStatus
+    updateWorkPackageStatus(id: ID!, name: String, color: String, order: Int, isClosed: Boolean): WorkPackageStatus
+    deleteWorkPackageStatus(id: ID!): Boolean
   }
 `

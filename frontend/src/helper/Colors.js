@@ -27,6 +27,8 @@ export function invertColor(hex) {
   return r * 0.299 + g * 0.587 + b * 0.114 > 128 ? '#000000' : '#FFFFFF';
 }
 
+export const getContrastColor = invertColor;
+
 export function removeHashtag(hex) {
   if (hex.indexOf('#') === 0) hex = hex.slice(1);
   return hex;

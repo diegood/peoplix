@@ -1,7 +1,7 @@
 <script setup>
 import { Network, GripVertical, CheckCircle, AlertCircle, Trash2, X, Plus, Calculator, Settings } from 'lucide-vue-next'
 import draggable from 'vuedraggable'
-import ProjectMilestones from '@/components/ProjectMilestones.vue'
+import ProjectMilestones from '@/modules/Projects/components/ProjectMilestones.vue'
 import ProjectConfigurationModal from './ProjectConfigurationModal.vue'
 import { ref } from 'vue'
 
@@ -60,7 +60,7 @@ import { computed } from 'vue'
 const totalAllocatedHours = computed(() => {
     if (!props.project.allocations) return 0
     const total = props.project.allocations.reduce((acc, alloc) => {
-        //TODO las 40  tendrian que ser configurables
+        //TODO [configurables] las 40  tendrian que ser configurables
         const contractHours = alloc.collaborator?.contractedHours || 40
         const percentage = alloc.dedicationPercentage || 0
         const hours = contractHours * (percentage / 100)

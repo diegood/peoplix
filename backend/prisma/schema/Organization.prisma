@@ -11,6 +11,7 @@ model Organization {
   workCenters            WorkCenter[]
   customFieldDefinitions CustomFieldDefinition[]
   hierarchyTypes         HierarchyType[]
+  workPackageStatuses    WorkPackageStatus[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

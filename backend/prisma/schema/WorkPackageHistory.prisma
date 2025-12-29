@@ -1,0 +1,13 @@
+model WorkPackageHistory {
+  id            String      @id @default(uuid())
+  workPackageId String
+  workPackage   WorkPackage @relation(fields: [workPackageId], references: [id], onDelete: Cascade)
+
+  field    String 
+  oldValue String?
+  newValue String?
+
+  userId String?
+
+  createdAt DateTime @default(now())
+}

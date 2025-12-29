@@ -3,7 +3,7 @@
 import { computed, ref } from 'vue'
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import { CREATE_MILESTONE, DELETE_MILESTONE } from '@/graphql/mutations'
-import { GET_MILESTONE_TYPES } from '@/graphql/queries'
+import { GET_MILESTONE_TYPES } from '@/modules/Configuration/graphql/configuration.queries'
 import { Plus, Trash2, Flag} from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 import VueMultiselect from 'vue-multiselect'
@@ -21,7 +21,6 @@ const isExpanded = ref(false)
 const showForm = ref(false)
 const newMilestone = ref({ name: '', date: '', type: null })
 
-// Fetch correct types from backend
 const { result: milestoneTypesResult } = useQuery(GET_MILESTONE_TYPES)
 const typeOptions = computed(() => milestoneTypesResult.value?.milestoneTypes || [])
 
@@ -67,7 +66,6 @@ const getMilestoneStyle = (milestoneOrType) => {
          }
          return {}
     }
-    // Fallback
     const typeStr = typeof milestoneOrType === 'string' ? milestoneOrType : (milestoneOrType?.milestoneType?.name || milestoneOrType?.type || milestoneOrType?.name || '?')
     return { backgroundColor: stringToColor(typeStr) }
 }
@@ -83,7 +81,6 @@ const getMilestoneClass = (milestoneOrType) => {
 const handleCreate = async () => {
     if (!newMilestone.value.name || !newMilestone.value.date || !newMilestone.value.type) return
     
-    // Check if newMilestone.value.type is an object (from Multiselect)
     const selected = newMilestone.value.type
     
     await createMilestone({
@@ -93,7 +90,6 @@ const handleCreate = async () => {
         milestoneTypeId: selected.id
     })
     showForm.value = false
-    // Reset defaults (pick first if available?)
     newMilestone.value = { name: '', date: '', type: null }
 }
 

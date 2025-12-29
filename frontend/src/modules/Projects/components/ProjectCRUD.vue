@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { GET_PROJECTS } from '@/graphql/queries'
+import { GET_PROJECTS } from '@/modules/Projects/graphql/project.queries'
 import { CREATE_PROJECT, UPDATE_PROJECT } from '@/graphql/mutations'
 import { FolderPlus, Clock, Edit2, SlidersHorizontal, Calendar } from 'lucide-vue-next'
 import ProjectRequirementsModal from './ProjectRequirementsModal.vue'
@@ -19,7 +19,6 @@ const form = ref({
 const editingId = ref(null)
 const editForm = ref({ name: '', contractedHours: 0 })
 
-// Requirements Modal
 const requirementsModalOpen = ref(false)
 const selectedProjectIdForReq = ref(null)
 
@@ -61,7 +60,6 @@ const openRequirements = (project) => {
     requirementsModalOpen.value = true
 }
 
-// Vacation Modal
 const vacationModalOpen = ref(false)
 const selectedProjectForVacation = ref(null)
 
@@ -70,7 +68,6 @@ const openVacations = (project) => {
     vacationModalOpen.value = true
 }
 </script>
-// ... existing code
 
 <template>
   <div class="space-y-6">

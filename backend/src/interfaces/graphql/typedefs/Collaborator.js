@@ -8,6 +8,7 @@ type Collaborator {
   firstName: String!
   lastName: String!
   systemRole: Int
+  organizationId: ID
 
   avatar: String
   roles: [Role!]!
@@ -71,35 +72,27 @@ type CollaboratorSkill {
   }
 
   extend type Mutation {
-
-  
-  createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID, password: String, systemRole: Int): Collaborator!
-
-  updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean, workCenterId: ID, password: String, systemRole: Int): Collaborator!
-
-  deleteCollaborator(id: ID!): Boolean!
-
-  
-  addCollaboratorSkill(collaboratorId: ID!, skillId: ID!, level: Int!): Collaborator!
-
-  removeCollaboratorSkill(collaboratorId: ID!, skillId: ID!): Collaborator!
-
-  
-  addCollaboratorRole(collaboratorId: ID!, roleId: ID!): Collaborator!
-
-  removeCollaboratorRole(collaboratorId: ID!, roleId: ID!): Collaborator!
-  
-  addCollaboratorCareerObjective(collaboratorId: ID!, year: Int!, quarter: Int!, description: String!, skillId: ID, targetLevel: Int): CollaboratorCareerObjective!
-  updateCollaboratorCareerObjective(id: ID!, status: String!): CollaboratorCareerObjective!
-  deleteCollaboratorCareerObjective(id: ID!): Boolean!
-  
-  addCollaboratorMeeting(collaboratorId: ID!, date: String!, notes: String): CollaboratorMeeting!
-  updateCollaboratorMeeting(id: ID!, date: String, notes: String): CollaboratorMeeting!
-  deleteCollaboratorMeeting(id: ID!): Boolean!
-
-  addMeetingActionItem(meetingId: ID!, description: String!): MeetingActionItem!
-  updateMeetingActionItem(id: ID!, status: String, description: String): MeetingActionItem!
-  deleteMeetingActionItem(id: ID!): Boolean!
+    createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID, password: String, systemRole: Int): Collaborator!
+    updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean, workCenterId: ID, password: String, systemRole: Int): Collaborator!
+    deleteCollaborator(id: ID!): Boolean!
+    
+    addCollaboratorSkill(collaboratorId: ID!, skillId: ID!, level: Int!): Collaborator!
+    removeCollaboratorSkill(collaboratorId: ID!, skillId: ID!): Collaborator!
+    
+    addCollaboratorRole(collaboratorId: ID!, roleId: ID!): Collaborator!
+    removeCollaboratorRole(collaboratorId: ID!, roleId: ID!): Collaborator!
+    
+    addCollaboratorCareerObjective(collaboratorId: ID!, year: Int!, quarter: Int!, description: String!, skillId: ID, targetLevel: Int): CollaboratorCareerObjective!
+    updateCollaboratorCareerObjective(id: ID!, status: String!): CollaboratorCareerObjective!
+    deleteCollaboratorCareerObjective(id: ID!): Boolean!
+    
+    addCollaboratorMeeting(collaboratorId: ID!, date: String!, notes: String): CollaboratorMeeting!
+    updateCollaboratorMeeting(id: ID!, date: String, notes: String): CollaboratorMeeting!
+    deleteCollaboratorMeeting(id: ID!): Boolean!
+    
+    addMeetingActionItem(meetingId: ID!, description: String!): MeetingActionItem!
+    updateMeetingActionItem(id: ID!, status: String, description: String): MeetingActionItem!
+    deleteMeetingActionItem(id: ID!): Boolean!
   }
 
 `;

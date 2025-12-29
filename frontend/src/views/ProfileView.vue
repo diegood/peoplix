@@ -3,7 +3,7 @@ import { ref, watchEffect } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_ME } from '../graphql/queries'
 import { UPDATE_COLLABORATOR } from '../graphql/mutations'
-import { useAuthStore } from '../stores/auth'
+import { useAuthStore } from '@/modules/Auth/stores/auth.store'
 import { Check, Loader2 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -15,10 +15,9 @@ const formData = ref({
     firstName: '',
     lastName: '',
     userName: '',
-    password: '' // Optional
+    password: ''
 })
 
-// Populate form
 watchEffect(() => {
     if (result.value?.me) {
         const me = result.value.me

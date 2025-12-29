@@ -63,6 +63,18 @@ async function main() {
         }
     });
 
+    const workPackageStatuses = [
+        { name: 'a estimar', color: '#fbbf24', order: 1, organizationId: org.id },
+        { name: 'Estimado', color: '#60a5fa', order: 2, organizationId: org.id },
+        { name: 'Confirmado', color: '#34d399', order: 3, organizationId: org.id },
+        { name: 'por hacer', color: '#e5e7eb', order: 4, organizationId: org.id },
+        { name: 'en progreso', color: '#3b82f6', order: 5, organizationId: org.id },
+        { name: 'hecho', color: '#22c55e', order: 6, organizationId: org.id },
+        { name: 'uat', color: '#a855f7', order: 7, organizationId: org.id },
+        { name: 'finalizado', color: '#1f2937', order: 8, organizationId: org.id }
+    ];
+    await prisma.workPackageStatus.createMany({ data: workPackageStatuses });
+
     console.log('Seeded:', { user, org, adminCollaborator, config: 'Default Configs Created' });
 
   } catch (error) {

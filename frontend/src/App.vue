@@ -3,7 +3,7 @@ import { RouterLink, RouterView } from 'vue-router'
 import { LayoutDashboard, Users, FolderKanban, BarChart3, Settings, Calendar, UserCog, LogOut } from 'lucide-vue-next'
 import ToastNotification from './components/ToastNotification.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
-import { useAuthStore } from './stores/auth'
+import { useAuthStore } from '@/modules/Auth/stores/auth.store'
 import { computed } from 'vue'
 
 const authStore = useAuthStore()

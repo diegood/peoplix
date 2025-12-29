@@ -1,22 +1,39 @@
 <script setup>
 import { computed } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { GET_PLANNING_PROJECTS } from '@/graphql/queries'
+import { GET_PLANNING_PROJECTS } from '@/modules/Projects/graphql/project.queries'
 import { UPDATE_WORK_PACKAGE } from '@/graphql/mutations'
 import { useNotificationStore } from '@/stores/notificationStore'
 import MonthlyPlanningGantt from '@/modules/Allocations/components/Planning/MonthlyPlanningGantt.vue'
 
+import { GET_WORK_PACKAGE_STATUSES } from '@/modules/Configuration/graphql/status.queries'
+import { useAuthStore } from '@/modules/Auth/stores/auth.store'
+
+const authStore = useAuthStore()
+
 const { result, loading, error, refetch } = useQuery(GET_PLANNING_PROJECTS)
+const { result: statusesResult } = useQuery(GET_WORK_PACKAGE_STATUSES, () => ({
+    organizationId: authStore.user?.organizationId
+}), {
+    enabled: computed(() => !!authStore.user?.organizationId)
+})
+
 const { mutate: updateWorkPackage } = useMutation(UPDATE_WORK_PACKAGE)
 const notificationStore = useNotificationStore()
 
 const projects = computed(() => {
     if (!result.value?.projects) return []
     
+    const activeStatuses = (statusesResult.value?.workPackageStatuses || [])
+        .filter(s => !s.isClosed)
+        .map(s => s.name)
+
     return result.value.projects.map(p => {
         const planningWPs = p.workPackages?.filter(wp => {
              const s = wp.status || ''
-             return ['BACKLOG', 'TO_DO', 'TODO', 'Por hacer', 'IN_PROGRESS', 'EN_PROGRESO', 'En progreso', 'En Progreso'].includes(s)
+             if (!s) return true
+             if (activeStatuses.length === 0) return true
+             return activeStatuses.includes(s)
         }) || []
         
         return {

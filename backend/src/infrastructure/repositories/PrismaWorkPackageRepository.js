@@ -1,5 +1,6 @@
 import { prisma } from '../database/client.js'
 
+
 export class PrismaWorkPackageRepository {
     async findByProjectId(projectId, status = null) {
         const where = { projectId }
@@ -14,6 +15,9 @@ export class PrismaWorkPackageRepository {
                         estimations: { include: { role: true, collaborator: true } },
                         collaborator: true
                     }
+                },
+                history: {
+                    orderBy: { createdAt: 'desc' }
                 }
             },
             orderBy: { createdAt: 'asc' }
@@ -29,6 +33,9 @@ export class PrismaWorkPackageRepository {
                         estimations: { include: { role: true, collaborator: true } },
                         collaborator: true
                     }
+                },
+                history: {
+                    orderBy: { createdAt: 'desc' }
                 }
             }
         })
@@ -48,12 +55,16 @@ export class PrismaWorkPackageRepository {
         })
     }
 
-    async update(id, data) {
+    async update(id, data, userId = null) {
         return prisma.workPackage.update({
             where: { id },
             data,
-            include: { tasks: true }
+            include: { tasks: true, history: true }
         })
+    }
+
+    async createHistory(data) {
+        return prisma.workPackageHistory.create({ data })
     }
 
     async delete(id) {

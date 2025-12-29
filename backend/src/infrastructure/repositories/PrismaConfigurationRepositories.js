@@ -57,3 +57,10 @@ export class PrismaCustomFieldRepository {
         })
     }
 }
+
+export class PrismaWorkPackageStatusRepository {
+    async findAll(organizationId) { return prisma.workPackageStatus.findMany({ where: { organizationId }, orderBy: { order: 'asc' } }) }
+    async create(data) { return prisma.workPackageStatus.create({ data }) }
+    async update(id, data) { return prisma.workPackageStatus.update({ where: { id }, data }) }
+    async delete(id) { await prisma.workPackageStatus.delete({ where: { id } }); return true }
+}

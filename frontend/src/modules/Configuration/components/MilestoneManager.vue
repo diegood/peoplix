@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { GET_MILESTONE_TYPES, GET_PROJECTS } from '@/graphql/queries'
+import { GET_MILESTONE_TYPES } from '@/modules/Configuration/graphql/configuration.queries'
+import { GET_PROJECTS } from '@/modules/Projects/graphql/project.queries'
 import { CREATE_MILESTONE_TYPE, UPDATE_MILESTONE_TYPE, DELETE_MILESTONE_TYPE } from '@/graphql/mutations'
 import { X, Plus, Trash2, Edit2, Hexagon, CheckCircle } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
@@ -51,7 +52,7 @@ const handleCreate = async () => {
 
 const startEdit = (type) => {
     editingId.value = type.id
-    editForm.value = { name: type.name, color: type.color }
+    editForm.value = { name: type.name, color: type.color || '#6366f1' }
 }
 
 const handleUpdate = async () => {

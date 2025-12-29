@@ -1,0 +1,14 @@
+model WorkPackageStatus {
+  id             String       @id @default(uuid())
+  name           String
+  color          String       @default("#cccccc")
+  order          Int          @default(0)
+  isClosed       Boolean      @default(false)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, name])
+}

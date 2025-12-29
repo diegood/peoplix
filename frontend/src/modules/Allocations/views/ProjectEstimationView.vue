@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { GET_PROJECT_WORK_PACKAGES, GET_PROJECTS } from '@/graphql/queries'
+import { GET_PROJECT_WORK_PACKAGES, GET_PROJECTS } from '@/modules/Projects/graphql/project.queries'
 import { CREATE_WORK_PACKAGE, ESTIMATE_TASK } from '@/graphql/mutations'
 import { useNotificationStore } from '@/stores/notificationStore'
 import dayjs from '@/config/dayjs'
@@ -98,26 +98,22 @@ const chartEnd = computed(() => {
 const debounceMap = ref(new Map())
 
 const handleUpdateTaskDate = async ({ taskId, roleId, hours, startDate, endDate }) => {
-    // Clear existing timeout for this task
     if (debounceMap.value.has(taskId)) {
         clearTimeout(debounceMap.value.get(taskId))
     }
-
-    // Set new timeout
     const timeoutId = setTimeout(async () => {
-        console.log('[DEBUG View] Debounced Update', { taskId, roleId, hours, startDate, endDate })
         try {
             await estimateTask({ taskId, roleId, hours: parseFloat(hours), startDate, endDate })
             await refetchWP()
             notificationStore.showToast('Fecha actualizada', 'success')
         } catch (err) {
             notificationStore.showToast('Error al mover tarea', 'error')
-            refetchWP() // Revert UI if possible (refetch checks server state)
+            refetchWP()
             console.error(err)
         } finally {
             debounceMap.value.delete(taskId)
         }
-    }, 1000) // 1 second debounce
+    }, 1000)
 
     debounceMap.value.set(taskId, timeoutId)
 }

@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
+import { useAuthStore } from '@/modules/Auth/stores/auth.store'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -7,13 +7,13 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/LoginView.vue'),
+      component: () => import('@/modules/Auth/views/LoginView.vue'),
       meta: { public: true }
     },
     {
       path: '/projects',
       name: 'projects',
-      component: () => import('@/views/ProjectsView.vue')
+      component: () => import('@/modules/Projects/views/ProjectsView.vue')
     },
     {
       path: '/',
@@ -33,7 +33,7 @@ const router = createRouter({
     {
       path: '/settings',
       name: 'settings',
-      component: () => import('@/views/SettingsView.vue')
+      component: () => import('@/modules/Configuration/views/SettingsView.vue'),
     },
     {
       path: '/planning',
@@ -60,7 +60,6 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  // We need to use store inside the guard (pinia is installed)
   const authStore = useAuthStore()
   
   const isPublic = to.meta.public
@@ -75,7 +74,6 @@ router.beforeEach(async (to, from, next) => {
   }
   
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
-      // Redirect to dashboard if trying to access admin route as non-admin
       return next({ name: 'dashboard' })
   }
 

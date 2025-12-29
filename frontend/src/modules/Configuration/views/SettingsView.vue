@@ -6,6 +6,7 @@ import WorkCenterManager from '../components/WorkCenterManager.vue'
 import CustomFieldManager from '../components/CustomFieldManager.vue'
 import RoleCRUD from '../components/RoleCRUD.vue'
 import AbsenceTypeManager from '../components/AbsenceTypeManager.vue'
+import WorkPackageStatusManager from '../components/WorkPackageStatusManager.vue'
 import { Hexagon } from 'lucide-vue-next'
 
 const showMilestones = ref(false)
@@ -26,6 +27,10 @@ const showMilestones = ref(false)
 
             <div class="mb-8">
                 <WorkCenterManager />
+            </div>
+
+            <div class="mb-8">
+                <WorkPackageStatusManager />
             </div>
 
             <div class="bg-white rounded-lg shadow p-6">

@@ -1,5 +1,5 @@
 <script setup>
-import ProjectCRUD from '@/components/ProjectCRUD.vue'
+import ProjectCRUD from '@/modules/Projects/components/ProjectCRUD.vue'
 </script>
 
 <template>
