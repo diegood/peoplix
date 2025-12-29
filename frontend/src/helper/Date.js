@@ -53,29 +53,93 @@ export const addBusinessDays = (startDate, days, blockedDates = [], weeklySchedu
     return cursor
 }
 
+export const getDailySchedule = (date, weeklySchedule) => {
+    if (!weeklySchedule) {
+        // Default: Mon-Fri 09:00-17:00
+        const isWork = date.day() !== 0 && date.day() !== 6
+        return { active: isWork, start: '09:00', end: '17:00' }
+    }
+    const key = getDayKey(date)
+    return weeklySchedule[key] || { active: false }
+}
+
+export const getDailyWorkingHours = (date, weeklySchedule) => {
+    const sched = getDailySchedule(date, weeklySchedule)
+    if (!sched.active) return 0
+    
+    const [startH, startM] = sched.start.split(':').map(Number)
+    const [endH, endM] = sched.end.split(':').map(Number)
+    
+    const start = dayjs(date).hour(startH).minute(startM || 0)
+    const end = dayjs(date).hour(endH).minute(endM || 0)
+    
+    return Math.max(0, end.diff(start, 'hour', true))
+}
+
 export const addWorkingDays = (startDate, durationHours, blockedDates = [], weeklySchedule = null) => {
-    let hoursRemaining = durationHours * GANTT_VISUAL_FACTOR
+    let hoursRemaining = durationHours
     let current = dayjs(startDate)
     const blockedSet = new Set(blockedDates)
+    let loops = 0
 
-    while (!isWorkingDay(current, weeklySchedule) || blockedSet.has(current.format(DATE_FORMAT_API))) {
-        current = current.add(1, 'day').startOf('day')
-    }
-    
-    while (hoursRemaining > 0) {
+    while (hoursRemaining > 0 && loops < 1000) {
+        loops++
+        
+        // Skip non-working / blocked days
         while (!isWorkingDay(current, weeklySchedule) || blockedSet.has(current.format(DATE_FORMAT_API))) {
-             current = current.add(1, 'day').startOf('day')
+            current = current.add(1, 'day').startOf('day')
+            // Set to start time of the new day
+            const sched = getDailySchedule(current, weeklySchedule)
+            if (sched.active) {
+                const [h, m] = sched.start.split(':').map(Number)
+                current = current.hour(h).minute(m || 0)
+            }
         }
 
-        const endOfDay = current.endOf('day')
-        const hoursInDay = endOfDay.diff(current, 'hour', true)
+        // Available hours today
+        const sched = getDailySchedule(current, weeklySchedule)
+        const [startH, startM] = sched.start.split(':').map(Number)
+        const [endH, endM] = sched.end.split(':').map(Number)
+        
+        const dayStartTime = dayjs(current).hour(startH).minute(startM || 0)
+        const dayEndTime = dayjs(current).hour(endH).minute(endM || 0)
+        
+        // If current is before start time, jump to start time
+        if (current.isBefore(dayStartTime)) {
+            current = dayStartTime
+        }
 
-        if (hoursRemaining <= hoursInDay) {
-            current = current.add(hoursRemaining, 'hour')
+        // If current is after end time, skip to next day
+        if (current.isAfter(dayEndTime) || current.isSame(dayEndTime)) {
+             current = current.add(1, 'day').startOf('day')
+             // Logic at start of loop will handle finding next working day/time
+             continue
+        }
+        
+        let availableToday = dayEndTime.diff(current, 'hour', true)
+        availableToday = Math.max(0, availableToday)
+        
+        if (availableToday <= 0.01) { // Floating point protection
+             current = current.add(1, 'day').startOf('day')
+             const nextSched = getDailySchedule(current, weeklySchedule)
+             if (nextSched.active) {
+                 const [h, m] = nextSched.start.split(':').map(Number)
+                 current = current.hour(h).minute(m || 0)
+             }
+             continue
+        }
+
+        if (hoursRemaining <= availableToday) {
+            current = current.add(hoursRemaining * 60, 'minute')
             hoursRemaining = 0
         } else {
-            hoursRemaining -= hoursInDay
+            hoursRemaining -= availableToday
             current = current.add(1, 'day').startOf('day')
+            const nextSched = getDailySchedule(current, weeklySchedule)
+            if (nextSched.active) {
+                 const [h, m] = nextSched.start.split(':').map(Number)
+                 current = current.hour(h).minute(m || 0)
+            }
         }
     }
     return current

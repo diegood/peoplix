@@ -45,7 +45,7 @@ import { computed } from 'vue'
 import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
 import dayjs from '@/config/dayjs'
 import { stringToColor, invertColor } from '@/helper/Colors'
-import { parseDateSafe, addBusinessDays, isWorkingDay } from '@/helper/Date'
+import { parseDateSafe, addBusinessDays, addWorkingDays, isWorkingDay } from '@/helper/Date'
 import { getBlockedDates, getComputedSchedule } from '@/modules/Allocations/helpers/estimationHelpers'
 import { GANTT_VISUAL_FACTOR, DATE_TIME_FORMAT_API, DATE_FORMAT_API } from '@/config/constants'
  
@@ -121,8 +121,7 @@ const handleDragEndBar = (e) => {
         newStartDate = newStartDate.add(1, 'day')
     }
 
-    const days = hours / GANTT_VISUAL_FACTOR
-    const newEndDate = addBusinessDays(newStartDate, days, blockedDates, schedule)
+    const newEndDate = addWorkingDays(newStartDate, hours, blockedDates, schedule)
 
     emit('update-task-date', { 
         taskId, 
@@ -211,7 +210,19 @@ const ganttRows = computed(() => {
                             }
                             
                             if (estimation?.hours && !estimation.endDate) {
-                                 end = addBusinessDays(start, estimation.hours / 8) 
+                                 let blocked = []
+                                 let sched = null
+                                 if (rowDef.collaboratorId) {
+                                     // Optimization: use the 'col' object found in outer scope?
+                                     // The outer scope has 'uniqueCollaborators'. 
+                                     // Let's find simpler way or just use rowDef info
+                                     const c = uniqueCollaborators.find(u => u.id === rowDef.collaboratorId)
+                                     if(c) {
+                                         blocked = getBlockedDates(c)
+                                         sched = getComputedSchedule(c)
+                                     }
+                                 }
+                                 end = addWorkingDays(start, estimation.hours, blocked, sched) 
                             }
 
                             const isUnassigned = !estimation.collaborator

@@ -122,7 +122,7 @@ import { useAuthStore } from '@/modules/Auth/stores/auth.store'
 import { Trash, ChevronDown, ChevronRight } from 'lucide-vue-next'
 import dayjs from '@/config/dayjs'
 import { useNotificationStore } from '@/stores/notificationStore'
-import { parseDateSafe, formatDate, addBusinessDays } from '@/helper/Date'
+import { parseDateSafe, formatDate, addBusinessDays, addWorkingDays } from '@/helper/Date'
 import { getEst, calculateWPEndDate, findRoundRobinCollaborator, calculateSequentialStartDate, getBlockedDates, getComputedSchedule } from '@/modules/Allocations/helpers/estimationHelpers'
 import { GANTT_VISUAL_FACTOR, DATE_TIME_FORMAT_API } from '@/config/constants'
 import { useEstimationMutations } from './useEstimationMutations'
@@ -236,8 +236,7 @@ const handleUpdateEst = async (taskId, roleId, hoursStr) => {
 
              const estStart = calculateSequentialStartDate(roleId, previousTasks, wpStartDate, collaboratorId, blockedDates, schedule) 
 
-             const days = hours / GANTT_VISUAL_FACTOR
-             const estEnd = addBusinessDays(estStart, days, blockedDates, schedule)
+             const estEnd = addWorkingDays(estStart, hours, blockedDates, schedule)
              
              startDateStr = estStart.format(DATE_TIME_FORMAT_API)
              endDateStr = estEnd.format(DATE_TIME_FORMAT_API)
@@ -328,8 +327,7 @@ const handleSaveDraft = async () => {
                      schedule
                  )
 
-                 const days = hours / GANTT_VISUAL_FACTOR
-                 const estEnd = addBusinessDays(estStart, days, blockedDates, schedule)
+                 const estEnd = addWorkingDays(estStart, hours, blockedDates, schedule)
 
                  return estimateTask({ 
                      taskId: newTask.id, 
