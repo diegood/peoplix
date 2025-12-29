@@ -56,13 +56,15 @@ export const GET_COLLABORATORS = gql`
          value
          fieldDefinitionId
       }
+      useCustomSchedule
+      workingSchedule
     }
   }
 `
 
 export const CREATE_COLLABORATOR = gql`
-  mutation CreateCollaborator($userName: String, $firstName: String!, $lastName: String!, $contractedHours: Int!, $joinDate: String!, $workCenterId: ID) {
-    createCollaborator(userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, workCenterId: $workCenterId) {
+  mutation CreateCollaborator($userName: String, $firstName: String!, $lastName: String!, $contractedHours: Int!, $joinDate: String!, $workCenterId: ID, $useCustomSchedule: Boolean, $workingSchedule: JSON) {
+    createCollaborator(userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, workCenterId: $workCenterId, useCustomSchedule: $useCustomSchedule, workingSchedule: $workingSchedule) {
       id
       userName
       firstName
@@ -79,8 +81,8 @@ export const CREATE_COLLABORATOR = gql`
 `
 
 export const UPDATE_COLLABORATOR = gql`
-  mutation UpdateCollaborator($id: ID!, $userName: String, $firstName: String, $lastName: String, $contractedHours: Int, $joinDate: String, $isActive: Boolean, $workCenterId: ID) {
-    updateCollaborator(id: $id, userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, isActive: $isActive, workCenterId: $workCenterId) {
+  mutation UpdateCollaborator($id: ID!, $userName: String, $firstName: String, $lastName: String, $contractedHours: Int, $joinDate: String, $isActive: Boolean, $workCenterId: ID, $useCustomSchedule: Boolean, $workingSchedule: JSON) {
+    updateCollaborator(id: $id, userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, isActive: $isActive, workCenterId: $workCenterId, useCustomSchedule: $useCustomSchedule, workingSchedule: $workingSchedule) {
       id
       userName
       firstName

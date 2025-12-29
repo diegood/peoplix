@@ -123,7 +123,7 @@ import { Trash, ChevronDown, ChevronRight } from 'lucide-vue-next'
 import dayjs from '@/config/dayjs'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { parseDateSafe, formatDate, addBusinessDays } from '@/helper/Date'
-import { getEst, calculateWPEndDate, findRoundRobinCollaborator, calculateSequentialStartDate, getBlockedDates } from '@/modules/Allocations/helpers/estimationHelpers'
+import { getEst, calculateWPEndDate, findRoundRobinCollaborator, calculateSequentialStartDate, getBlockedDates, getComputedSchedule } from '@/modules/Allocations/helpers/estimationHelpers'
 import { GANTT_VISUAL_FACTOR, DATE_TIME_FORMAT_API } from '@/config/constants'
 import { useEstimationMutations } from './useEstimationMutations'
 
@@ -227,17 +227,17 @@ const handleUpdateEst = async (taskId, roleId, hoursStr) => {
              const previousTasks = taskIndex > 0 ? props.wp.tasks.slice(0, taskIndex) : []
              const wpStartDate = parseDateSafe(props.wp?.startDate) || dayjs().startOf('day')
 
-             // Find currently assigned collaborator
              const task = props.wp.tasks[taskIndex]
              const currentEst = getEst(task, roleId)
              const collaboratorId = currentEst?.collaborator?.id
              const allocation = props.projectAllocations.find(a => a.collaborator.id === collaboratorId)
              const blockedDates = getBlockedDates(allocation?.collaborator)
+             const schedule = getComputedSchedule(allocation?.collaborator)
 
-             const estStart = calculateSequentialStartDate(roleId, previousTasks, wpStartDate, collaboratorId, blockedDates) 
+             const estStart = calculateSequentialStartDate(roleId, previousTasks, wpStartDate, collaboratorId, blockedDates, schedule) 
 
              const days = hours / GANTT_VISUAL_FACTOR
-             const estEnd = addBusinessDays(estStart, days, blockedDates)
+             const estEnd = addBusinessDays(estStart, days, blockedDates, schedule)
              
              startDateStr = estStart.format(DATE_TIME_FORMAT_API)
              endDateStr = estEnd.format(DATE_TIME_FORMAT_API)
@@ -317,17 +317,19 @@ const handleSaveDraft = async () => {
                  )
                  const allocation = props.projectAllocations.find(a => a.collaborator.id === collaboratorId)
                  const blockedDates = getBlockedDates(allocation?.collaborator)
+                 const schedule = getComputedSchedule(allocation?.collaborator)
 
                  const estStart = calculateSequentialStartDate(
                      roleId, 
                      props.wp.tasks, 
                      wpStartDateFormatted,
                      collaboratorId,
-                     blockedDates
+                     blockedDates,
+                     schedule
                  )
 
                  const days = hours / GANTT_VISUAL_FACTOR
-                 const estEnd = addBusinessDays(estStart, days, blockedDates)
+                 const estEnd = addBusinessDays(estStart, days, blockedDates, schedule)
 
                  return estimateTask({ 
                      taskId: newTask.id, 

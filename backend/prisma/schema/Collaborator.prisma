@@ -28,7 +28,10 @@ model Collaborator {
   skillHistory        CollaboratorSkillHistory[]
   careerObjectives    CollaboratorCareerObjective[]
   vacationDaysPerYear Json? // Stores { "2024": 23, "2025": 25 }
-  meetings            CollaboratorMeeting[]
+
+  meetings          CollaboratorMeeting[]
+  workingSchedule   Json?
+  useCustomSchedule Boolean               @default(false)
 
   workCenterId String?
   workCenter   WorkCenter? @relation(fields: [workCenterId], references: [id])

@@ -16,6 +16,7 @@ import CollaboratorSkillsTab from './tabs/CollaboratorSkillsTab.vue'
 import CollaboratorHardwareTab from './tabs/CollaboratorHardwareTab.vue'
 import CollaboratorHolidaysTab from './tabs/CollaboratorHolidaysTab.vue'
 import CollaboratorAbsencesTab from './tabs/CollaboratorAbsencesTab.vue'
+import CollaboratorScheduleTab from './tabs/CollaboratorScheduleTab.vue'
 
 const props = defineProps({
   show: Boolean,
@@ -39,7 +40,9 @@ const form = ref({
   contractedHours: 40,
   joinDate: new Date().toISOString().split('T')[0],
   isActive: true,
-  workCenterId: ''
+  workCenterId: '',
+  useCustomSchedule: false,
+  workingSchedule: null
 })
 const customFieldForm = ref({})
 
@@ -51,6 +54,7 @@ const tabs = computed(() => [
   { id: 'hardware', label: 'Hardware', icon: Laptop, disabled: !isEditing.value },
   { id: 'holidays', label: 'Festivos', icon: Calendar, disabled: !isEditing.value },
   { id: 'absences', label: 'Ausencias', icon: Calendar, disabled: !isEditing.value },
+  { id: 'schedule', label: 'Jornada', icon: Calendar, disabled: !isEditing.value },
 ])
 
 watch(() => props.show, (newVal) => {
@@ -64,7 +68,11 @@ watch(() => props.show, (newVal) => {
         contractedHours: props.collaborator.contractedHours,
         joinDate: props.collaborator.joinDate?.split('T')[0] || new Date().toISOString().split('T')[0],
         isActive: props.collaborator.isActive,
-        workCenterId: props.collaborator.workCenter?.id || ''
+        workCenterId: props.collaborator.workCenter?.id || '',
+        useCustomSchedule: props.collaborator.useCustomSchedule || false,
+        workingSchedule: props.collaborator.workingSchedule ? 
+            (typeof props.collaborator.workingSchedule === 'string' ? JSON.parse(props.collaborator.workingSchedule) : props.collaborator.workingSchedule) 
+            : null
       }
       customFieldForm.value = {}
       props.customFieldDefinitions.forEach(def => {
@@ -87,7 +95,9 @@ const resetForms = () => {
     contractedHours: 40,
     joinDate: new Date().toISOString().split('T')[0],
     isActive: true,
-    workCenterId: ''
+    workCenterId: '',
+    useCustomSchedule: false,
+    workingSchedule: null
   }
   customFieldForm.value = {}
 }
@@ -124,7 +134,9 @@ const handleSaveGeneral = async () => {
         contractedHours: Number(form.value.contractedHours),
         joinDate: form.value.joinDate,
         isActive: form.value.isActive,
-        workCenterId: form.value.workCenterId || null
+        workCenterId: form.value.workCenterId || null,
+        workingSchedule: form.value.workingSchedule,
+        useCustomSchedule: form.value.useCustomSchedule
       })
       savedCollaborator = res.data.updateCollaborator
       notificationStore.showToast('Colaborador actualizado', 'success')
@@ -135,7 +147,9 @@ const handleSaveGeneral = async () => {
         lastName: form.value.lastName,
         contractedHours: Number(form.value.contractedHours),
         joinDate: form.value.joinDate,
-        workCenterId: form.value.workCenterId || null 
+        workCenterId: form.value.workCenterId || null,
+        workingSchedule: form.value.workingSchedule,
+        useCustomSchedule: form.value.useCustomSchedule
       })
       savedCollaborator = res.data.createCollaborator
       localCollaborator.value = savedCollaborator
@@ -250,6 +264,13 @@ const updateHardware = (newHardware) => {
              :collaboratorId="localCollaborator.id"
              :workCenter="localCollaborator.workCenter"
              :vacationDaysPerYear="localCollaborator.vacationDaysPerYear"
+        />
+
+        <CollaboratorScheduleTab
+             v-else-if="activeTab === 'schedule'"
+             v-model:useCustomSchedule="form.useCustomSchedule"
+             v-model:workingSchedule="form.workingSchedule"
+             @save="handleSaveGeneral"
         />
 
       </div>

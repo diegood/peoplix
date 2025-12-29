@@ -1,8 +1,0 @@
-Starting debug script
-Loaded modules
-DATABASE_URL present: true
-Pool created
-Adapter created
-PrismaClient created
-Connecting...
-Connected successfully!

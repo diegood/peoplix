@@ -45,8 +45,8 @@ import { computed } from 'vue'
 import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
 import dayjs from '@/config/dayjs'
 import { stringToColor, invertColor } from '@/helper/Colors'
-import { parseDateSafe, addBusinessDays } from '@/helper/Date'
-import { getBlockedDates } from '@/modules/Allocations/helpers/estimationHelpers'
+import { parseDateSafe, addBusinessDays, isWorkingDay } from '@/helper/Date'
+import { getBlockedDates, getComputedSchedule } from '@/modules/Allocations/helpers/estimationHelpers'
 import { GANTT_VISUAL_FACTOR, DATE_TIME_FORMAT_API, DATE_FORMAT_API } from '@/config/constants'
  
 const FORMAT = DATE_TIME_FORMAT_API
@@ -81,9 +81,7 @@ const chartEnd = computed(() => {
 
 
 
-const setTaskDate = (taskId, dates) => {
-    emit('update-task-date', { taskId, ...dates })
-}
+
 
 const handleDragEndBar = (e) => {
     const { bar } = e
@@ -107,46 +105,24 @@ const handleDragEndBar = (e) => {
 
     let newStartDate = dayjs(bar.from).startOf('day')
     
-    // Find collaborator to get their blocked dates
-    // Estimation might have collaborator. If not, check if rowDef has unassigned?
-    // Bar ID is task|role. But we need to know WHICH row line it was dragged on?
-    // Wait. In this Gantt, bars are ON rows.
-    // The "roleId" is in the bar ID.
-    // But if we moved it to another row (reassignment)?
-    // `handleDragEndBar` receives `bar` and `e`.
-    // Does `hy-vue-gantt` support row dropping?
-    // User only said "mover la tarea al inicio del dia 5". Moving time, not row.
-    // Assuming same row/collaborator.
-    
     const collaboratorId = estimation?.collaborator?.id
-    // We need the collaborator OBJECT to use getBlockedDates.
-    // We can find it in project.allocations.
     
     let blockedDates = []
+    let schedule = null
     if (collaboratorId && props.project?.allocations) {
         const alloc = props.project.allocations.find(a => a.collaborator.id === collaboratorId)
         if (alloc?.collaborator) {
             blockedDates = getBlockedDates(alloc.collaborator)
+            schedule = getComputedSchedule(alloc.collaborator)
         }
     }
-    // Also check logical blocked start date?
-    // Current loop skips weekends manually:
-    // while (newStartDate.day() === 0 || newStartDate.day() === 6) ...
-    // using addBusinessDays for start? No, just finding valid start.
-    
-    // Check if new start date falls on blocked date?
-    // This logic should match calculateSequentialStartDate... but here user sets specific date.
-    // We should enforce it starts on valid day.
-    
     const blockedSet = new Set(blockedDates)
-    // We should probably rely on a helper to "findNextValidStartDate" if we land on holiday?
-    // The previous code did:
-    while (newStartDate.day() === 0 || newStartDate.day() === 6 || blockedSet.has(newStartDate.format(DATE_FORMAT_API))) {
+    while (!isWorkingDay(newStartDate, schedule) || blockedSet.has(newStartDate.format(DATE_FORMAT_API))) {
         newStartDate = newStartDate.add(1, 'day')
     }
 
     const days = hours / GANTT_VISUAL_FACTOR
-    const newEndDate = addBusinessDays(newStartDate, days, blockedDates)
+    const newEndDate = addBusinessDays(newStartDate, days, blockedDates, schedule)
 
     emit('update-task-date', { 
         taskId, 
@@ -296,7 +272,7 @@ const ganttRows = computed(() => {
                                     if (col.holidayCalendar && col.holidayCalendar.holidays) {
                                         let hList = col.holidayCalendar.holidays
                                         if (typeof hList === 'string') {
-                                           try { hList = JSON.parse(hList) } catch(e) {}
+                                           try { hList = JSON.parse(hList) } catch {}
                                         }
                                         if (Array.isArray(hList)) holidays = [...holidays, ...hList]
                                     } 

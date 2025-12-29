@@ -9,6 +9,7 @@ type Collaborator {
   lastName: String!
   systemRole: Int
   organizationId: ID
+  organization: Organization
 
   avatar: String
   roles: [Role!]!
@@ -27,6 +28,8 @@ type Collaborator {
   careerObjectives: [CollaboratorCareerObjective!]!
   projectSkills: [Skill!]!
   meetings: [CollaboratorMeeting!]!
+  workingSchedule: JSON
+  useCustomSchedule: Boolean
 }
 
 type CollaboratorMeeting {
@@ -72,8 +75,8 @@ type CollaboratorSkill {
   }
 
   extend type Mutation {
-    createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID, password: String, systemRole: Int): Collaborator!
-    updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean, workCenterId: ID, password: String, systemRole: Int): Collaborator!
+    createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID, password: String, systemRole: Int, workingSchedule: JSON, useCustomSchedule: Boolean): Collaborator!
+    updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean, workCenterId: ID, password: String, systemRole: Int, workingSchedule: JSON, useCustomSchedule: Boolean): Collaborator!
     deleteCollaborator(id: ID!): Boolean!
     
     addCollaboratorSkill(collaboratorId: ID!, skillId: ID!, level: Int!): Collaborator!

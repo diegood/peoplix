@@ -61,6 +61,11 @@ export const GET_PROJECTS = gql`
                 name
             }
           }
+          workingSchedule
+          useCustomSchedule
+          organization {
+              workingSchedule
+          }
         }
         supervisors {
           id

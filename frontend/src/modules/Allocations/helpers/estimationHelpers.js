@@ -1,6 +1,32 @@
 import dayjs from '@/config/dayjs'
-import { parseDateSafe } from '@/helper/Date'
+import { parseDateSafe, isWorkingDay } from '@/helper/Date'
 import { GANTT_VISUAL_FACTOR, DATE_TIME_FORMAT_API, DATE_FORMAT_API } from '@/config/constants'
+
+// Helper to get correct schedule (Custom vs Org override)
+export const getComputedSchedule = (collaborator) => {
+  if (!collaborator) return null
+  
+  // Need to parse if string
+  let custom = null
+  let org = null
+  
+  if (collaborator.workingSchedule) {
+      custom = typeof collaborator.workingSchedule === 'string' 
+        ? JSON.parse(collaborator.workingSchedule) 
+        : collaborator.workingSchedule
+  }
+
+  if (collaborator.organization && collaborator.organization.workingSchedule) {
+      org = typeof collaborator.organization.workingSchedule === 'string'
+        ? JSON.parse(collaborator.organization.workingSchedule)
+        : collaborator.organization.workingSchedule
+  }
+
+  if (collaborator.useCustomSchedule && custom) return custom
+  if (org) return org
+  
+  return null // Fallback to default in isWorkingDay
+}
 
 export const findRoundRobinCollaborator = (roleId, projectAllocations, existingTasksCount) => {
     const matchingAllocations = projectAllocations.filter(a => 
@@ -50,7 +76,7 @@ export const getBlockedDates = (collaborator) => {
     return dates
 }
 
-export const calculateSequentialStartDate = (roleId, previousTasks, defaultStart, collaboratorId = null, blockedDates = []) => {
+export const calculateSequentialStartDate = (roleId, previousTasks, defaultStart, collaboratorId = null, blockedDates = [], weeklySchedule = null) => {
     let estStart = dayjs(defaultStart)
     let lastEndDateForRole = null
 
@@ -78,9 +104,33 @@ export const calculateSequentialStartDate = (roleId, previousTasks, defaultStart
     }
 
     if (lastEndDateForRole) {
-        estStart = calculateNextStartDate(lastEndDateForRole, blockedDates)
+        estStart = calculateNextStartDate(lastEndDateForRole, blockedDates, weeklySchedule)
     }
     return estStart
+}
+
+// ... existing code ...
+
+export const calculateNextStartDate = (lastEndDate, blockedDates = [], weeklySchedule = null) => {
+    let nextStart = dayjs(lastEndDate)
+    const blockedSet = new Set(blockedDates)
+
+    const hour = nextStart.hour()
+    const isBlocked = blockedSet.has(nextStart.format(DATE_FORMAT_API))
+    
+    const notWorking = !isWorkingDay(nextStart, weeklySchedule)
+    
+    if (notWorking || isBlocked || hour >= 18) {
+        if (hour >= 18) {
+            nextStart = nextStart.add(1, 'day').startOf('day').hour(9)
+        }
+        
+        while (!isWorkingDay(nextStart, weeklySchedule) || blockedSet.has(nextStart.format(DATE_FORMAT_API))) {
+            nextStart = nextStart.add(1, 'day')
+        }
+        nextStart = nextStart.startOf('day').hour(9)
+    }
+    return nextStart
 }
 
 export const getEst = (task, roleId) => task.estimations?.find(e => e.role.id === roleId)
@@ -136,25 +186,6 @@ export const calculateWPEndDate = (tasks) => {
     return maxDate
 }
 
-export const calculateNextStartDate = (lastEndDate, blockedDates = []) => {
-    let nextStart = dayjs(lastEndDate)
-    const blockedSet = new Set(blockedDates)
 
-    const hour = nextStart.hour()
-    const isWeekend = nextStart.day() === 0 || nextStart.day() === 6
-    const isBlocked = blockedSet.has(nextStart.format(DATE_FORMAT_API))
-    
-    if (isWeekend || isBlocked || hour >= 18) {
-        if (hour >= 18) {
-            nextStart = nextStart.add(1, 'day').startOf('day').hour(9)
-        }
-        
-        while (nextStart.day() === 0 || nextStart.day() === 6 || blockedSet.has(nextStart.format(DATE_FORMAT_API))) {
-            nextStart = nextStart.add(1, 'day')
-        }
-        nextStart = nextStart.startOf('day').hour(9)
-    }
-    return nextStart
-}
 
 

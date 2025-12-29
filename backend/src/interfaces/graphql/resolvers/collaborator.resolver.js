@@ -2,16 +2,17 @@ import { prisma } from '../../../infrastructure/database/client.js'
 import { CollaboratorService } from '../../../application/services/CollaboratorService.js'
 
 const service = new CollaboratorService()
+const ADMIN_ROLE = 1
 
 const checkAdmin = (context) => {
-    if (!context.user || context.user.role !== 1) { // 1 = Admin
+    if (!context.user || context.user.role !== ADMIN_ROLE) { 
         throw new Error('Unauthorized: Admin access required')
     }
 }
 
 const checkOwnerOrAdmin = (context, resourceId) => {
     if (!context.user) throw new Error('Unauthorized');
-    if (context.user.role === 1) return;
+    if (context.user.role === ADMIN_ROLE) return;
     if (context.user.userId === resourceId) return;
     throw new Error('Unauthorized: You can only edit your own profile');
 }
@@ -20,20 +21,17 @@ export const collaboratorResolver = {
   Query: {
     collaborators: (_, __, context) => {
         if (!context.user) throw new Error('Unauthorized'); 
-        return service.getAll(context.user.organizationId) // Pass Org Context
+        return service.getAll(context.user.organizationId) 
     },
     collaborator: (_, { id }, context) => {
         if (!context.user) throw new Error('Unauthorized');
-        // Ensure the collaborator belongs to my org? 
-        // Logic currently in repo findById doesn't check, but UI flows usually only show links.
-        // For strict multi-tenancy we should check. For now assume good faith or add check later.
         return service.getById(id)
     }
   },
   Mutation: {
     createCollaborator: (_, args, context) => {
         checkAdmin(context);
-        return service.create({ ...args, organizationId: context.user.organizationId }); // Attach Org ID
+        return service.create({ ...args, organizationId: context.user.organizationId }); 
     },
     updateCollaborator: (_, { id, ...data }, context) => {
         checkOwnerOrAdmin(context, id);
@@ -58,17 +56,11 @@ export const collaboratorResolver = {
         return service.addHardware(args);
     },
     removeHardware: (_, { id }, context) => {
-        // Need to check ownership of hardware? 
-        // Typically hardware is assigned by admin, but let's assume Admin only for hardware assignment removal?
-        // Or if user can edit profile, maybe they can remove hardware? 
-        // Let's stick to checkAdmin for Hardware management if "personalizar su perfil" implies info, not assets.
-        // Prompt: "cada usuario puede personalizar su pefil". Typically means name, skills, maybe avatar.
-        // Hardware is usually company managed. I'll make hardware Admin only.
         checkAdmin(context); 
         return service.removeHardware(id);
     },
     updateHolidayCalendar: (_, args, context) => {
-        checkAdmin(context); // Admin manages holidays? Or user? Likely Admin.
+        checkAdmin(context); 
         return service.updateHolidayCalendar(args);
     },
 
@@ -77,15 +69,6 @@ export const collaboratorResolver = {
         return service.addCareerObjective(collaboratorId, year, quarter, description, skillId, targetLevel)
     },
     updateCollaboratorCareerObjective: (_, { id, status }, context) => {
-        // Checking owner for update is harder without fetching the object first to see who owns it.
-        // For simplicity/performance in this iteration: Admin only or I'd need to fetch owner.
-        // Let's assume Admin only for now to be safe, or allow if I can verify. 
-        // Actually, preventing this is complex without DB lookup. 
-        // I'll leave as-is (open) or restrict to Admin? 
-        // Let's strict to Admin for 'update' of sub-resources unless I add lookup.
-        // Or better: trust the 'collaboratorId' if it was passed... but here only ID is passed.
-        // I will restrict these specific sub-updates to Admin for now to avoid complexity, 
-        // assuming Users mostly just VIEW or ADD things.
         checkAdmin(context);
         return service.updateCareerObjective(id, status);
     },
@@ -95,7 +78,7 @@ export const collaboratorResolver = {
     },
     
     addCollaboratorMeeting: (_, { collaboratorId, date, notes }, context) => {
-        checkAdmin(context); // Meetings are usually set by managers
+        checkAdmin(context);
         return service.addMeeting(collaboratorId, date, notes);
     },
     updateCollaboratorMeeting: (_, { id, ...data }, context) => {
@@ -146,7 +129,7 @@ export const collaboratorResolver = {
       },
       isActive: (parent) => parent.isActive ?? true,
       email: async (parent) => {
-          if (parent.user && parent.user.email) return parent.user.email; // If already included
+          if (parent.user && parent.user.email) return parent.user.email;
           const user = await prisma.user.findUnique({ where: { id: parent.userId } });
           return user ? user.email : null;
       },
@@ -154,23 +137,9 @@ export const collaboratorResolver = {
       holidayCalendar: async (parent) => {
           if (parent.holidayCalendar !== undefined) return parent.holidayCalendar
           
-          // Fetch from DB if not present (undefined)
           const cal = await prisma.holidayCalendar.findFirst({
-              where: { collaboratorId: parent.id, year: new Date().getFullYear() } // Or match logic? Usually just by Collab ID if 1:1 or logic needed
+              where: { collaboratorId: parent.id, year: new Date().getFullYear() }
           })
-          // Wait, schema says 1:1? Or 1:N?
-          // Prisma schema not visible but repo implies unique per year?
-          // Let's check repository logic.
-          // Repo: findUnique where { collaboratorId_year: ... }
-          // The Type is just `holidayCalendar: HolidayCalendar` (singular).
-          // Assuming the frontend wants *current* calendar or list?
-          // Frontend fragment uses `holidayCalendar { ... }`.
-          // Let's simply fetch the one that matches or most recent?
-          // Actually, let's look at `PrismaCollaboratorRepository.js` findAll include logic: `holidayCalendar: true`.
-          // This implies 1:1 relation or 1:N but fetched as list?
-          // Type definition says `holidayCalendar: HolidayCalendar`. Singular.
-          // So it is 1:1 on Prisma level? Or maybe the relation name is `holidayCalendar`.
-          // If 1:1, we can findUnique if we knew ID, or findFirst by collaboratorId.
           
           const collab = await prisma.collaborator.findUnique({
               where: { id: parent.id },
@@ -242,7 +211,12 @@ export const collaboratorResolver = {
           where: { collaboratorId: parent.id }, 
           orderBy: { date: 'desc' },
           include: { actionItems: true }
-      })
+      }),
+      organization: (parent) => {
+          if (parent.organization) return parent.organization
+          if (parent.organizationId) return prisma.organization.findUnique({ where: { id: parent.organizationId } })
+          return null
+      }
   },
   CollaboratorSkillHistory: {
       createdAt: (parent) => parent.createdAt.toISOString()

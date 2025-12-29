@@ -13,7 +13,7 @@ const props = defineProps({
   },
   maxWidth: {
     type: String,
-    default: 'max-w-md' // options: max-w-sm, max-w-lg, max-w-xl, max-w-2xl, etc.
+    default: 'max-w-md' // max-w-sm | max-w-lg | max-w-xl | max-w-2xl
   }
 })
 

@@ -65,6 +65,16 @@ export const COLLABORATOR_FRAGMENT = gql`
         name
         color
       }
+      type {
+        id
+        name
+        color
+      }
+    }
+    workingSchedule
+    useCustomSchedule
+    organization {
+        workingSchedule
     }
     holidayCalendar {
       ...HolidayCalendarFields
