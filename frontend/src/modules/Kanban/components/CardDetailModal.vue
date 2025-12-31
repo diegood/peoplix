@@ -1,7 +1,7 @@
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { X, AlignLeft, List, MessageSquare, Trash } from 'lucide-vue-next'
+import { X, AlignLeft, List, Trash } from 'lucide-vue-next'
 import { useKanbanStore } from '../store/kanban.store'
 
 const store = useKanbanStore()
@@ -16,9 +16,20 @@ const emit = defineEmits(['close', 'open-card'])
 
 const localCard = ref({})
 
-watch(() => props.card, (newCard) => {
+import TiptapEditor from './TiptapEditor.vue'
+import CardComments from './CardComments.vue'
+
+watch(() => props.card, async (newCard) => {
     if (newCard) {
         localCard.value = JSON.parse(JSON.stringify(newCard))
+        
+        const fullCard = await store.fetchCard(newCard.id, { 
+            projectTag: newCard.project?.tag, 
+            orgTag: newCard.project?.organization?.tag 
+        })
+        if (fullCard) {
+            localCard.value = fullCard
+        }
     }
 }, { immediate: true, deep: true })
 
@@ -61,7 +72,7 @@ const handleAddSubtask = async () => {
     }
 }
 
-const activeTab = ref('description')
+
 
 const openProject = () => {
     if (localCard.value.project?.tag && localCard.value.project?.organization?.tag) {
@@ -113,7 +124,7 @@ const handleStatusChange = async (event) => {
         console.error('Failed to update status', e)
     }
 }
-import TiptapEditor from './TiptapEditor.vue'
+
 
 const handleDescriptionSave = async () => {
     try {
@@ -157,27 +168,23 @@ const handleDescriptionSave = async () => {
 
           <div class="flex-1 flex overflow-hidden">
               <div class="flex-1 p-6 overflow-y-auto w-2/3 border-r border-gray-100">
-                  <div class="flex border-b mb-6">
-                      <button @click="activeTab = 'description'" :class="['px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2', activeTab === 'description' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700']">
-                          <AlignLeft size="16"/> Descripción
-                      </button>
-                      <button @click="activeTab = 'check'" :class="['px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2', activeTab === 'check' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700']">
+                  <div class="mb-8">
+                       <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+                           <AlignLeft size="16"/> Descripción
+                       </h3>
+                       <div class="h-64 flex flex-col">
+                          <TiptapEditor 
+                            v-model="localCard.description" 
+                            @blur="handleDescriptionSave"
+                            class="h-full"
+                          />
+                       </div>
+                  </div>
+
+                  <div class="mb-8">
+                      <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
                           <List size="16"/> Subtareas ({{ localCard.children?.length || 0 }})
-                      </button>
-                      <button @click="activeTab = 'comments'" :class="['px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2', activeTab === 'comments' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700']">
-                          <MessageSquare size="16"/> Comentarios
-                      </button>
-                  </div>
-
-                  <div v-if="activeTab === 'description'" class="h-64 flex flex-col">
-                      <TiptapEditor 
-                        v-model="localCard.description" 
-                        @blur="handleDescriptionSave"
-                        class="h-full"
-                      />
-                  </div>
-
-                  <div v-if="activeTab === 'check'">
+                      </h3>
                       <div class="mb-4 flex gap-2">
                           <input 
                               v-model="newSubtaskTitle"
@@ -202,16 +209,17 @@ const handleDescriptionSave = async () => {
                               </button>
                           </div>
                       </div>
-                      <div v-else class="text-center py-10 text-gray-400">
+                      <div v-else class="text-center py-4 text-gray-400 text-sm">
                           No hay subtareas
                       </div>
                   </div>
 
-                  <div v-else-if="activeTab === 'comments'">
-                      <div class="text-center py-10 text-gray-400">
-                          Componente de Comentarios próximamente
-                      </div>
-                  </div>
+                  <CardComments 
+                    v-if="localCard.id" 
+                    :card-id="localCard.id" 
+                    :comments="localCard.comments"
+                    @added="(newComment) => localCard.comments.push(newComment)"
+                  />
               </div>
 
               <div class="w-1/3 bg-gray-50 p-6 overflow-y-auto">

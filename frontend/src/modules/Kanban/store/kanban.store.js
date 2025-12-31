@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { apolloClient } from '@/apollo'
-import { GET_KANBAN_BOARD, GET_KANBAN_CARD, MOVE_CARD, CREATE_CARD_FROM_ESTIMATION, CREATE_CARD_FROM_TASK, DELETE_CARD, ADD_SUBTASK, UPDATE_CARD } from '../graphql/kanban'
+import { GET_KANBAN_BOARD, GET_KANBAN_CARD, MOVE_CARD, CREATE_CARD_FROM_ESTIMATION, CREATE_CARD_FROM_TASK, DELETE_CARD, ADD_SUBTASK, UPDATE_CARD, ADD_CARD_COMMENT } from '../graphql/kanban'
 
 export const useKanbanStore = defineStore('kanban', {
   state: () => ({
@@ -164,6 +164,27 @@ export const useKanbanStore = defineStore('kanban', {
             return updatedCard
         } catch (e) {
             console.error('Failed to update card', e)
+            throw e
+        }
+    },
+
+    async addComment(cardId, content) {
+        try {
+             const { data } = await apolloClient.mutate({
+                 mutation: ADD_CARD_COMMENT,
+                 variables: { cardId, content }
+             })
+             const newComment = data.addCardComment
+             
+             const index = this.cards.findIndex(c => c.id === cardId)
+             if (index !== -1) {
+                 const card = this.cards[index]
+                 const comments = card.comments ? [...card.comments, newComment] : [newComment]
+                 this.cards[index] = { ...card, comments }
+             }
+             return newComment
+        } catch(e) {
+            console.error('Failed to add comment', e)
             throw e
         }
     }

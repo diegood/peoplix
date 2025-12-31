@@ -1,5 +1,6 @@
 <script setup>
 import { useEditor, EditorContent } from '@tiptap/vue-3'
+import { BubbleMenu } from '@tiptap/extension-bubble-menu'
 import StarterKit from '@tiptap/starter-kit'
 import { watch, onBeforeUnmount } from 'vue'
 import { 
@@ -22,6 +23,15 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  menuType: {
+    type: String,
+    default: 'fixed', // 'fixed' | 'bubble'
+    validator: (value) => ['fixed', 'bubble'].includes(value)
+  },
+  placeholder: {
+      type: String,
+      default: ''
+  }
 })
 
 const emit = defineEmits(['update:modelValue', 'blur'])
@@ -30,10 +40,13 @@ const editor = useEditor({
   content: props.modelValue,
   extensions: [
     StarterKit,
+    BubbleMenu.configure({
+        pluginKey: 'bubbleMenu',
+    }),
   ],
   editorProps: {
     attributes: {
-      class: 'prose prose-sm sm:prose-base focus:outline-none min-h-[200px] p-4 max-w-none',
+      class: 'prose prose-sm sm:prose-base focus:outline-none min-h-[100px] p-4 max-w-none',
     },
   },
   onUpdate: () => {
@@ -44,7 +57,6 @@ const editor = useEditor({
   }
 })
 
-// Update content if modelValue changes externally
 watch(() => props.modelValue, (value) => {
   const isSame = editor.value && editor.value.getHTML() === value
   if (editor.value && !isSame) {
@@ -145,9 +157,8 @@ const items = [
 </script>
 
 <template>
-  <div class="border rounded-lg overflow-hidden bg-white flex flex-col w-full h-full">
-    <!-- Toolbar -->
-    <div v-if="editor" class="flex items-center gap-1 border-b bg-gray-50 p-2 flex-wrap">
+  <div class="border rounded-lg overflow-hidden bg-white flex flex-col w-full h-full relative group">
+    <div v-if="editor && menuType === 'fixed'" class="flex items-center gap-1 border-b bg-gray-50 p-2 flex-wrap">
       <template v-for="(item, index) in items">
           <div v-if="item.type === 'divider'" :key="`divider-${index}`" class="w-px h-6 bg-gray-300 mx-2"></div>
           <button 
@@ -163,13 +174,52 @@ const items = [
       </template>
     </div>
 
-    <!-- Editor Content -->
+    <bubble-menu
+      v-if="editor && menuType === 'bubble'"
+      :editor="editor"
+      :tippy-options="{ duration: 100 }"
+      class="flex items-center gap-1 bg-gray-800 text-white p-1 rounded-lg shadow-xl overflow-hidden"
+    >
+      <button 
+        @click="editor.chain().focus().toggleBold().run()" 
+        class="p-1.5 hover:bg-gray-700 rounded transition-colors"
+        :class="{ 'text-blue-400': editor.isActive('bold') }"
+      >
+        <Bold size="16" />
+      </button>
+      <button 
+        @click="editor.chain().focus().toggleItalic().run()" 
+        class="p-1.5 hover:bg-gray-700 rounded transition-colors"
+        :class="{ 'text-blue-400': editor.isActive('italic') }"
+      >
+        <Italic size="16" />
+      </button>
+      <div class="w-px h-4 bg-gray-600 mx-1"></div>
+      <button 
+        @click="editor.chain().focus().toggleHeading({ level: 1 }).run()" 
+        class="p-1.5 hover:bg-gray-700 rounded transition-colors"
+        :class="{ 'text-blue-400': editor.isActive('heading', { level: 1 }) }"
+      >
+        <Heading1 size="16" />
+      </button>
+       <button 
+        @click="editor.chain().focus().toggleBulletList().run()" 
+        class="p-1.5 hover:bg-gray-700 rounded transition-colors"
+        :class="{ 'text-blue-400': editor.isActive('bulletList') }"
+      >
+        <List size="16" />
+      </button>
+    </bubble-menu>
+
     <editor-content :editor="editor" class="flex-1 overflow-y-auto cursor-text text-sm" />
+    
+    <div v-if="!modelValue && placeholder && !editor?.isFocused" class="absolute top-4 left-4 text-gray-400 pointer-events-none text-sm">
+        {{ placeholder }}
+    </div>
   </div>
 </template>
 
 <style>
-/* Basic Prose Mirror styles since we might not have full Tailwind Typography plugin enabled explicitly or want custom ones */
 .ProseMirror p {
     margin-bottom: 0.5em;
 }
