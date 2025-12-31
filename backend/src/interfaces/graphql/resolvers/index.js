@@ -7,6 +7,7 @@ import { absenceResolver } from './absence.resolver.js'
 import { workPackageResolvers } from './workPackage.resolver.js'
 import { authResolvers } from './Auth.js'
 import { organizationResolvers } from './Organization.js'
+import KanbanResolver from './kanban.resolver.js'
 import GraphQLJSON from 'graphql-type-json';
 
 const mergeResolvers = (resolvers) => {
@@ -33,5 +34,6 @@ export const resolvers = mergeResolvers([
     absenceResolver,
     workPackageResolvers,
     authResolvers,
-    organizationResolvers
+    organizationResolvers,
+    KanbanResolver
 ])

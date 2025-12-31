@@ -4,6 +4,8 @@ export const ProjectSchema = gql`
 type Project {
   id: ID!
   name: String!
+  tag: String
+  organization: Organization
   contractedHours: Int!
   startDate: String
   allocations: [Allocation!]
@@ -39,7 +41,7 @@ type ProjectRequirementSkill {
 
   createProject(name: String!, contractedHours: Int!, startDate: String): Project!
 
-  updateProject(id: ID!, name: String, contractedHours: Int, startDate: String): Project!
+  updateProject(id: ID!, name: String, tag: String, contractedHours: Int, startDate: String): Project!
 
   deleteProject(id: ID!): Boolean
 

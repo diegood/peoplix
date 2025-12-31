@@ -13,17 +13,20 @@ export const organizationResolvers = {
     }
   },
   Mutation: {
-    updateOrganization: async (_, { workingSchedule }, context) => {
+    updateOrganization: async (_, { name, tag, workingSchedule }, context) => {
       const user = context.user
       if (!user || !user.organizationId) throw new Error('Unauthorized')
       
       if (user.role !== 1) throw new Error('Forbidden: Only Admins can update Organization settings')
 
+      const data = {}
+      if (name) data.name = name
+      if (tag) data.tag = tag
+      if (workingSchedule) data.workingSchedule = workingSchedule
+
       return prisma.organization.update({
         where: { id: user.organizationId },
-        data: {
-          workingSchedule
-        }
+        data
       })
     }
   }

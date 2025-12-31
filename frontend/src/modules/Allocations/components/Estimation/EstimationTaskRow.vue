@@ -92,7 +92,10 @@
                 </div>
             </div>
         </td>
-        <td class="py-2 px-2 text-center w-10">
+        <td class="py-2 px-2 text-center w-16 flex items-center justify-center gap-1">
+                <button @click="$emit('start-work', task)" class="text-gray-300 hover:text-green-500 transition-colors" title="Iniciar ejecución">
+                    <Play :size="14" />
+                </button>
                 <button @click="$emit('delete-task', task.id)" class="text-gray-300 hover:text-red-500 transition-colors">
                     <Trash :size="14" />
                 </button>
@@ -103,8 +106,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { FileText, User, X, Link, Trash } from 'lucide-vue-next'
+import { ref, computed } from 'vue' 
+import { FileText, User, X, Link, Trash, Play } from 'lucide-vue-next'
 import { getEst, getTaskSummary } from '@/modules/Allocations/helpers/estimationHelpers'
 
 const props = defineProps({
@@ -113,7 +116,7 @@ const props = defineProps({
     tasksOptions: Array
 })
 
-defineEmits(['update-name', 'update-desc', 'update-est', 'delete-task', 'add-dependency', 'remove-dependency', 'open-assignment'])
+defineEmits(['update-name', 'update-desc', 'update-est', 'delete-task', 'add-dependency', 'remove-dependency', 'open-assignment', 'start-work'])
 
 const isDescEditing = ref(false)
 const isAddingDep = ref(false)

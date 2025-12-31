@@ -177,8 +177,8 @@ export const CREATE_PROJECT = gql`
 `
 
 export const UPDATE_PROJECT = gql`
-  mutation UpdateProject($id: ID!, $name: String!, $contractedHours: Int!, $startDate: String) {
-    updateProject(id: $id, name: $name, contractedHours: $contractedHours, startDate: $startDate) {
+  mutation UpdateProject($id: ID!, $name: String!, $tag: String, $contractedHours: Int!, $startDate: String) {
+    updateProject(id: $id, name: $name, tag: $tag, contractedHours: $contractedHours, startDate: $startDate) {
       ...ProjectFields
     }
   }

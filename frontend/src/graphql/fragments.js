@@ -88,6 +88,7 @@ export const PROJECT_FRAGMENT = gql`
     id
     name
     contractedHours
+    tag
     startDate
   }
 `

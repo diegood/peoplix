@@ -34,6 +34,7 @@ const router = createRouter({
       path: '/settings',
       name: 'settings',
       component: () => import('@/modules/Configuration/views/SettingsView.vue'),
+      meta: { requiresAdmin: true }
     },
     {
       path: '/planning',
@@ -44,6 +45,31 @@ const router = createRouter({
       path: '/projects/:id/estimation',
       name: 'project-estimation',
       component: () => import('@/modules/Allocations/views/ProjectEstimationView.vue')
+    },
+    {
+      path: '/projects/:id/kanban',
+      name: 'project-kanban',
+      component: () => import('@/modules/Kanban/views/KanbanView.vue')
+    },
+    {
+      path: '/:orgTag/kanban/:projectTag',
+      name: 'tagged-kanban-board',
+      component: () => import('@/modules/Kanban/views/KanbanView.vue')
+    },
+    {
+      path: '/:orgTag/kanban/:projectTag/card/:cardId',
+      name: 'tagged-kanban-card',
+      component: () => import('@/modules/Kanban/views/KanbanView.vue')
+    },
+    {
+      path: '/kanban',
+      name: 'global-kanban',
+      component: () => import('@/modules/Kanban/views/KanbanView.vue')
+    },
+    {
+      path: '/kanban/card/:cardId',
+      name: 'global-kanban-card',
+      component: () => import('@/modules/Kanban/views/KanbanView.vue')
     },
     {
       path: '/admin/users',

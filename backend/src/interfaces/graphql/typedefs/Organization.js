@@ -4,6 +4,7 @@ export const OrganizationSchema = gql`
   type Organization {
     id: ID!
     name: String!
+    tag: String
     workingSchedule: JSON
   }
 
@@ -12,6 +13,6 @@ export const OrganizationSchema = gql`
   }
 
   extend type Mutation {
-    updateOrganization(workingSchedule: JSON): Organization!
+    updateOrganization(name: String, tag: String, workingSchedule: JSON): Organization!
   }
 `;

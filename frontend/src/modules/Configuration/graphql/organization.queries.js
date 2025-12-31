@@ -5,15 +5,18 @@ export const GET_ORGANIZATION = gql`
     organization {
       id
       name
+      tag
       workingSchedule
     }
   }
 `
 
 export const UPDATE_ORGANIZATION = gql`
-  mutation UpdateOrganization($workingSchedule: JSON) {
-    updateOrganization(workingSchedule: $workingSchedule) {
+  mutation UpdateOrganization($name: String, $tag: String, $workingSchedule: JSON) {
+    updateOrganization(name: $name, tag: $tag, workingSchedule: $workingSchedule) {
       id
+      name
+      tag
       workingSchedule
     }
   }

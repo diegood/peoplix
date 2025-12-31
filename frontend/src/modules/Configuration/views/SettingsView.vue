@@ -6,7 +6,7 @@ import WorkCenterManager from '../components/WorkCenterManager.vue'
 import CustomFieldManager from '../components/CustomFieldManager.vue'
 import RoleCRUD from '../components/RoleCRUD.vue'
 import AbsenceTypeManager from '../components/AbsenceTypeManager.vue'
-
+import OrganizationDetails from '../components/OrganizationDetails.vue'
 import WorkPackageStatusManager from '../components/WorkPackageStatusManager.vue'
 import WorkScheduleManager from '../components/WorkScheduleManager.vue'
 import { Hexagon } from 'lucide-vue-next'
@@ -22,6 +22,11 @@ const showMilestones = ref(false)
     </div>
     
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+            
+            <div class="lg:col-span-2">
+                 <OrganizationDetails />
+            </div>
+
             <div class="bg-orange-50/50 p-4 rounded-xl border border-orange-100 mb-6 hidden">
                 <h3 class="font-bold text-orange-800">Tecnologías</h3>
                 <TechnologyCRUD />

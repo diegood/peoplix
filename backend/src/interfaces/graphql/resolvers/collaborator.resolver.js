@@ -128,6 +128,17 @@ export const collaboratorResolver = {
           return parent.roles ? parent.roles.map(r => r.role) : []
       },
       isActive: (parent) => parent.isActive ?? true,
+      allocations: (parent) => {
+          if (parent.allocations) return parent.allocations
+          return prisma.allocation.findMany({
+              where: { collaboratorId: parent.id },
+              include: { 
+                  project: { 
+                      include: { organization: true } 
+                  }
+              }
+          })
+      },
       email: async (parent) => {
           if (parent.user && parent.user.email) return parent.user.email;
           const user = await prisma.user.findUnique({ where: { id: parent.userId } });

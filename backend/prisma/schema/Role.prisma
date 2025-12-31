@@ -9,6 +9,7 @@ model Role {
   allocations     AllocationRole[]
   requirements    ProjectRequirement[]
   taskEstimations TaskEstimation[]
+  kanbanCards     KanbanCard[]         @relation("CardRoles")
 
   @@unique([name, organizationId])
 }

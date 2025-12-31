@@ -71,6 +71,7 @@
                      @add-dependency="handleAddDependency"
                      @remove-dependency="handleRemoveDependency"
                      @open-assignment="openAssignmentModal"
+                     @start-work="handleStartWork"
                   />
                   
                   <tr class="bg-gray-50/50">
@@ -126,6 +127,9 @@ import { parseDateSafe, formatDate, addWorkingDays } from '@/helper/Date'
 import { getEst, calculateWPEndDate, findRoundRobinCollaborator, calculateSequentialStartDate, getBlockedDates, getComputedSchedule } from '@/modules/Allocations/helpers/estimationHelpers'
 import { DATE_TIME_FORMAT_API } from '@/config/constants'
 import { useEstimationMutations } from './useEstimationMutations'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 
 import CollaboratorAssignmentModal from './CollaboratorAssignmentModal.vue'
 import EstimationTaskRow from './EstimationTaskRow.vue'
@@ -141,6 +145,26 @@ const props = defineProps({
 const emit = defineEmits(['refetch'])
 const notificationStore = useNotificationStore()
 const authStore = useAuthStore()
+
+import { useKanbanStore } from '@/modules/Kanban/store/kanban.store'
+const kanbanStore = useKanbanStore()
+
+const handleStartWork = async (task) => {
+    if (!task.estimations || task.estimations.length === 0) {
+        notificationStore.showToast('No hay estimaciones para iniciar', 'warning')
+        return
+    }
+
+    try {
+        const projectId = props.wp.workPackage?.projectId || props.wp.projectId || route.params.id
+        await kanbanStore.createCardStructure(task.id, projectId)
+        notificationStore.showToast('Tarea iniciada en Kanban', 'success')
+    } catch (e) {
+        console.error(e)
+        notificationStore.showToast('Error al iniciar tarea', 'error')
+    }
+}
+
 
 const { 
   handleUpdateTaskName, 

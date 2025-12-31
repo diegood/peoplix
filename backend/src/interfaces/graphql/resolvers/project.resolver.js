@@ -11,7 +11,7 @@ export const projectResolver = {
   },
   Mutation: {
     createProject: (_, { name, contractedHours, startDate }, { user }) => service.create({ name, contractedHours, startDate, organizationId: user.organizationId }),
-    updateProject: (_, { id, name, contractedHours, startDate }) => service.update(id, { name, contractedHours, startDate }),
+    updateProject: (_, { id, name, tag, contractedHours, startDate }) => service.update(id, { name, tag, contractedHours, startDate }),
     deleteProject: async (_, { id }) => {
         await service.delete(id)
         return true

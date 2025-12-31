@@ -2,11 +2,9 @@ import dayjs from '@/config/dayjs'
 import { parseDateSafe, isWorkingDay, getDailySchedule } from '@/helper/Date'
 import { GANTT_VISUAL_FACTOR, DATE_TIME_FORMAT_API, DATE_FORMAT_API } from '@/config/constants'
 
-// Helper to get correct schedule (Custom vs Org override)
 export const getComputedSchedule = (collaborator) => {
   if (!collaborator) return null
   
-  // Need to parse if string
   let custom = null
   let org = null
   
@@ -25,7 +23,7 @@ export const getComputedSchedule = (collaborator) => {
   if (collaborator.useCustomSchedule && custom) return custom
   if (org) return org
   
-  return null // Fallback to default in isWorkingDay
+  return null
 }
 
 export const findRoundRobinCollaborator = (roleId, projectAllocations, existingTasksCount) => {
@@ -82,13 +80,11 @@ export const calculateSequentialStartDate = (roleId, previousTasks, defaultStart
 
     if(previousTasks && previousTasks.length > 0) {
 
-        // Collect all potential end dates for this role/collaborator
         let bestDate = null
         
         previousTasks.forEach(t => {
             const est = t.estimations?.find(e => e.role.id === roleId)
             if (est) {
-                // If filtering by specific collaborator, check ID
                 if (collaboratorId) {
                     const cId = est.collaborator?.id
                     if (cId !== collaboratorId) return
@@ -117,8 +113,6 @@ export const calculateSequentialStartDate = (roleId, previousTasks, defaultStart
     return estStart
 }
 
-// ... existing code ...
-
 export const calculateNextStartDate = (lastEndDate, blockedDates = [], weeklySchedule = null) => {
     let nextStart = dayjs(lastEndDate)
     const blockedSet = new Set(blockedDates)
@@ -129,7 +123,6 @@ export const calculateNextStartDate = (lastEndDate, blockedDates = [], weeklySch
     
     const isBlocked = blockedSet.has(nextStart.format(DATE_FORMAT_API))
     
-    // Default End if active undefined or string parsing fails
     let endHour = 18
     if (daySched.active && daySched.end) {
         const [h] = daySched.end.split(':').map(Number)
@@ -138,23 +131,17 @@ export const calculateNextStartDate = (lastEndDate, blockedDates = [], weeklySch
 
     const hour = nextStart.hour()
     
-    // Check Tolerance: If current time is within 1 hour of schedule end, move to next day
-    // This aligns with "Full Day" visual logic (8h task in 9h schedule ends 1hr early but counts as full day)
     const isNearEndOfDay = hour >= (endHour - 1)
 
     if (!daySched.active || isBlocked || isNearEndOfDay) {
         if (daySched.active && isNearEndOfDay) {
-            // Move to next day
             nextStart = nextStart.add(1, 'day')
         }
         
-        // Find next valid working day
         while (!isWorkingDay(nextStart, weeklySchedule) || blockedSet.has(nextStart.format(DATE_FORMAT_API))) {
             nextStart = nextStart.add(1, 'day')
         }
         
-        // Set start time to 00:00 (Start of Day) for visual consistency
-        // addWorkingDays will handle skipping non-working hours (00:00-09:00) during calculation
         nextStart = nextStart.startOf('day')
     }
     return nextStart

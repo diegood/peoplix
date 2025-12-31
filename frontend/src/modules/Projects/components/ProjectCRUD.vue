@@ -40,7 +40,8 @@ const handleCreate = async () => {
 const startEdit = (project) => {
     editingId.value = project.id
     editForm.value = { 
-        name: project.name, 
+        name: project.name,
+        tag: project.tag, 
         contractedHours: project.contractedHours 
     }
 }
@@ -50,6 +51,7 @@ const saveEdit = async () => {
     await updateProject({
         id: editingId.value,
         name: editForm.value.name,
+        tag: editForm.value.tag,
         contractedHours: Number(editForm.value.contractedHours)
     })
     editingId.value = null
@@ -157,6 +159,10 @@ const openVacations = (project) => {
             <div class="space-y-1">
                 <label class="text-xs font-bold text-gray-500">Nombre</label>
                 <input v-model="editForm.name" class="w-full border rounded px-2 py-1 text-sm" />
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-500">Tag (URL)</label>
+                <input v-model="editForm.tag" class="w-full border rounded px-2 py-1 text-sm" placeholder="PRO" />
             </div>
             <div class="space-y-1">
                 <label class="text-xs font-bold text-gray-500">Horas</label>

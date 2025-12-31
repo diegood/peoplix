@@ -5,10 +5,13 @@ import ToastNotification from './components/ToastNotification.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import { useAuthStore } from '@/modules/Auth/stores/auth.store'
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 
 const authStore = useAuthStore()
+const route = useRoute()
 const user = computed(() => authStore.user)
 const isAdmin = computed(() => authStore.isAdmin)
+const projectId = computed(() => route.params.id)
 </script>
 
 <template>
@@ -29,6 +32,11 @@ const isAdmin = computed(() => authStore.isAdmin)
             <span>Proyectos</span>
           </RouterLink>
 
+          <RouterLink to="/kanban" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
+             <LayoutDashboard size="20" />
+             <span>Tablero Kanban</span>
+          </RouterLink>
+
           <RouterLink to="/planning" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
             <Calendar size="20" />
             <span>Planificación</span>
@@ -47,7 +55,7 @@ const isAdmin = computed(() => authStore.isAdmin)
               </RouterLink>
            </div>
 
-          <RouterLink to="/settings" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100/50 hover:text-gray-900 rounded-lg transition-colors mt-auto" exact-active-class="bg-gray-100 text-gray-900 font-medium">
+          <RouterLink v-if="isAdmin" to="/settings" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100/50 hover:text-gray-900 rounded-lg transition-colors mt-auto" exact-active-class="bg-gray-100 text-gray-900 font-medium">
             <Settings size="20" />
             <span>Configuración</span>
           </RouterLink>

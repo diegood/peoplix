@@ -25,10 +25,12 @@ app.register(mercurius, {
         // Bearer token
         const cleanToken = token.replace('Bearer ', '')
         const decoded = jwt.verify(cleanToken, JWT_SECRET)
+        // console.log('User authenticated:', decoded.username)
         return { user: decoded }
       }
     } catch (e) {
-      console.error('Invalid token', e.message)
+      console.error('Invalid token:', e.message)
+      console.error('Token received:', token)
     }
     return { user: null }
   }

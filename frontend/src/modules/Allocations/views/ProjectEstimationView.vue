@@ -11,6 +11,7 @@ import { parseDateSafe } from '@/helper/Date'
 import EstimationHeader from '@/modules/Allocations/components/Estimation/EstimationHeader.vue'
 import EstimationWorkPackage from '@/modules/Allocations/components/Estimation/EstimationWorkPackage.vue'
 import EstimationGantt from '@/modules/Allocations/components/Estimation/EstimationGantt.vue'
+import { LayoutDashboard } from 'lucide-vue-next'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -122,6 +123,16 @@ const handleUpdateTaskDate = async ({ taskId, roleId, hours, startDate, endDate 
 <template>
   <div class="p-6 max-w-7xl mx-auto space-y-8" v-if="project">
       
+      <div class="flex justify-between items-center mb-[-1rem]">
+          <router-link to="/projects" class="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1">
+             &larr; Volver a Proyectos
+          </router-link>
+          <router-link :to="`/projects/${projectId}/kanban`" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-colors">
+             <LayoutDashboard class="w-4 h-4" />
+             Tablero Kanban
+          </router-link>
+      </div>
+
       <EstimationHeader 
         :projectName="project.name" 
         :totalHours="summary.totalHours" 

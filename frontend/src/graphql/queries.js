@@ -127,8 +127,20 @@ export const GET_ME = gql`
       userName
       firstName
       lastName
+      lastName
       contractedHours
       systemRole
+      allocations {
+         id
+         project {
+           id
+           name
+           tag
+           organization {
+             tag
+           }
+         }
+      }
     }
   }
 `

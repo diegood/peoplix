@@ -10,7 +10,7 @@ model Collaborator {
 
   systemRole Int @default(2)
 
-  userId String
+  userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
   organizationId String
@@ -35,6 +35,8 @@ model Collaborator {
 
   workCenterId String?
   workCenter   WorkCenter? @relation(fields: [workCenterId], references: [id])
+
+  kanbanCards KanbanCard[] @relation("CardAssignees")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

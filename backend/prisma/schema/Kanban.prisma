@@ -1,0 +1,106 @@
+enum CardRisk {
+  HIGH
+  MEDIUM
+  LOW
+  NONE
+}
+
+enum RelationType {
+  BLOCKS
+  EXPECTS
+  RELATES_TO
+}
+
+enum CardEventType {
+  CREATED
+  MOVED
+  ASSIGNED
+  COMMENT_ADDED
+  COMMENT_EDITED
+  COMMENT_DELETED
+  UPDATED
+}
+
+model KanbanCard {
+  id String @id @default(uuid())
+
+  readableId String
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  title String
+
+  description String?
+
+  status String   @default("todo")
+  risk   CardRisk @default(NONE)
+
+  estimatedStartDate DateTime?
+  estimatedEndDate   DateTime?
+  startDate          DateTime?
+  endDate            DateTime?
+  taskEstimationId   String?         @unique
+  taskEstimation     TaskEstimation? @relation(fields: [taskEstimationId], references: [id])
+
+  isDeleted Boolean @default(false)
+
+  parentCardId String?
+  parentCard   KanbanCard?  @relation("CardHierarchy", fields: [parentCardId], references: [id])
+  children     KanbanCard[] @relation("CardHierarchy")
+
+  comments          CardComment[]
+  timeline          CardEvent[]
+  outgoingRelations CardRelation[] @relation("SourceCard")
+  incomingRelations CardRelation[] @relation("TargetCard")
+  collaborators     Collaborator[] @relation("CardAssignees")
+  roles             Role[]         @relation("CardRoles")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CardComment {
+  id      String @id @default(uuid())
+  content String
+
+  cardId String
+  card   KanbanCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id])
+
+  updatedBy String?
+
+  isDeleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CardEvent {
+  id      String        @id @default(uuid())
+  type    CardEventType
+  details String?
+
+  cardId String
+  card   KanbanCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model CardRelation {
+  id   String       @id @default(uuid())
+  type RelationType
+
+  sourceId String
+  source   KanbanCard @relation("SourceCard", fields: [sourceId], references: [id], onDelete: Cascade)
+
+  targetId String
+  target   KanbanCard @relation("TargetCard", fields: [targetId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}

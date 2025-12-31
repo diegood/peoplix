@@ -61,7 +61,24 @@ export class CollaboratorService {
         if (data.joinDate) {
              data.joinDate = new Date(data.joinDate).toISOString()
         }
-        return this.repository.update(id, data)
+
+        const { password, ...collaboratorData } = data;
+
+        if (password) {
+            const collaborator = await this.repository.findById(id);
+            if (collaborator && collaborator.userId) {
+                await prisma.user.update({
+                    where: { id: collaborator.userId },
+                    data: { password }
+                });
+            }
+        }
+
+        if (Object.keys(collaboratorData).length === 0) {
+            return this.repository.findById(id);
+        }
+
+        return this.repository.update(id, collaboratorData)
     }
     
     async delete(id) {

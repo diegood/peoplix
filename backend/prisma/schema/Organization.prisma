@@ -1,6 +1,7 @@
 model Organization {
   id   String @id @default(uuid())
   name String
+  tag  String @unique @default("ORG")
 
   projects               Project[]
   collaborators          Collaborator[]

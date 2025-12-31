@@ -3,7 +3,10 @@ model User {
   email    String @unique
   password String
 
-  collaborators Collaborator[]
+  collaborator Collaborator?
+
+  cardComments CardComment[]
+  cardEvents   CardEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
