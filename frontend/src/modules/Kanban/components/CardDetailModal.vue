@@ -113,6 +113,15 @@ const handleStatusChange = async (event) => {
         console.error('Failed to update status', e)
     }
 }
+import TiptapEditor from './TiptapEditor.vue'
+
+const handleDescriptionSave = async () => {
+    try {
+        await store.updateCard(localCard.value.id, { description: localCard.value.description })
+    } catch (e) {
+        console.error('Failed to save description', e)
+    }
+}
 </script>
 
 <template>
@@ -160,8 +169,12 @@ const handleStatusChange = async (event) => {
                       </button>
                   </div>
 
-                  <div v-if="activeTab === 'description'">
-                      <textarea class="w-full h-64 border rounded-lg p-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Añadir descripción detallada... (Markdown soportado próximamente)" :value="localCard.description"></textarea>
+                  <div v-if="activeTab === 'description'" class="h-64 flex flex-col">
+                      <TiptapEditor 
+                        v-model="localCard.description" 
+                        @blur="handleDescriptionSave"
+                        class="h-full"
+                      />
                   </div>
 
                   <div v-if="activeTab === 'check'">
