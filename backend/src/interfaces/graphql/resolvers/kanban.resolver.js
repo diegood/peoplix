@@ -130,6 +130,15 @@ export default {
             data: { content }
         })
 
+        await prisma.cardEvent.create({
+            data: {
+                type: 'COMMENT_EDITED',
+                details: content,
+                cardId: comment.cardId,
+                authorId: userId
+            }
+        })
+
         const card = await service.repository.findById(comment.cardId)
         context.pubsub.emitter.emit({
             topic: `CARD_UPDATED_${comment.cardId}`,
@@ -171,7 +180,7 @@ export default {
         await prisma.cardEvent.create({
             data: {
                 type: 'COMMENT_DELETED',
-                details: 'Comment deleted',
+                details: comment.content,
                 cardId: comment.cardId,
                 authorId: userId
             }

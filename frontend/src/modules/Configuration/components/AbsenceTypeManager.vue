@@ -7,21 +7,17 @@ import {
     UPDATE_ABSENCE_TYPE, 
     DELETE_ABSENCE_TYPE 
 } from '@/modules/Absences/graphql/absence.queries.js'
-import { Plus, Trash, Edit, Check, X, CalendarOff } from 'lucide-vue-next'
+import { Plus } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 
 const notificationStore = useNotificationStore()
 
-// Queries
 const { result, loading, refetch } = useQuery(GET_ABSENCE_TYPES)
-const types = ref([]) // Local copy if needed, or computed
 
-// Mutations
 const { mutate: createType } = useMutation(CREATE_ABSENCE_TYPE)
 const { mutate: updateType } = useMutation(UPDATE_ABSENCE_TYPE)
 const { mutate: deleteType } = useMutation(DELETE_ABSENCE_TYPE)
 
-// State
 const isCreating = ref(false)
 const editingId = ref(null)
 const form = ref({
@@ -63,7 +59,7 @@ const onSave = async () => {
         }
         await refetch()
         resetForm()
-    } catch (err) {
+    } catch {
         notificationStore.showToast('Error al guardar', 'error')
     }
 }
@@ -75,7 +71,7 @@ const onDelete = async (id) => {
         await deleteType({ id })
         notificationStore.showToast('Eliminado correctamente', 'success')
         await refetch()
-    } catch (err) {
+    } catch {
          notificationStore.showToast('No se puede eliminar (posiblemente en uso)', 'error')
     }
 }

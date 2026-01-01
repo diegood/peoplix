@@ -22,6 +22,14 @@ const localCard = ref({})
 
 import TiptapEditor from './TiptapEditor.vue'
 import CardComments from './CardComments.vue'
+import CardTimeline from './CardTimeline.vue'
+import SimpleTabs from '@/components/SimpleTabs.vue'
+
+const tabs = [
+    { id: 'details', label: 'Detalles' },
+    { id: 'timeline', label: 'Cronología' }
+]
+const activeTab = ref('details')
 
 watch(() => props.card, async (newCard) => {
     if (newCard) {
@@ -181,61 +189,74 @@ const handleDescriptionSave = async () => {
                  <X size="24" />
              </button>
           </div>
+          
+          <SimpleTabs :tabs="tabs" @change="id => activeTab = id" class="px-6" />
 
           <div class="flex-1 flex overflow-hidden">
               <div class="flex-1 p-6 overflow-y-auto w-2/3 border-r border-gray-100">
-                  <div class="mb-8">
-                       <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
-                           <AlignLeft size="16"/> Descripción
-                       </h3>
-                       <div class="h-64 flex flex-col">
-                          <TiptapEditor 
-                            v-model="localCard.description" 
-                            @blur="handleDescriptionSave"
-                            class="h-full"
-                          />
-                       </div>
-                  </div>
-
-                  <div class="mb-8">
-                      <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
-                          <List size="16"/> Subtareas ({{ localCard.children?.length || 0 }})
-                      </h3>
-                      <div class="mb-4 flex gap-2">
-                          <input 
-                              v-model="newSubtaskTitle"
-                              @keydown.enter="handleAddSubtask"
-                              placeholder="Nueva subtarea..." 
-                              class="flex-1 text-sm border-gray-200 rounded-md p-2 bg-white border focus:ring-2 focus:ring-blue-500 outline-none"
-                          />
-                          <button @click="handleAddSubtask" class="px-3 py-1 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50" :disabled="!newSubtaskTitle">
-                              +
-                          </button>
-                      </div>
-                      <div v-if="localCard.children?.length" class="space-y-2">
-                          <div v-for="child in localCard.children" :key="child.id" class="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                              <input 
-                                  type="checkbox" 
-                                  :checked="child.status === 'done'" 
-                                  @change="(e) => handleSubtaskToggle(child, e.target.checked)"
-                                  class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer" 
+                  
+                  <div v-if="activeTab === 'details'" class="animate-in fade-in duration-200">
+                      <div class="mb-8">
+                           <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+                               <AlignLeft size="16"/> Descripción
+                           </h3>
+                           <div class="h-64 flex flex-col">
+                              <TiptapEditor 
+                                v-model="localCard.description" 
+                                @blur="handleDescriptionSave"
+                                class="h-full"
                               />
-                              <button @click="$emit('open-card', child)" class="text-left hover:text-blue-600 hover:underline flex-1" :class="{'line-through text-gray-400': child.status === 'done'}">
-                                  {{ child.readableId }} {{ child.title }}
+                           </div>
+                      </div>
+
+                      <div class="mb-8">
+                          <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+                              <List size="16"/> Subtareas ({{ localCard.children?.length || 0 }})
+                          </h3>
+                          <div class="mb-4 flex gap-2">
+                              <input 
+                                  v-model="newSubtaskTitle"
+                                  @keydown.enter="handleAddSubtask"
+                                  placeholder="Nueva subtarea..." 
+                                  class="flex-1 text-sm border-gray-200 rounded-md p-2 bg-white border focus:ring-2 focus:ring-blue-500 outline-none"
+                              />
+                              <button @click="handleAddSubtask" class="px-3 py-1 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50" :disabled="!newSubtaskTitle">
+                                  +
                               </button>
                           </div>
+                          <div v-if="localCard.children?.length" class="space-y-2">
+                              <div v-for="child in localCard.children" :key="child.id" class="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                                  <input 
+                                      type="checkbox" 
+                                      :checked="child.status === 'done'" 
+                                      @change="(e) => handleSubtaskToggle(child, e.target.checked)"
+                                      class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer" 
+                                  />
+                                  <button @click="$emit('open-card', child)" class="text-left hover:text-blue-600 hover:underline flex-1" :class="{'line-through text-gray-400': child.status === 'done'}">
+                                      {{ child.readableId }} {{ child.title }}
+                                  </button>
+                              </div>
+                          </div>
+                          <div v-else class="text-center py-4 text-gray-400 text-sm">
+                              No hay subtareas
+                          </div>
                       </div>
-                      <div v-else class="text-center py-4 text-gray-400 text-sm">
-                          No hay subtareas
-                      </div>
+
+                      <CardComments 
+                        v-if="localCard.id" 
+                        :card-id="localCard.id" 
+                        :comments="localCard.comments"
+                        @added="(newComment) => localCard.comments.push(newComment)"
+                      />
                   </div>
 
-                  <CardComments 
-                    v-if="localCard.id" 
-                    :card-id="localCard.id" 
-                    :comments="localCard.comments"
-                    @added="(newComment) => localCard.comments.push(newComment)"
-                  />
+                  <div v-if="activeTab === 'timeline'" class="animate-in fade-in duration-200">
+                      <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+                          Historial de Actividad
+                      </h3>
+                      <CardTimeline :timeline="localCard.timeline" />
+                  </div>
+
               </div>
 
               <div class="w-1/3 bg-gray-50 p-6 overflow-y-auto">

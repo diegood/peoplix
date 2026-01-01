@@ -7,7 +7,7 @@ import {
     DELETE_ABSENCE,
     GET_ABSENCE_TYPES 
 } from '@/modules/Absences/graphql/absence.queries.js'
-import { Plus, Trash, Check, X, AlertCircle } from 'lucide-vue-next'
+import { Plus, Check } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 
 const props = defineProps({
@@ -18,7 +18,6 @@ const props = defineProps({
 
 const notificationStore = useNotificationStore()
 
-// State
 const isCreating = ref(false)
 const currentYear = new Date().getFullYear()
 const selectedYear = ref(currentYear)
@@ -29,28 +28,23 @@ const form = ref({
     reason: ''
 })
 
-// Queries
 const { result: absencesResult, refetch: refetchAbsences, loading: loadingAbsences } = useQuery(GET_ABSENCES, () => ({
     collaboratorId: props.collaboratorId
 }))
 
 const { result: typesResult } = useQuery(GET_ABSENCE_TYPES)
 
-// Mutations
 const { mutate: requestAbsence, loading: requesting } = useMutation(REQUEST_ABSENCE)
 const { mutate: deleteAbsence } = useMutation(DELETE_ABSENCE)
 
-// Computed
 const absences = computed(() => absencesResult.value?.absences || [])
 const types = computed(() => typesResult.value?.absenceTypes || [])
 
 const vacationBalance = computed(() => {
-    // Configured days for year (default 23)
     const allowance = props.vacationDaysPerYear && props.vacationDaysPerYear[selectedYear.value] 
         ? Number(props.vacationDaysPerYear[selectedYear.value]) 
         : 23
     
-    // Consumed days
     const consumed = absences.value
         .filter(a => {
             const d = new Date(a.startDate)
@@ -65,7 +59,6 @@ const vacationBalance = computed(() => {
     }
 })
 
-// Methods
 const startRequest = () => {
     form.value = {
         typeId: '',
@@ -87,7 +80,6 @@ const submitRequest = async () => {
             return
         }
         
-        // Basic validation: End >= Start
         if (new Date(form.value.endDate) < new Date(form.value.startDate)) {
             notificationStore.showToast('La fecha fin debe ser posterior a la fecha inicio', 'error')
             return
@@ -115,8 +107,8 @@ const removeAbsence = async (id) => {
         await deleteAbsence({ id })
         notificationStore.showToast('Ausencia eliminada', 'success')
         await refetchAbsences()
-    } catch (err) {
-        notificationStore.showToast('Error al eliminar', 'error')
+    } catch {
+        notificationStore.showToast('Error al eliminar ausencia', 'error')
     }
 }
 

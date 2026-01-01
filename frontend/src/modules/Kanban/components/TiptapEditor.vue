@@ -2,7 +2,7 @@
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import { BubbleMenu } from '@tiptap/extension-bubble-menu'
 import StarterKit from '@tiptap/starter-kit'
-import { watch, onBeforeUnmount } from 'vue'
+import { watch, onBeforeUnmount, ref } from 'vue'
 import { 
   Bold, 
   Italic, 
@@ -36,6 +36,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'blur'])
 
+const isFocused = ref(false)
+
 const editor = useEditor({
   content: props.modelValue,
   extensions: [
@@ -52,7 +54,11 @@ const editor = useEditor({
   onUpdate: () => {
     emit('update:modelValue', editor.value.getHTML())
   },
+  onFocus: () => {
+      isFocused.value = true
+  },
   onBlur: () => {
+      isFocused.value = false
       emit('blur')
   }
 })
@@ -157,8 +163,11 @@ const items = [
 </script>
 
 <template>
-  <div class="border rounded-lg overflow-hidden bg-white flex flex-col w-full h-full relative group">
-    <div v-if="editor && menuType === 'fixed'" class="flex items-center gap-1 border-b bg-gray-50 p-2 flex-wrap">
+  <div 
+    class="border rounded-lg overflow-hidden flex flex-col w-full h-full relative group transition-colors"
+    :class="isFocused ? 'bg-white border-blue-200 ring-2 ring-blue-50' : 'bg-transparent border-transparent hover:bg-gray-50'"
+  >
+    <div v-if="editor && menuType === 'fixed' && isFocused" class="flex items-center gap-1 border-b bg-gray-50 p-2 flex-wrap">
       <template v-for="(item, index) in items">
           <div v-if="item.type === 'divider'" :key="`divider-${index}`" class="w-px h-6 bg-gray-300 mx-2"></div>
           <button 
@@ -174,7 +183,6 @@ const items = [
       </template>
     </div>
 
-    <!-- Bubble Menu Disabled due to package issue -->
 
     <editor-content :editor="editor" class="flex-1 overflow-y-auto cursor-text text-sm" />
     

@@ -95,8 +95,17 @@ export class KanbanService {
     }
 
     async updateCard(cardId, data, userId) {
+        const oldCard = await this.repository.findById(cardId)
         const card = await this.repository.update(cardId, data)
-        await this.logEvent(cardId, 'UPDATED', 'Card details updated', userId)
+        
+        const changes = []
+        if (data.title && data.title !== oldCard.title) changes.push(`Título actualizado`)
+        if (data.description && data.description !== oldCard.description) changes.push('Descripción actualizada')
+        if (data.risk && data.risk !== oldCard.risk) changes.push(`Riesgo cambiado a ${data.risk}`)
+        
+        if (changes.length > 0) {
+            await this.logEvent(cardId, 'UPDATED', changes.join(', '), userId)
+        }
         return card
     }
 
@@ -106,7 +115,8 @@ export class KanbanService {
             content,
             authorId
         })
-        await this.logEvent(cardId, 'COMMENT_ADDED', 'Comment added', authorId)
+        const summary = content.length > 200 ? content.substring(0, 200) + '...' : content
+        await this.logEvent(cardId, 'COMMENT_ADDED', summary, authorId)
         return comment
     }
 
