@@ -5,8 +5,10 @@ model User {
 
   collaborator Collaborator?
 
-  cardComments CardComment[]
-  cardEvents   CardEvent[]
+  cardComments         CardComment[]
+  cardEvents           CardEvent[]
+  cardCommentReactions CardCommentReaction[]
+  cardCommentHistory   CardCommentHistory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

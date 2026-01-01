@@ -174,42 +174,7 @@ const items = [
       </template>
     </div>
 
-    <bubble-menu
-      v-if="editor && menuType === 'bubble'"
-      :editor="editor"
-      :tippy-options="{ duration: 100 }"
-      class="flex items-center gap-1 bg-gray-800 text-white p-1 rounded-lg shadow-xl overflow-hidden"
-    >
-      <button 
-        @click="editor.chain().focus().toggleBold().run()" 
-        class="p-1.5 hover:bg-gray-700 rounded transition-colors"
-        :class="{ 'text-blue-400': editor.isActive('bold') }"
-      >
-        <Bold size="16" />
-      </button>
-      <button 
-        @click="editor.chain().focus().toggleItalic().run()" 
-        class="p-1.5 hover:bg-gray-700 rounded transition-colors"
-        :class="{ 'text-blue-400': editor.isActive('italic') }"
-      >
-        <Italic size="16" />
-      </button>
-      <div class="w-px h-4 bg-gray-600 mx-1"></div>
-      <button 
-        @click="editor.chain().focus().toggleHeading({ level: 1 }).run()" 
-        class="p-1.5 hover:bg-gray-700 rounded transition-colors"
-        :class="{ 'text-blue-400': editor.isActive('heading', { level: 1 }) }"
-      >
-        <Heading1 size="16" />
-      </button>
-       <button 
-        @click="editor.chain().focus().toggleBulletList().run()" 
-        class="p-1.5 hover:bg-gray-700 rounded transition-colors"
-        :class="{ 'text-blue-400': editor.isActive('bulletList') }"
-      >
-        <List size="16" />
-      </button>
-    </bubble-menu>
+    <!-- Bubble Menu Disabled due to package issue -->
 
     <editor-content :editor="editor" class="flex-1 overflow-y-auto cursor-text text-sm" />
     

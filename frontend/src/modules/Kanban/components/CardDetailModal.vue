@@ -3,6 +3,8 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { X, AlignLeft, List, Trash } from 'lucide-vue-next'
 import { useKanbanStore } from '../store/kanban.store'
+import { useSubscription } from '@vue/apollo-composable'
+import { CARD_UPDATED_SUBSCRIPTION } from '../graphql/kanban'
 
 const store = useKanbanStore()
 const router = useRouter()
@@ -32,6 +34,18 @@ watch(() => props.card, async (newCard) => {
         }
     }
 }, { immediate: true, deep: true })
+
+const { result: subscriptionResult } = useSubscription(CARD_UPDATED_SUBSCRIPTION, () => ({
+    cardId: props.card?.id
+}), {
+    enabled: () => !!props.card?.id
+})
+
+watch(subscriptionResult, (data) => {
+    if (data?.cardUpdated) {
+        localCard.value = JSON.parse(JSON.stringify(data.cardUpdated))
+    }
+})
 
 const handleDelete = async () => {
     if(confirm('¿Seguro que deseas eliminar esta tarjeta?')) {

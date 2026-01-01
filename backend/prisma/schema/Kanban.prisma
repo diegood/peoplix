@@ -60,6 +60,21 @@ model KanbanCard {
   updatedAt DateTime @updatedAt
 }
 
+model CardCommentReaction {
+  id    String @id @default(uuid())
+  emoji String // The emoji char
+
+  commentId String
+  comment   CardComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, userId, emoji])
+}
+
 model CardComment {
   id      String @id @default(uuid())
   content String
@@ -74,8 +89,24 @@ model CardComment {
 
   isDeleted Boolean @default(false)
 
+  history CardCommentHistory[]
+
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  cardCommentReactions CardCommentReaction[]
+}
+
+model CardCommentHistory {
+  id      String @id @default(uuid())
+  content String
+
+  commentId String
+  comment   CardComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id])
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model CardEvent {

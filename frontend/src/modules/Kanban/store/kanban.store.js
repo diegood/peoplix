@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { apolloClient } from '@/apollo'
-import { GET_KANBAN_BOARD, GET_KANBAN_CARD, MOVE_CARD, CREATE_CARD_FROM_ESTIMATION, CREATE_CARD_FROM_TASK, DELETE_CARD, ADD_SUBTASK, UPDATE_CARD, ADD_CARD_COMMENT } from '../graphql/kanban'
+import { GET_KANBAN_BOARD, GET_KANBAN_CARD, MOVE_CARD, CREATE_CARD_FROM_ESTIMATION, CREATE_CARD_FROM_TASK, DELETE_CARD, ADD_SUBTASK, UPDATE_CARD, ADD_CARD_COMMENT, ADD_REACTION, EDIT_CARD_COMMENT } from '../graphql/kanban'
 
 export const useKanbanStore = defineStore('kanban', {
   state: () => ({
@@ -185,6 +185,32 @@ export const useKanbanStore = defineStore('kanban', {
              return newComment
         } catch(e) {
             console.error('Failed to add comment', e)
+            throw e
+        }
+    },
+
+    async editComment(commentId, content) {
+        try {
+            const { data } = await apolloClient.mutate({
+                mutation: EDIT_CARD_COMMENT,
+                variables: { commentId, content }
+            })
+            return data.editCardComment
+        } catch (e) {
+            console.error('Failed to edit comment', e)
+            throw e
+        }
+    },
+
+    async addReaction(commentId, emoji) {
+        try {
+            const { data } = await apolloClient.mutate({
+                mutation: ADD_REACTION,
+                variables: { commentId, emoji }
+            })
+            return data.addReaction
+        } catch (e) {
+            console.error('Failed to add reaction', e)
             throw e
         }
     }

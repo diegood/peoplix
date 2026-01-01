@@ -67,7 +67,6 @@ const currentBoardName = computed(() => {
     if (projectId.value) {
         const p = myProjects.value.find(p => p.id === projectId.value)
         if (p) return p.name
-        // Try to find from store cards if not in myProjects
         if (store.cards.length > 0 && store.cards[0].project) {
             return store.cards[0].project.name
         }
@@ -79,7 +78,6 @@ const currentBoardName = computed(() => {
         )
         if (p) return p.name
         
-        // Try to find from store cards
         if (store.cards.length > 0 && store.cards[0].project) {
             return store.cards[0].project.name
         }

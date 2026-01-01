@@ -4,7 +4,7 @@ import cors from '@fastify/cors'
 import { resolvers } from '../graphql/resolvers/index.js'
 import { schema } from '../graphql/schema.js'
 
-const app = Fastify()
+export const app = Fastify()
 
 await app.register(cors, {
   origin: true 
@@ -18,21 +18,20 @@ app.register(mercurius, {
   schema,
   resolvers,
   graphiql: true,
+  subscription: true,
   context: (request) => {
     const token = request.headers.authorization || ''
     try {
       if (token) {
-        // Bearer token
         const cleanToken = token.replace('Bearer ', '')
         const decoded = jwt.verify(cleanToken, JWT_SECRET)
-        // console.log('User authenticated:', decoded.username)
-        return { user: decoded }
+        return { user: decoded, pubsub: request.server.graphql.pubsub }
       }
     } catch (e) {
       console.error('Invalid token:', e.message)
       console.error('Token received:', token)
     }
-    return { user: null }
+    return { user: null, pubsub: request.server.graphql.pubsub }
   }
 })
 

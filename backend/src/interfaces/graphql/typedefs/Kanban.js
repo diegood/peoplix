@@ -37,6 +37,22 @@ export const KanbanSchema = gql`
     createdAt: String
     updatedAt: String
     isDeleted: Boolean
+    reactions: [CardCommentReaction]
+    history: [CardCommentHistory]
+  }
+
+  type CardCommentHistory {
+    id: ID!
+    content: String!
+    createdAt: String!
+    author: User
+  }
+
+  type CardCommentReaction {
+    id: ID!
+    emoji: String!
+    user: User
+    createdAt: String
   }
 
   type CardEvent {
@@ -52,6 +68,10 @@ export const KanbanSchema = gql`
     kanbanCard(id: ID, readableId: String, projectTag: String, orgTag: String): KanbanCard
   }
 
+  extend type Subscription {
+    cardUpdated(cardId: ID!): KanbanCard
+  }
+
   extend type Mutation {
     createCardFromEstimation(estimationId: ID!, projectId: ID!): KanbanCard
     createCardFromTask(taskId: ID!, projectId: ID!): KanbanCard
@@ -60,6 +80,8 @@ export const KanbanSchema = gql`
     updateCard(cardId: ID!, input: UpdateCardInput!): KanbanCard
     
     addCardComment(cardId: ID!, content: String!): CardComment
+    editCardComment(commentId: ID!, content: String!): CardComment
+    addReaction(commentId: ID!, emoji: String!): CardCommentReaction
     deleteCard(cardId: ID!): Boolean
     addSubtask(parentCardId: ID!, title: String!): KanbanCard
   }
