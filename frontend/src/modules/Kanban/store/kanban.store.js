@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { apolloClient } from '@/apollo'
-import { GET_KANBAN_BOARD, GET_KANBAN_CARD, MOVE_CARD, CREATE_CARD_FROM_ESTIMATION, CREATE_CARD_FROM_TASK, DELETE_CARD, ADD_SUBTASK, UPDATE_CARD, ADD_CARD_COMMENT, ADD_REACTION, EDIT_CARD_COMMENT } from '../graphql/kanban'
+import { GET_KANBAN_BOARD, GET_KANBAN_CARD, MOVE_CARD, CREATE_CARD_FROM_ESTIMATION, CREATE_CARD_FROM_TASK, DELETE_CARD, ADD_SUBTASK, UPDATE_CARD, ADD_CARD_COMMENT, ADD_REACTION, EDIT_CARD_COMMENT, DELETE_CARD_COMMENT } from '../graphql/kanban'
 
 export const useKanbanStore = defineStore('kanban', {
   state: () => ({
@@ -200,6 +200,15 @@ export const useKanbanStore = defineStore('kanban', {
             console.error('Failed to edit comment', e)
             throw e
         }
+    },
+
+    async deleteComment(commentId) {
+        await apolloClient.mutate({
+            mutation: DELETE_CARD_COMMENT,
+            variables: { commentId }
+        })
+        // The subscription or refetch will update the list, but we can optimistically remove it if needed.
+        // For now relying on subscription/refetch logic which updates 'cards'.
     },
 
     async addReaction(commentId, emoji) {

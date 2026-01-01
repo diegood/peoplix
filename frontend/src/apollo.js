@@ -54,6 +54,15 @@ export const apolloClient = new ApolloClient({
             }
           }
         }
+      },
+      KanbanCard: {
+        fields: {
+          comments: {
+            merge(existing, incoming) {
+              return incoming
+            }
+          }
+        }
       }
     }
   }),

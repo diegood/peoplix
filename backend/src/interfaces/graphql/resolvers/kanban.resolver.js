@@ -139,6 +139,54 @@ export default {
         return updatedComment
     },
 
+    deleteCardComment: async (_, { commentId }, context) => {
+        const userId = context.user?.userId
+        if (!userId) throw new Error('Unauthorized')
+
+        const comment = await prisma.cardComment.findUnique({
+            where: { id: commentId },
+            include: { author: true }
+        })
+        if (!comment) throw new Error('Comment not found')
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { collaborator: true }
+        })
+
+        const isAdmin = user?.collaborator?.systemRole === 1
+        const isAuthor = comment.authorId === userId
+
+        if (!isAuthor && !isAdmin) {
+             throw new Error('Forbidden')
+        }
+
+        // Soft delete
+        await prisma.cardComment.update({
+            where: { id: commentId },
+            data: { isDeleted: true }
+        })
+
+        // Create timeline event
+        await prisma.cardEvent.create({
+            data: {
+                type: 'COMMENT_DELETED',
+                details: 'Comment deleted',
+                cardId: comment.cardId,
+                authorId: userId
+            }
+        })
+
+        // Broadcast update
+        const card = await service.repository.findById(comment.cardId)
+        context.pubsub.emitter.emit({
+            topic: `CARD_UPDATED_${comment.cardId}`,
+            payload: { cardUpdated: card }
+        })
+
+        return true
+    },
+
     addReaction: async (_, { commentId, emoji }, context) => {
         const userId = context.user?.userId
         if (!userId) throw new Error('Unauthorized')
@@ -200,7 +248,7 @@ export default {
      },
      comments: async (parent) => {
          if (parent.comments) return parent.comments
-         return prisma.cardComment.findMany({ where: { cardId: parent.id } })
+         return prisma.cardComment.findMany({ where: { cardId: parent.id, isDeleted: false } })
      },
      timeline: async (parent) => {
          if (parent.timeline) return parent.timeline
@@ -208,13 +256,11 @@ export default {
      },
      collaborators: async (parent) => {
          if (parent.collaborators) return parent.collaborators
-         const card = await prisma.kanbanCard.findUnique({ where: { id: parent.id }, include: { collaborators: true } })
-         return card?.collaborators || []
+         return prisma.kanbanCard.findUnique({ where: { id: parent.id } }).collaborators() || []
      },
      roles: async (parent) => {
          if (parent.roles) return parent.roles
-         const card = await prisma.kanbanCard.findUnique({ where: { id: parent.id }, include: { roles: true } })
-         return card?.roles || []
+         return prisma.kanbanCard.findUnique({ where: { id: parent.id } }).roles() || []
      },
      breadcrumbs: async (parent) => {
          let path = []

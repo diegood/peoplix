@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { Send, Reply, Smile, Pencil, Clock } from 'lucide-vue-next'
+import { Send, Reply, Smile, Pencil, Clock, Trash } from 'lucide-vue-next'
 import { useKanbanStore } from '../store/kanban.store'
 import { useAuthStore } from '@/modules/Auth/stores/auth.store'
+import { useNotificationStore } from '@/stores/notificationStore'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/es'
@@ -26,6 +27,7 @@ const props = defineProps({
 const emit = defineEmits(['added'])
 
 const store = useKanbanStore()
+const notificationStore = useNotificationStore()
 const newComment = ref('')
 const isSubmitting = ref(false)
 
@@ -43,7 +45,7 @@ const handleAddComment = async () => {
         newComment.value = ''
     } catch (e) {
         console.error(e)
-        alert('Error al agregar comentario')
+        notificationStore.showToast('Error al agregar comentario', 'error')
     } finally {
         isSubmitting.value = false
     }
@@ -121,7 +123,20 @@ const saveEdit = async (commentId) => {
         editingCommentId.value = null
         editingContent.value = ''
     } catch {
-        alert('Error al editar comentario')
+        notificationStore.showToast('Error al editar comentario', 'error')
+    }
+}
+
+const deleteComment = async (commentId) => {
+    const confirmed = await notificationStore.showDialog('¿Estás seguro de que quieres eliminar este comentario?', 'Eliminar Comentario')
+    if (!confirmed) return
+
+    try {
+        await store.deleteComment(commentId)
+        notificationStore.showToast('Comentario eliminado', 'success')
+    } catch (e) {
+        console.error(e)
+        notificationStore.showToast('Error al eliminar comentario', 'error')
     }
 }
 
@@ -192,9 +207,14 @@ const closeHistory = () => {
                           
                           <div v-if="editingCommentId === comment.id">
                               <TiptapEditor v-model="editingContent" menu-type="bubble" class="bg-white border rounded" />
-                              <div class="flex justify-end gap-2 mt-2">
-                                  <button @click="cancelEditing" class="text-xs text-gray-500 hover:text-gray-700">Cancelar</button>
-                                  <button @click="saveEdit(comment.id)" class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700">Guardar</button>
+                              <div class="flex justify-between items-center mt-2">
+                                  <button @click="deleteComment(comment.id)" class="text-xs text-red-500 hover:text-red-700 flex items-center gap-1" title="Eliminar comentario">
+                                      <Trash size="12" /> Eliminar
+                                  </button>
+                                  <div class="flex gap-2">
+                                      <button @click="cancelEditing" class="text-xs text-gray-500 hover:text-gray-700">Cancelar</button>
+                                      <button @click="saveEdit(comment.id)" class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700">Guardar</button>
+                                  </div>
                               </div>
                           </div>
                           <div v-else>

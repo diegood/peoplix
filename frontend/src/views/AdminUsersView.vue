@@ -4,10 +4,12 @@ import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_COLLABORATORS } from '../graphql/queries'
 import { CREATE_COLLABORATOR, UPDATE_COLLABORATOR, DELETE_COLLABORATOR } from '../graphql/mutations'
 import { Loader2, Plus, Edit2, Trash2, X } from 'lucide-vue-next'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 const isModalOpen = ref(false)
 const isEditing = ref(false)
 const currentUser = ref({})
+const notificationStore = useNotificationStore()
 
 const { result, loading, refetch } = useQuery(GET_COLLABORATORS)
 const collaborators = computed(() => result.value?.collaborators || [])
@@ -60,19 +62,20 @@ const handleSubmit = async () => {
             await createCollaborator({
                 ...formData.value,
                 joinDate: new Date().toISOString(),
-                password: formData.value.password || '123456' // Default if not provided
+                password: formData.value.password
             })
         }
         refetch()
         closeModal()
     } catch (e) {
         console.error(e)
-        alert('Error saving user')
+        notificationStore.showToast('Error saving user', 'error')
     }
 }
 
 const handleDelete = async (id) => {
-    if(!confirm('Are you sure?')) return
+    const confirmed = await notificationStore.showDialog('¿Seguro que deseas eliminar este usuario?', 'Eliminar Usuario')
+    if(!confirmed) return
     try {
         await deleteCollaborator({ id })
         refetch()

@@ -69,7 +69,8 @@ const onSave = async () => {
 }
 
 const onDelete = async (id) => {
-    if (!confirm('¿Seguro que deseas eliminar este tipo de ausencia?')) return
+    const confirmed = await notificationStore.showDialog('¿Seguro que deseas eliminar este tipo de ausencia?', 'Eliminar Ausencia')
+    if (!confirmed) return
     try {
         await deleteType({ id })
         notificationStore.showToast('Eliminado correctamente', 'success')

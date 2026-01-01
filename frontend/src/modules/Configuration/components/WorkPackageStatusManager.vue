@@ -196,7 +196,7 @@ const saveStatus = async () => {
 }
 
 const confirmDelete = async (status) => {
-    if(confirm(`¿Eliminar estado "${status.name}"?`)) {
+    if(await notificationStore.showDialog(`¿Eliminar estado "${status.name}"?`, 'Eliminar Estado')) {
         try {
             await deleteStatus({ id: status.id })
             await refetch()

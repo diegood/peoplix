@@ -5,8 +5,10 @@ import { X, AlignLeft, List, Trash } from 'lucide-vue-next'
 import { useKanbanStore } from '../store/kanban.store'
 import { useSubscription } from '@vue/apollo-composable'
 import { CARD_UPDATED_SUBSCRIPTION } from '../graphql/kanban'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 const store = useKanbanStore()
+const notificationStore = useNotificationStore()
 const router = useRouter()
 
 const props = defineProps({
@@ -48,7 +50,7 @@ watch(subscriptionResult, (data) => {
 })
 
 const handleDelete = async () => {
-    if(confirm('¿Seguro que deseas eliminar esta tarjeta?')) {
+    if(await notificationStore.showDialog('¿Seguro que deseas eliminar esta tarjeta?', 'Eliminar Tarjeta')) {
         await store.deleteCard(localCard.value.id)
         emit('close')
     }
@@ -82,7 +84,7 @@ const handleAddSubtask = async () => {
         newSubtaskTitle.value = ''
     } catch (e) {
         console.error(e)
-        alert('Error al crear subtarea')
+        notificationStore.showToast('Error al crear subtarea', 'error')
     }
 }
 

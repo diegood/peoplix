@@ -55,7 +55,7 @@ const handleAddMeeting = async () => {
 }
 
 const handleRemoveMeeting = async (id) => {
-    if (!confirm('¿Eliminar esta reunión y todos sus datos?')) return
+    if (!await notificationStore.showDialog('¿Eliminar esta reunión y todos sus datos?', 'Eliminar Reunión')) return
     try {
         await deleteMeeting({ id })
         notificationStore.showToast('Reunión eliminada', 'success')

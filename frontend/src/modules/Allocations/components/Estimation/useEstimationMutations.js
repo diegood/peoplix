@@ -42,7 +42,7 @@ export function useEstimationMutations(emitRefetch) {
     }
 
     const handleDeleteWP = async (id) => {
-        if (confirm('¿Eliminar funcionalidad y todas sus tareas?')) {
+        if (await notificationStore.showDialog('¿Eliminar funcionalidad y todas sus tareas?', 'Eliminar Funcionalidad')) {
             await deleteWorkPackage({ id })
             if (emitRefetch) emitRefetch()
         }
@@ -70,7 +70,7 @@ export function useEstimationMutations(emitRefetch) {
     }
     
     const handleDeleteTask = async (taskId) => {
-        if (confirm('¿Eliminar tarea?')) {
+        if (await notificationStore.showDialog('¿Eliminar tarea?', 'Eliminar Tarea')) {
             try {
                 await deleteTask({ id: taskId })
                 if (emitRefetch) emitRefetch()

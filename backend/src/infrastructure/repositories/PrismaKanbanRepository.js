@@ -13,7 +13,7 @@ export class PrismaKanbanRepository {
                 timeline: true,
                 collaborators: true,
                 roles: true,
-                comments: true,
+                comments: { where: { isDeleted: false } },
                 project: { include: { organization: true } }
             }
         })
@@ -40,7 +40,7 @@ export class PrismaKanbanRepository {
                 timeline: true,
                 collaborators: true,
                 roles: true,
-                comments: true,
+                comments: { where: { isDeleted: false } },
                 project: { include: { organization: true } }
             }
         })
@@ -68,7 +68,7 @@ export class PrismaKanbanRepository {
                  timeline: true,
                  collaborators: true,
                  roles: true,
-                 comments: true,
+                 comments: { where: { isDeleted: false } },
                  project: { include: { organization: true } }
              }
           })

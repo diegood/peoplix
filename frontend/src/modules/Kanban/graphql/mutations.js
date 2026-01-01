@@ -94,6 +94,12 @@ export const EDIT_CARD_COMMENT = gql`
   }
 `
 
+export const DELETE_CARD_COMMENT = gql`
+  mutation DeleteCardComment($commentId: ID!) {
+     deleteCardComment(commentId: $commentId)
+  }
+`
+
 export const ADD_REACTION = gql`
   mutation AddReaction($commentId: ID!, $emoji: String!) {
     addReaction(commentId: $commentId, emoji: $emoji) {

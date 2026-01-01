@@ -59,7 +59,7 @@ const updateStatus = async (obj, status) => {
 }
 
 const removeObjective = async (id) => {
-    if (!confirm('¿Eliminar objetivo?')) return
+    if (!await notificationStore.showDialog('¿Eliminar objetivo?', 'Eliminar Objetivo')) return
     try {
         await deleteObjective({ id })
         emit('refetch')

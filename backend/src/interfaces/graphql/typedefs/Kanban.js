@@ -81,6 +81,7 @@ export const KanbanSchema = gql`
     
     addCardComment(cardId: ID!, content: String!): CardComment
     editCardComment(commentId: ID!, content: String!): CardComment
+    deleteCardComment(commentId: ID!): Boolean
     addReaction(commentId: ID!, emoji: String!): CardCommentReaction
     deleteCard(cardId: ID!): Boolean
     addSubtask(parentCardId: ID!, title: String!): KanbanCard

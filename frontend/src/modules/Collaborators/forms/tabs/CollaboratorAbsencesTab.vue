@@ -110,7 +110,7 @@ const submitRequest = async () => {
 }
 
 const removeAbsence = async (id) => {
-    if (!confirm('¿Eliminar esta ausencia?')) return
+    if (!await notificationStore.showDialog('¿Eliminar esta ausencia?', 'Eliminar Ausencia')) return
     try {
         await deleteAbsence({ id })
         notificationStore.showToast('Ausencia eliminada', 'success')
