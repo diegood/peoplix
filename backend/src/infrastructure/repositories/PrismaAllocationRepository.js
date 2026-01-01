@@ -2,12 +2,6 @@ import { prisma } from '../database/client.js'
 
 export class PrismaAllocationRepository {
     async create(data) {
-        // data expects: { projectId, collaboratorId, dedicationPercentage, startWeek, endWeek, roleId }
-        // The service layer should prepare the data structure for Prisma
-        // But here we can accept raw args or structured data. 
-        // Let's assume generic create data passed from Service.
-        // However, the current resolver does specific nesting.
-        // Let's stick to the current resolver logic but encapsulated.
         
         const { projectId, collaboratorId, dedicationPercentage, startWeek, endWeek, roleId } = data
         
@@ -47,7 +41,6 @@ export class PrismaAllocationRepository {
         await prisma.allocationRole.create({
             data: { allocationId, roleId }
         })
-        // Return only the role as per schema
         return prisma.role.findUnique({ where: { id: roleId } }) 
     }
     
@@ -60,7 +53,6 @@ export class PrismaAllocationRepository {
         return true
     }
 
-    // Hierarchy
     async addHierarchy(subordinateId, supervisorId, hierarchyTypeId) {
         return prisma.allocationHierarchy.create({
             data: {
@@ -77,7 +69,6 @@ export class PrismaAllocationRepository {
         return true
     }
     
-    // Field resolvers support
     async findRoles(allocationId) {
          const rs = await prisma.allocationRole.findMany({
             where: { allocationId },

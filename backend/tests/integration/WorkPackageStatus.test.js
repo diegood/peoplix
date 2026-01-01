@@ -10,14 +10,19 @@ describe('E2E: WorkPackageStatus Mutation', () => {
     beforeAll(async () => {
         service = new ConfigurationService();
         const org = await prisma.organization.create({
-            data: { name: 'E2E Test Org ' + Date.now() }
+            data: { 
+                name: 'E2E Test Org ' + Date.now(),
+                tag: 'ORG_WPS_' + Date.now()
+            }
         });
         organizationId = org.id;
     });
 
     afterAll(async () => {
-        await prisma.workPackageStatus.deleteMany({ where: { organizationId } });
-        await prisma.organization.delete({ where: { id: organizationId } });
+        if (organizationId) {
+            await prisma.workPackageStatus.deleteMany({ where: { organizationId } }).catch(() => {});
+            await prisma.organization.delete({ where: { id: organizationId } }).catch(() => {});
+        }
         await prisma.$disconnect();
     });
 

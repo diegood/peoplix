@@ -1,7 +1,7 @@
 import { KanbanService } from '../../../application/services/KanbanService.js'
 import { prisma } from '../../../infrastructure/database/client.js'
 
-const service = new KanbanService()
+export const service = new KanbanService()
 
 async function getProjectTag(projectId) {
     const project = await prisma.project.findUnique({ where: { id: projectId } })

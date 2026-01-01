@@ -1,13 +1,11 @@
 import { prisma } from '../database/client.js'
 
 export class PrismaAbsenceRepository {
-    // Absence Types
     async findAllTypes() { return prisma.absenceType.findMany() }
     async createType(data) { return prisma.absenceType.create({ data }) }
     async updateType(id, data) { return prisma.absenceType.update({ where: { id }, data }) }
     async deleteType(id) { await prisma.absenceType.delete({ where: { id } }); return true }
 
-    // Absences
     async findAbsences({ collaboratorId, projectId, startDate, endDate }) {
         const where = {}
         if (collaboratorId) where.collaboratorId = collaboratorId

@@ -12,7 +12,10 @@ describe('E2E: WorkCenter Mutation', () => {
         service = new WorkCenterService();
         // Setup: Create Organization
         const org = await prisma.organization.create({
-            data: { name: 'E2E WorkCenter Org ' + Date.now() }
+            data: { 
+                name: 'E2E WorkCenter Org ' + Date.now(),
+                tag: 'ORG_WC_' + Date.now()
+            }
         });
         organizationId = org.id;
     });

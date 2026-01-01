@@ -2,7 +2,6 @@ export class HolidayApiClient {
     async fetchPublicHolidays(year, countryCode, regionCode) {
         if (!year || !countryCode) throw new Error("Year and CountryCode are required arguments.");
 
-        // Nager.Date API
         const url = `https://date.nager.at/api/v3/PublicHolidays/${year}/${countryCode}`
         
         try {
@@ -14,13 +13,10 @@ export class HolidayApiClient {
             
             let data = await response.json()
             
-            // Filter by region if provided
             if (regionCode) {
                  const rc = regionCode.toUpperCase();
                  data = data.filter(h => {
-                     // Global holidays (counties is null)
                      if (!h.counties) return true;
-                     // Or specific region
                      return h.counties.some(c => c.endsWith(rc) || c === rc)
                  })
             }
