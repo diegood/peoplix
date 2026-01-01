@@ -170,13 +170,11 @@ export default {
              throw new Error('Forbidden')
         }
 
-        // Soft delete
         await prisma.cardComment.update({
             where: { id: commentId },
             data: { isDeleted: true }
         })
 
-        // Create timeline event
         await prisma.cardEvent.create({
             data: {
                 type: 'COMMENT_DELETED',
@@ -186,7 +184,6 @@ export default {
             }
         })
 
-        // Broadcast update
         const card = await service.repository.findById(comment.cardId)
         context.pubsub.emitter.emit({
             topic: `CARD_UPDATED_${comment.cardId}`,

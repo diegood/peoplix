@@ -17,12 +17,12 @@ vi.mock('../../../src/infrastructure/database/client.js', () => ({
 }));
 
 describe('Auth Resolvers', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     describe('Mutation.login', () => {
         const login = authResolvers.Mutation.login;
-
-        beforeEach(() => {
-            vi.clearAllMocks();
-        });
 
         it('should login successfully with valid email', async () => {
             const input = { username: 'test@example.com', password: 'password123' };
@@ -96,6 +96,34 @@ describe('Auth Resolvers', () => {
             prisma.collaborator.findMany.mockResolvedValue([]); // No profiles
 
             await expect(login(null, { input })).rejects.toThrow('User is not associated with any organization');
+        });
+    });
+
+    describe('Query.me', () => {
+        const me = authResolvers.Query.me;
+
+        it('should return collaborator if user context is present', async () => {
+            const context = { user: { userId: 'u1', organizationId: 'o1' } };
+            const collaborator = { id: 'c1', userId: 'u1', organizationId: 'o1' };
+            
+            prisma.collaborator.findFirst.mockResolvedValue(collaborator);
+            
+            const result = await me(null, null, context);
+            
+            expect(prisma.collaborator.findFirst).toHaveBeenCalledWith({
+                where: { 
+                    userId: 'u1', 
+                    organizationId: 'o1' 
+                }
+            });
+            expect(result).toEqual(collaborator);
+        });
+
+        it('should return null if user context is missing', async () => {
+            const context = {}; // No user
+            const result = await me(null, null, context);
+            expect(result).toBeNull();
+            expect(prisma.collaborator.findFirst).not.toHaveBeenCalled();
         });
     });
 });

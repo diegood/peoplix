@@ -1,7 +1,7 @@
 import { prisma } from '../../../infrastructure/database/client.js';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey'; // Ensure this is in .env in prod
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
 export const authResolvers = {
   Mutation: {
@@ -13,8 +13,6 @@ export const authResolvers = {
       });
 
       if (!user) {
-          // If not found by email, try finding by Collaborator userName
-          // Note: userName is not unique in schema, but we'll take the first one or ensure logic elsewhere
           const collaborator = await prisma.collaborator.findFirst({
               where: { userName: username },
               include: { user: true }
@@ -29,13 +27,10 @@ export const authResolvers = {
         throw new Error('Invalid credentials');
       }
 
-      // 2. Check Password
-      // TODO: Use bcrypt in production
       if (user.password !== password) {
         throw new Error('Invalid credentials');
       }
 
-      // 3. Find Collaborator profiles (Organization Memberships)
       const collaborators = await prisma.collaborator.findMany({
         where: { userId: user.id },
         include: { organization: true }
@@ -45,8 +40,6 @@ export const authResolvers = {
          throw new Error('User is not associated with any organization');
       }
 
-      // 4. Select Default Organization (First one for now)
-      // Future: Allow user to select org if multiple (Multi-step login or header selection)
       const activeProfile = collaborators[0];
 
       const token = jwt.sign(
@@ -61,7 +54,7 @@ export const authResolvers = {
 
       return {
         token,
-        user: activeProfile // Return the Collaborator profile the frontend expects
+        user: activeProfile
       };
     }
   },
