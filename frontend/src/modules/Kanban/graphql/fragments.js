@@ -11,8 +11,8 @@ export const KANBAN_CARD_FRAGMENT = gql`
     startDate
     endDate
     estimatedStartDate
-
     estimatedEndDate
+    estimatedHours
     project {
       id
       tag
@@ -42,6 +42,7 @@ export const KANBAN_CARD_FRAGMENT = gql`
       endDate
       estimatedStartDate
       estimatedEndDate
+      estimatedHours
       collaborators {
         id
         firstName

@@ -165,14 +165,28 @@ const closeHistory = () => {
                         placeholder="Escribe un comentario..."
                         @keydown.ctrl.enter="handleAddComment"
                     />
-                    <button 
-                        @click="handleAddComment" 
-                        :disabled="!newComment || newComment === '<p></p>' || isSubmitting"
-                        class="absolute bottom-3 right-3 text-blue-600 hover:text-blue-700 disabled:opacity-50 transition-colors z-10 bg-white shadow-sm p-1 rounded-full"
-                        title="Enviar (Ctrl+Enter)"
-                    >
-                        <Send size="18" />
-                    </button>
+                    <div class="absolute bottom-3 right-3 flex items-center gap-2">
+                        <Transition
+                            enter-active-class="transition duration-200 ease-out"
+                            enter-from-class="transform translate-y-1 opacity-0"
+                            enter-to-class="transform translate-y-0 opacity-100"
+                            leave-active-class="transition duration-150 ease-in"
+                            leave-from-class="transform translate-y-0 opacity-100"
+                            leave-to-class="transform translate-y-1 opacity-0"
+                        >
+                            <span v-if="newComment && newComment.length > 0 && newComment !== '<p></p>'" class="text-xs text-gray-500">
+                                Ctrl+Enter para enviar
+                            </span>
+                        </Transition>
+                        <button 
+                            @click="handleAddComment" 
+                            :disabled="!newComment || newComment === '<p></p>' || isSubmitting"
+                            class="text-blue-600 hover:text-blue-700 disabled:opacity-50 transition-colors z-10 bg-white shadow-sm p-1 rounded-full"
+                            title="Enviar (Ctrl+Enter)"
+                        >
+                            <Send size="18" />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

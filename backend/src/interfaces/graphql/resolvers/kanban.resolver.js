@@ -3,6 +3,8 @@ import { prisma } from '../../../infrastructure/database/client.js'
 
 export const service = new KanbanService()
 
+const SYSTEM_ROLE_ADMIN = 1
+
 async function getProjectTag(projectId) {
     const project = await prisma.project.findUnique({ where: { id: projectId } })
     return project?.name?.slice(0, 3).toUpperCase() || 'TAG'
@@ -74,6 +76,17 @@ export default {
     
     updateCard: async (_, { cardId, input }, context) => {
       const userId = context.user?.userId
+      
+      if (input.estimatedHours !== undefined) {
+           const user = await prisma.user.findUnique({ 
+                where: { id: userId }, 
+                include: { collaborator: true } 
+           })
+           if (user?.collaborator?.systemRole !== SYSTEM_ROLE_ADMIN) {
+                throw new Error('Forbidden: Only admins can update estimated hours')
+           }
+      }
+
       const card = await service.updateCard(cardId, input, userId)
       context.pubsub.emitter.emit({
           topic: `CARD_UPDATED_${cardId}`,

@@ -131,6 +131,32 @@ describe('KanbanResolver', () => {
             expect(service.updateCard).toHaveBeenCalledWith(cardId, input, 'user-1')
             expect(context.pubsub.emitter.emit).toHaveBeenCalled()
         })
+
+        it('should update Estimated Hours if Admin', async () => {
+             const user = { id: 'u1', email: 'admin@test.com' }
+             const collaborator = { id: 'c1', userId: 'u1', systemRole: 1 } // Admin
+             
+             prisma.user.findUnique.mockResolvedValue({ ...user, collaborator })
+             vi.spyOn(service, 'updateCard').mockResolvedValue({ id: 'card-1', estimatedHours: 10 })
+             
+             const result = await resolver.Mutation.updateCard(null, { cardId: 'card-1', input: { estimatedHours: 10 } }, { ...context, user: { userId: 'u1' } })
+             
+             expect(prisma.user.findUnique).toHaveBeenCalled()
+             expect(service.updateCard).toHaveBeenCalledWith('card-1', { estimatedHours: 10 }, 'u1')
+             expect(result.estimatedHours).toBe(10)
+        })
+
+        it('should throw Forbidden if updating Estimated Hours as Non-Admin', async () => {
+             const user = { id: 'u2', email: 'user@test.com' }
+             const collaborator = { id: 'c2', userId: 'u2', systemRole: 2 } // Regular User
+             
+             prisma.user.findUnique.mockResolvedValue({ ...user, collaborator })
+             
+             await expect(resolver.Mutation.updateCard(null, { cardId: 'card-1', input: { estimatedHours: 10 } }, { ...context, user: { userId: 'u2' } }))
+             .rejects.toThrow('Forbidden: Only admins can update estimated hours')
+             
+             expect(service.updateCard).not.toHaveBeenCalled()
+        })
         
         it('addCardComment', async () => {
             vi.spyOn(service, 'addComment').mockResolvedValue({ id: 'comment-1' })

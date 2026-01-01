@@ -48,7 +48,7 @@ const editor = useEditor({
   ],
   editorProps: {
     attributes: {
-      class: 'prose prose-sm sm:prose-base focus:outline-none min-h-[100px] p-4 max-w-none',
+      class: 'prose prose-sm sm:prose-base focus:outline-none min-h-[100px] p-4 max-w-none h-full',
     },
   },
   onUpdate: () => {

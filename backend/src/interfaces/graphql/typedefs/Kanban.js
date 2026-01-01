@@ -13,6 +13,7 @@ export const KanbanSchema = gql`
     endDate: String
     estimatedStartDate: String
     estimatedEndDate: String
+    estimatedHours: Float
     
     createdAt: String
     updatedAt: String
@@ -99,6 +100,7 @@ export const KanbanSchema = gql`
     risk: String
     startDate: String
     endDate: String
+    estimatedHours: Float
     status: String
   }
 `;

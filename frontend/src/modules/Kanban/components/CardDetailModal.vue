@@ -3,11 +3,13 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { X, AlignLeft, List, Trash } from 'lucide-vue-next'
 import { useKanbanStore } from '../store/kanban.store'
+import { useAuthStore } from '@/modules/Auth/stores/auth.store'
 import { useSubscription } from '@vue/apollo-composable'
 import { CARD_UPDATED_SUBSCRIPTION } from '../graphql/kanban'
 import { useNotificationStore } from '@/stores/notificationStore'
 
 const store = useKanbanStore()
+const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
 const router = useRouter()
 
@@ -157,6 +159,21 @@ const handleDescriptionSave = async () => {
         console.error('Failed to save description', e)
     }
 }
+
+const updateEstimatedHours = async (value) => {
+    try {
+        const hours = parseFloat(value)
+        if (isNaN(hours)) return
+
+        const updated = await store.updateCard(localCard.value.id, { estimatedHours: hours })
+        if (updated) {
+            localCard.value = { ...localCard.value, ...updated }
+        }
+    } catch (e) {
+        console.error('Failed to update estimated hours', e)
+        notificationStore.showToast('Error al actualizar horas (Solo Admin)', 'error')
+    }
+}
 </script>
 
 <template>
@@ -297,6 +314,21 @@ const handleDescriptionSave = async () => {
                                <div class="bg-white p-2 rounded flex flex-col gap-0.5 text-xs text-gray-600">
                                    <span class="text-[10px] text-gray-400">Fin Est.</span>
                                    <div class="flex items-center gap-1">{{ formatDate(localCard.estimatedEndDate) }}</div>
+                               </div>
+                           </div>
+                           
+                           <label class="text-xs text-gray-400 block mb-1">Estimación (Horas)</label>
+                           <div class="mb-2">
+                               <div class="bg-white border p-2 rounded flex items-center gap-2 text-sm text-gray-600">
+                                   <input 
+                                       type="number" 
+                                       :value="localCard.estimatedHours" 
+                                       @change="(e) => updateEstimatedHours(e.target.value)"
+                                       :disabled="!authStore.isAdmin"
+                                       placeholder="-"
+                                       class="w-full bg-transparent outline-none text-xs disabled:cursor-not-allowed disabled:bg-gray-50"
+                                   />
+                                   <span class="text-xs text-gray-400">h</span>
                                </div>
                            </div>
                            

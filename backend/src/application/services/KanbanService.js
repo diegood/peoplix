@@ -39,6 +39,7 @@ export class KanbanService {
             title: task.name,
             description: task.description,
             status: 'todo',
+            estimatedHours: task.estimations.reduce((sum, e) => sum + (e.hours || 0), 0)
         })
         await this.logEvent(parentCard.id, 'CREATED', 'Parent card created from task')
         let currentSeq = seq
@@ -58,7 +59,8 @@ export class KanbanService {
                     parentCardId: parentCard.id,
                     estimatedStartDate: est.startDate,
                     estimatedEndDate: est.endDate,
-                    risk: 'NONE'
+                    risk: 'NONE',
+                    estimatedHours: est.hours
                 })
                 
                 if (est.collaboratorId) {

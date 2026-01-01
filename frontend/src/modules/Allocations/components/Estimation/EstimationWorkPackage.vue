@@ -19,6 +19,14 @@
               </div>
           </div>
           <div class="flex items-center gap-4">
+               <button 
+                  @click.stop="handleStartAllWork" 
+                  class="text-gray-400 hover:text-green-500 transition-colors"
+                  title="Iniciar todas las tareas"
+               >
+                   <Play size="18" />
+               </button>
+
                <div class="text-sm font-medium text-gray-600">
                    {{ wp.tasks?.reduce((acc, t) => acc + (t.estimations?.reduce((a,e)=>a+e.hours,0) || 0), 0) }}h
                </div>
@@ -120,7 +128,7 @@ import { ref, computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { GET_WORK_PACKAGE_STATUSES } from '@/modules/Configuration/graphql/status.queries'
 import { useAuthStore } from '@/modules/Auth/stores/auth.store'
-import { Trash, ChevronDown, ChevronRight } from 'lucide-vue-next'
+import { Trash, ChevronDown, ChevronRight, Play } from 'lucide-vue-next'
 import dayjs from '@/config/dayjs'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { parseDateSafe, formatDate, addWorkingDays } from '@/helper/Date'
@@ -164,6 +172,42 @@ const handleStartWork = async (task) => {
         notificationStore.showToast('Error al iniciar tarea', 'error')
     }
 }
+
+const handleStartAllWork = async () => {
+    if (!props.wp.tasks || props.wp.tasks.length === 0) return
+
+    const tasksToStart = props.wp.tasks.filter(t => t.estimations && t.estimations.length > 0)
+    
+    if (tasksToStart.length === 0) {
+        notificationStore.showToast('No hay tareas con estimación para iniciar', 'warning')
+        return
+    }
+
+    if (!await notificationStore.showDialog(`¿Iniciar ${tasksToStart.length} tareas en Kanban?`, 'Iniciar Trabajo')) return
+
+    let startedCount = 0
+    let errors = 0
+
+    const projectId = props.wp.workPackage?.projectId || props.wp.projectId || route.params.id
+
+    for (const task of tasksToStart) {
+        try {
+            await kanbanStore.createCardStructure(task.id, projectId)
+            startedCount++
+        } catch (e) {
+            console.error(e)
+            errors++
+        }
+    }
+
+    if (startedCount > 0) {
+        notificationStore.showToast(`${startedCount} tareas iniciadas correctamente`, 'success')
+    }
+    if (errors > 0) {
+         notificationStore.showToast(`${errors} fallaron al iniciar`, 'error')
+    }
+}
+
 
 
 const { 

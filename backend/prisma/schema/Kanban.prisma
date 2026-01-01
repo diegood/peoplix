@@ -38,6 +38,7 @@ model KanbanCard {
 
   estimatedStartDate DateTime?
   estimatedEndDate   DateTime?
+  estimatedHours     Float?
   startDate          DateTime?
   endDate            DateTime?
   taskEstimationId   String?         @unique
@@ -62,7 +63,7 @@ model KanbanCard {
 
 model CardCommentReaction {
   id    String @id @default(uuid())
-  emoji String // The emoji char
+  emoji String
 
   commentId String
   comment   CardComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
