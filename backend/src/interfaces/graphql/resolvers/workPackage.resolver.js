@@ -31,6 +31,11 @@ export const workPackageResolvers = {
 
         createWorkPackageStatus: (_, args) => configurationService.createWorkPackageStatus(args),
         updateWorkPackageStatus: (_, { id, ...args }) => configurationService.updateWorkPackageStatus(id, args),
-        deleteWorkPackageStatus: (_, { id }) => configurationService.deleteWorkPackageStatus(id)
+        createWorkPackageStatus: (_, args) => configurationService.createWorkPackageStatus(args),
+        updateWorkPackageStatus: (_, { id, ...args }) => configurationService.updateWorkPackageStatus(id, args),
+        deleteWorkPackageStatus: (_, { id }) => configurationService.deleteWorkPackageStatus(id),
+
+        createWorkPackageRecurrentEvent: (_, args) => workPackageService.createRecurrentEvent(args),
+        deleteWorkPackageRecurrentEvent: (_, { id }) => workPackageService.deleteRecurrentEvent(id)
     }
 }

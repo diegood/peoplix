@@ -1,15 +1,43 @@
 model WorkPackage {
-  id                  String               @id @default(uuid())
+  id                  String                      @id @default(uuid())
   name                String
   description         String?
   projectId           String
-  project             Project              @relation(fields: [projectId], references: [id])
+  project             Project                     @relation(fields: [projectId], references: [id])
   tasks               Task[]
   history             WorkPackageHistory[]
   startDate           DateTime?
   endDate             DateTime?
   highLevelEstimation Int?
-  status              String               @default("BACKLOG")
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  status              String                      @default("BACKLOG")
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+  recurrentEvents     WorkPackageRecurrentEvent[]
+}
+
+enum RecurrentEventType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  SPECIFIC
+}
+
+model WorkPackageRecurrentEvent {
+  id    String             @id @default(uuid())
+  name  String
+  type  RecurrentEventType
+  hours Float
+
+  date       DateTime? 
+  dayOfWeek  Int? 
+  dayOfMonth Int? 
+
+  startDate DateTime
+  endDate   DateTime?
+
+  workPackageId String
+  workPackage   WorkPackage @relation(fields: [workPackageId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

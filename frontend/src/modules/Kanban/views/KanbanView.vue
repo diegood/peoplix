@@ -296,7 +296,7 @@ const onDragChange = (evt, newStatus) => {
                         class="flex-1 overflow-y-auto space-y-3 min-h-[100px]"
                         @change="(e) => onDragChange(e, col.id)">
                         <template #item="{ element }">
-                             <div @click="openCard(element)">
+                             <div @click="openCard(element)" class="kanban-card">
                                 <KanbanCard :card="element" />
                              </div>
                         </template>

@@ -191,6 +191,17 @@ export const WORK_PACKAGE_FRAGMENT = gql`
     endDate
     highLevelEstimation
     status
+    recurrentEvents {
+      id
+      name
+      type
+      hours
+      date
+      dayOfWeek
+      dayOfMonth
+      startDate
+      endDate
+    }
     tasks {
       ...TaskFields
     }

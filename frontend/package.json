@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "author": "Diego G. Arias",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
@@ -12,6 +13,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:unit": "vitest",
+    "test:e2e": "playwright test",
     "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix --cache",
     "lint": "run-s lint:*",

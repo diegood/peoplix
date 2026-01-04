@@ -1,5 +1,6 @@
 import { prisma } from '../database/client.js'
 
+const RECORD_NOT_FOUND_ERROR_CODE = 'P2025'
 
 export class PrismaWorkPackageRepository {
     async findByProjectId(projectId, status = null) {
@@ -18,7 +19,8 @@ export class PrismaWorkPackageRepository {
                 },
                 history: {
                     orderBy: { createdAt: 'desc' }
-                }
+                },
+                recurrentEvents: true
             },
             orderBy: { createdAt: 'asc' }
         })
@@ -36,7 +38,8 @@ export class PrismaWorkPackageRepository {
                 },
                 history: {
                     orderBy: { createdAt: 'desc' }
-                }
+                },
+                recurrentEvents: true
             }
         })
     }
@@ -65,6 +68,20 @@ export class PrismaWorkPackageRepository {
 
     async createHistory(data) {
         return prisma.workPackageHistory.create({ data })
+    }
+
+    async createRecurrentEvent(data) {
+        return prisma.workPackageRecurrentEvent.create({ data })
+    }
+
+    async deleteRecurrentEvent(id) {
+        try {
+            await prisma.workPackageRecurrentEvent.delete({ where: { id } })
+            return true
+        } catch (e) {
+            if (e.code === RECORD_NOT_FOUND_ERROR_CODE) return true
+            throw e
+        }
     }
 
     async delete(id) {

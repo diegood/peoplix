@@ -76,10 +76,10 @@
                      @update-desc="handleUpdateTaskDesc"
                      @update-est="handleUpdateEst"
                      @delete-task="handleDeleteTask"
-                     @add-dependency="handleAddDependency"
                      @remove-dependency="handleRemoveDependency"
                      @open-assignment="openAssignmentModal"
                      @start-work="handleStartWork"
+                     @open-detail="openTaskDetail"
                   />
                   
                   <tr class="bg-gray-50/50">
@@ -106,11 +106,48 @@
                            </button>
                        </td>
                        <td></td>
+                       <td></td>
+                  </tr>
+                  
+                  <tr class="bg-blue-50/50 border-t border-blue-100">
+                      <td class="py-3 pl-2 font-bold text-gray-700 text-xs uppercase">Totales por Rol</td>
+                      <td v-for="role in roleColumns" :key="role.id" class="py-2 text-center font-bold text-gray-700 text-xs">
+                          {{ roleSummaries[role.id] || '-' }}
+                      </td>
+                      <td colspan="3"></td>
                   </tr>
               </tbody>
           </table>
       </div>
-      <CollaboratorAssignmentModal 
+      
+      <div v-show="isExpanded" class="px-4 pb-4 border-t border-gray-100 bg-gray-50/30">
+        <div class="flex items-center justify-between mb-2 mt-4">
+             <h5 class="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
+                <Clock size="12"/> Eventos Recurrentes
+             </h5>
+             <button @click="openRecurrentModal" class="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1">
+                 <Plus size="12" /> Agregar Evento
+             </button>
+        </div>
+        
+        <div v-if="wp.recurrentEvents && wp.recurrentEvents.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+             <div v-for="event in wp.recurrentEvents" :key="event.id" class="bg-white border border-gray-200 rounded p-2 flex justify-between items-start">
+                 <div>
+                     <div class="text-sm font-medium text-gray-700">{{ event.name }}</div>
+                     <div class="text-xs text-gray-500 flex items-center gap-1">
+                        <span class="px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-semibold">{{ event.type }}</span>
+                        <span>{{ event.hours }}h</span>
+                     </div>
+                 </div>
+                 <button @click="handleDeleteRecurrentEvent(event.id)" class="text-gray-400 hover:text-red-500">
+                     <Trash size="14" />
+                 </button>
+             </div>
+        </div>
+        <div v-else class="text-xs text-gray-400 italic">No hay eventos recurrentes definidos</div>
+      </div>
+
+       <CollaboratorAssignmentModal 
          v-if="assignmentModalOpen"
          :isOpen="assignmentModalOpen"
          :roleId="assignmentContext.roleId"
@@ -120,6 +157,23 @@
          @close="assignmentModalOpen = false"
          @select="handleAssignmentSelect"
       />
+      
+      <RecurrentEventModal 
+        v-if="recurrentModalOpen"
+        :isOpen="recurrentModalOpen"
+        :workPackageId="wp.id"
+        @close="recurrentModalOpen = false"
+        @save="handleSaveRecurrentEvent"
+      />
+      
+      <TaskDetailModal
+        v-if="taskDetailOpen"
+        :isOpen="taskDetailOpen"
+        :task="selectedTaskForDetail"
+        :availableRoles="roleColumns"
+        @close="taskDetailOpen = false"
+        @refetch="$emit('refetch')"
+      />
   </div>
 </template>
 
@@ -128,11 +182,11 @@ import { ref, computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { GET_WORK_PACKAGE_STATUSES } from '@/modules/Configuration/graphql/status.queries'
 import { useAuthStore } from '@/modules/Auth/stores/auth.store'
-import { Trash, ChevronDown, ChevronRight, Play } from 'lucide-vue-next'
+import { Trash, ChevronDown, ChevronRight, Play, Clock, Plus } from 'lucide-vue-next'
 import dayjs from '@/config/dayjs'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { parseDateSafe, formatDate, addWorkingDays } from '@/helper/Date'
-import { getEst, calculateWPEndDate, findRoundRobinCollaborator, calculateSequentialStartDate, getBlockedDates, getComputedSchedule } from '@/modules/Allocations/helpers/estimationHelpers'
+import { getEst, calculateWPEndDate, calculateSequentialStartDate, getBlockedDates, getComputedSchedule, calculateEstimation } from '@/modules/Allocations/helpers/estimationHelpers'
 import { DATE_TIME_FORMAT_API } from '@/config/constants'
 import { useEstimationMutations } from './useEstimationMutations'
 import { useRoute } from 'vue-router'
@@ -141,6 +195,9 @@ const route = useRoute()
 
 import CollaboratorAssignmentModal from './CollaboratorAssignmentModal.vue'
 import EstimationTaskRow from './EstimationTaskRow.vue'
+import RecurrentEventModal from './components/RecurrentEventModal.vue'
+import TaskDetailModal from './components/TaskDetailModal.vue'
+
 
 const props = defineProps({
   wp: { type: Object, required: true },
@@ -149,6 +206,102 @@ const props = defineProps({
   projectCollaborators: { type: Array, default: () => [] },
   projectAllocations: { type: Array, default: () => [] } 
 })
+
+const recalculateAllEstimations = async (updatedRecurrentEvents) => {
+    if (!props.wp.tasks || props.wp.tasks.length === 0) return
+
+    let runningTasks = JSON.parse(JSON.stringify(props.wp.tasks))
+    const mutations = []
+
+    const wpStartDate = parseDateSafe(props.wp?.startDate) || dayjs().startOf('day')
+    const wpStartDateFormatted = wpStartDate.format(DATE_TIME_FORMAT_API)
+
+    for (let i = 0; i < runningTasks.length; i++) {
+        const task = runningTasks[i]
+        const previousTasks = i > 0 ? runningTasks.slice(0, i) : []
+
+        if (task.estimations && task.estimations.length > 0) {
+            for (const est of task.estimations) {
+                const roleId = est.role.id
+                const hours = est.hours
+                const collaboratorId = est.collaborator?.id
+
+                if (hours > 0) {
+                     const allocation = props.projectAllocations.find(a => a.collaborator.id === collaboratorId)
+                     const blockedDates = getBlockedDates(allocation?.collaborator)
+                     const schedule = getComputedSchedule(allocation?.collaborator)
+
+                     const estStart = calculateSequentialStartDate(
+                         roleId, 
+                         previousTasks, 
+                         wpStartDateFormatted,
+                         collaboratorId,
+                         blockedDates,
+                         schedule,
+                         updatedRecurrentEvents
+                     )
+
+                     const estEnd = addWorkingDays(estStart, hours, blockedDates, schedule, updatedRecurrentEvents)
+
+                     const newStartStr = estStart.format(DATE_TIME_FORMAT_API)
+                     const newEndStr = estEnd.format(DATE_TIME_FORMAT_API)
+
+                     est.startDate = newStartStr
+                     est.endDate = newEndStr
+
+                     mutations.push(estimateTask({
+                         taskId: task.id,
+                         roleId: roleId,
+                         hours: hours,
+                         startDate: newStartStr,
+                         endDate: newEndStr,
+                         collaboratorId: collaboratorId
+                     }))
+                }
+            }
+        }
+    }
+
+    try {
+        await Promise.all(mutations)
+        emit('refetch')
+        notificationStore.showToast('Planificación recalculada', 'success')
+    } catch (e) {
+        console.error(e)
+        notificationStore.showToast('Error al recalcular planificación', 'error')
+    }
+}
+
+const handleSaveRecurrentEvent = async (eventData) => {
+    try {
+        const { data } = await createRecurrentEvent(eventData)
+        recurrentModalOpen.value = false
+        
+        const newEvent = data.createWorkPackageRecurrentEvent
+        const updatedEvents = [...(props.wp.recurrentEvents || []), newEvent]
+        
+        await recalculateAllEstimations(updatedEvents)
+        notificationStore.showToast('Evento recurrente creado', 'success')
+    } catch(e) {
+        console.error(e)
+        notificationStore.showToast('Error al crear evento', 'error')
+    }
+}
+
+const handleDeleteRecurrentEvent = async (id) => {
+    if(await notificationStore.showDialog('¿Eliminar evento recurrente?', 'Eliminar')) {
+        try {
+            await deleteRecurrentEvent({ id })
+            
+            const updatedEvents = (props.wp.recurrentEvents || []).filter(e => e.id !== id)
+            await recalculateAllEstimations(updatedEvents)
+            
+            notificationStore.showToast('Evento eliminado', 'success')
+        } catch {
+            notificationStore.showToast('Error al eliminar evento', 'error')
+        }
+    }
+}
 
 const emit = defineEmits(['refetch'])
 const notificationStore = useNotificationStore()
@@ -208,8 +361,6 @@ const handleStartAllWork = async () => {
     }
 }
 
-
-
 const { 
   handleUpdateTaskName, 
   handleUpdateTaskDesc, 
@@ -217,14 +368,12 @@ const {
   handleUpdateWPDate, 
   handleUpdateStatus, 
   handleDeleteTask, 
-  handleAddDependency, 
   handleRemoveDependency,
   createTask,
-  estimateTask
+  estimateTask,
+  createRecurrentEvent,
+  deleteRecurrentEvent
 } = useEstimationMutations(() => emit('refetch'))
-
-
-
 
 const { result: statusResult } = useQuery(GET_WORK_PACKAGE_STATUSES, () => ({
     organizationId: authStore.user?.organizationId
@@ -261,6 +410,17 @@ const assignmentContext = ref({
     currentCollaboratorId: null
 })
 
+const recurrentModalOpen = ref(false)
+const openRecurrentModal = () => recurrentModalOpen.value = true
+
+const taskDetailOpen = ref(false)
+const selectedTaskForDetail = ref(null)
+
+const openTaskDetail = (task) => {
+    selectedTaskForDetail.value = task
+    taskDetailOpen.value = true
+}
+
 const openAssignmentModal = (task, role) => {
     const est = getEst(task, role.id)
     assignmentContext.value = {
@@ -284,6 +444,7 @@ const handleAssignmentSelect = (collab) => {
 }
 
 const handleUpdateEst = async (taskId, roleId, hoursStr) => {
+    console.log('handleUpdateEst called', { taskId, roleId, hoursStr })
     try {
         const hours = parseFloat(hoursStr) || 0
         
@@ -292,22 +453,36 @@ const handleUpdateEst = async (taskId, roleId, hoursStr) => {
         
         if (hours > 0) {
              const taskIndex = props.wp.tasks.findIndex(t => t.id === taskId)
-             const previousTasks = taskIndex > 0 ? props.wp.tasks.slice(0, taskIndex) : []
-             const wpStartDate = parseDateSafe(props.wp?.startDate) || dayjs().startOf('day')
-
              const task = props.wp.tasks[taskIndex]
+             const wpStartDate = parseDateSafe(props.wp?.startDate) || dayjs().startOf('day')
+             const wpStartDateFormatted = wpStartDate.format(DATE_TIME_FORMAT_API)
+
              const currentEst = getEst(task, roleId)
-             const collaboratorId = currentEst?.collaborator?.id
-             const allocation = props.projectAllocations.find(a => a.collaborator.id === collaboratorId)
-             const blockedDates = getBlockedDates(allocation?.collaborator)
-             const schedule = getComputedSchedule(allocation?.collaborator)
-
-             const estStart = calculateSequentialStartDate(roleId, previousTasks, wpStartDate, collaboratorId, blockedDates, schedule) 
-
-             const estEnd = addWorkingDays(estStart, hours, blockedDates, schedule)
              
-             startDateStr = estStart.format(DATE_TIME_FORMAT_API)
-             endDateStr = estEnd.format(DATE_TIME_FORMAT_API)
+             let forceStart = undefined
+             if (task.startDate && parseDateSafe(task.startDate)?.isValid()) {
+                forceStart = parseDateSafe(task.startDate)
+             }
+
+             const result = calculateEstimation({
+                 roleId,
+                 hours,
+                 taskIndex,
+                 allTasks: props.wp.tasks,
+                 wpStartDateFormatted,
+                 projectAllocations: props.projectAllocations,
+                 recurrentEvents: props.wp.recurrentEvents,
+                 existingEstimation: currentEst,
+                 forceStartDate: forceStart
+             })
+             
+             startDateStr = result.startDate.format(DATE_TIME_FORMAT_API)
+             endDateStr = result.endDate.format(DATE_TIME_FORMAT_API)
+             
+             console.log('Centralized Recalc Debug', { 
+                 estStart: result.startDate.format(), 
+                 estEnd: result.endDate.format()
+             })
         }
 
         await estimateTask({ 
@@ -318,8 +493,7 @@ const handleUpdateEst = async (taskId, roleId, hoursStr) => {
             endDate: endDateStr
         })
         emit('refetch')
-    } catch (e) {
-        console.error(e)
+    } catch {
         notificationStore.showToast('Error al actualizar estimación', 'error')
     }
 }
@@ -377,25 +551,19 @@ const handleSaveDraft = async () => {
         const estimationPromises = entries.map(async ([roleId, hoursStr]) => {
             const hours = parseFloat(hoursStr)
             if (hours > 0) {
-                 const collaboratorId = findRoundRobinCollaborator(
-                     roleId, 
-                     props.projectAllocations, 
-                     props.wp.tasks?.length
-                 )
-                 const allocation = props.projectAllocations.find(a => a.collaborator.id === collaboratorId)
-                 const blockedDates = getBlockedDates(allocation?.collaborator)
-                 const schedule = getComputedSchedule(allocation?.collaborator)
-
-                 const estStart = calculateSequentialStartDate(
-                     roleId, 
-                     props.wp.tasks, 
+                 const result = calculateEstimation({
+                     roleId,
+                     hours,
+                     taskIndex: props.wp.tasks?.length || 0,
+                     allTasks: props.wp.tasks || [],
                      wpStartDateFormatted,
-                     collaboratorId,
-                     blockedDates,
-                     schedule
-                 )
+                     projectAllocations: props.projectAllocations,
+                     recurrentEvents: props.wp.recurrentEvents
+                 })
 
-                 const estEnd = addWorkingDays(estStart, hours, blockedDates, schedule)
+                 const estStart = result.startDate
+                 const estEnd = result.endDate
+                 const collaboratorId = result.collaboratorId
 
                  return estimateTask({ 
                      taskId: newTask.id, 
@@ -423,4 +591,14 @@ const handleSaveDraft = async () => {
 const wpEndDateComputed = computed(() => dateToString(calculateWPEndDate(props.wp.tasks)))
 const dateToString = (d) => d ? d.format('DD/MM/YYYY') : '-'
 
+const roleSummaries = computed(() => {
+    const sums = {}
+    props.wp.tasks?.forEach(task => {
+        task.estimations?.forEach(est => {
+            if (!sums[est.role.id]) sums[est.role.id] = 0
+            sums[est.role.id] += est.hours
+        })
+    })
+    return sums
+})
 </script>

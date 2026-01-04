@@ -43,6 +43,18 @@ export class WorkPackageService {
         return result
     }
 
+    async createRecurrentEvent(data) {
+        if (data.startDate) data.startDate = new Date(data.startDate)
+        if (data.endDate) data.endDate = new Date(data.endDate)
+        if (data.date) data.date = new Date(data.date)
+        
+        return this.repository.createRecurrentEvent(data)
+    }
+
+    async deleteRecurrentEvent(id) {
+        return this.repository.deleteRecurrentEvent(id)
+    }
+
     async delete(id) {
         return this.repository.delete(id)
     }

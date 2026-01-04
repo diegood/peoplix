@@ -45,8 +45,8 @@ import { computed } from 'vue'
 import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
 import dayjs from '@/config/dayjs'
 import { stringToColor, invertColor } from '@/helper/Colors'
-import { parseDateSafe, addWorkingDays, isWorkingDay, getDailySchedule } from '@/helper/Date'
-import { getBlockedDates, getComputedSchedule } from '@/modules/Allocations/helpers/estimationHelpers'
+import { parseDateSafe, isWorkingDay, getDailySchedule } from '@/helper/Date'
+import { getBlockedDates, getComputedSchedule, addWorkingDays } from '@/modules/Allocations/helpers/estimationHelpers'
 import { DATE_TIME_FORMAT_API, DATE_FORMAT_API } from '@/config/constants'
  
 const FORMAT = DATE_TIME_FORMAT_API
@@ -58,7 +58,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update-task-date'])
 
-// --- Configuration Computed ---
 
 const chartStart = computed(() => {
     let earliest = null
@@ -231,15 +230,14 @@ const generateTaskBars = (tasks, rowDef, wpStartDate, collaborator) => {
         const { blockedDates, schedule } = getCollaboratorMetadata(collaborator)
         
         if (estimation?.hours && !estimation.endDate) {
-             end = addWorkingDays(start, estimation.hours, blockedDates, schedule) 
+             const wp = props.workPackages.find(w => w.tasks.some(t => t.id === task.id))
+             end = addWorkingDays(start, estimation.hours, blockedDates, schedule, wp?.recurrentEvents) 
         }
 
         if (end) {
             const daySched = getDailySchedule(end, schedule)
             if (daySched.active) {
                 const [endH] = daySched.end.split(':').map(Number)
-                // Relaxed Check: If 'end' time is close enough to schedule end (within 1 hour)
-                // This forces "Full Day" visualization for 8h tasks in 9h schedules (ending 17:00 when sched ends 18:00).
                 if (end.hour() >= (endH - 1)) {
                         end = end.endOf('day')
                 }
@@ -450,10 +448,11 @@ const handleDragEndBar = (e) => {
         newStartDate = newStartDate.add(1, 'day').startOf('day')
     }
 
+    const wp = props.workPackages.find(w => w.tasks.some(t => t.id === taskId))
     const siblingBars = getSiblingBars(ganttRows.value, configId)
     newStartDate = resolveCollision(newStartDate, hours, blockedDates, schedule, siblingBars)
 
-    const newEndDate = addWorkingDays(newStartDate, hours, blockedDates, schedule)
+    const newEndDate = addWorkingDays(newStartDate, hours, blockedDates, schedule, wp?.recurrentEvents)
 
     emit('update-task-date', { 
         taskId, 

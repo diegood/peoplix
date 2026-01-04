@@ -4,7 +4,7 @@ test.describe('Flexible Working Hours', () => {
   test.beforeEach(async ({ page }) => {
     // Login flow
     await page.goto('/login');
-    await page.fill('input[type="email"]', 'admin@workload.com');
+    await page.fill('input[type="text"]', 'admin@workload.com');
     await page.fill('input[type="password"]', 'admin');
     await page.click('button[type="submit"]');
     await page.waitForURL('/');

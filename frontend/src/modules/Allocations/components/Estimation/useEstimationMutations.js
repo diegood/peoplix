@@ -10,6 +10,40 @@ import {
     DELETE_TASK
 } from '@/graphql/mutations'
 import { useNotificationStore } from '@/stores/notificationStore'
+import gql from 'graphql-tag'
+
+const CREATE_RECURRENT_EVENT = gql`
+  mutation CreateRecurrentEvent($workPackageId: ID!, $name: String!, $type: String!, $hours: Float!, $startDate: String!, $endDate: String, $date: String, $dayOfWeek: Int, $dayOfMonth: Int) {
+    createWorkPackageRecurrentEvent(
+        workPackageId: $workPackageId, 
+        name: $name, 
+        type: $type, 
+        hours: $hours, 
+        startDate: $startDate, 
+        endDate: $endDate, 
+        date: $date, 
+        dayOfWeek: $dayOfWeek, 
+        dayOfMonth: $dayOfMonth
+    ) {
+      id
+      name
+      type
+      hours
+      startDate
+      endDate
+      date
+      dayOfWeek
+      dayOfMonth
+      workPackageId
+    }
+  }
+`
+
+const DELETE_RECURRENT_EVENT = gql`
+  mutation DeleteRecurrentEvent($id: ID!) {
+    deleteWorkPackageRecurrentEvent(id: $id)
+  }
+`
 
 export function useEstimationMutations(emitRefetch) {
     const notificationStore = useNotificationStore()
@@ -20,6 +54,8 @@ export function useEstimationMutations(emitRefetch) {
     const { mutate: updateWorkPackage } = useMutation(UPDATE_WORK_PACKAGE)
     const { mutate: createTask } = useMutation(CREATE_TASK)
     const { mutate: addTaskDependency } = useMutation(ADD_TASK_DEPENDENCY)
+    const { mutate: createRecurrentEvent } = useMutation(CREATE_RECURRENT_EVENT)
+    const { mutate: deleteRecurrentEvent } = useMutation(DELETE_RECURRENT_EVENT)
     const { mutate: removeTaskDependency } = useMutation(REMOVE_TASK_DEPENDENCY)
     const { mutate: deleteTask } = useMutation(DELETE_TASK)
 
@@ -112,6 +148,8 @@ export function useEstimationMutations(emitRefetch) {
         handleUpdateStatus,
         handleDeleteTask,
         handleAddDependency,
-        handleRemoveDependency
+        handleRemoveDependency,
+        createRecurrentEvent,
+        deleteRecurrentEvent
     }
 }

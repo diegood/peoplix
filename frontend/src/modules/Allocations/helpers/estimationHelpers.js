@@ -74,7 +74,7 @@ export const getBlockedDates = (collaborator) => {
     return dates
 }
 
-export const calculateSequentialStartDate = (roleId, previousTasks, defaultStart, collaboratorId = null, blockedDates = [], weeklySchedule = null) => {
+export const calculateSequentialStartDate = (roleId, previousTasks, defaultStart, collaboratorId = null, blockedDates = [], weeklySchedule = null, recurrentEvents = []) => {
     let estStart = dayjs(defaultStart)
     let lastEndDateForRole = null
 
@@ -108,7 +108,7 @@ export const calculateSequentialStartDate = (roleId, previousTasks, defaultStart
     }
 
     if (lastEndDateForRole) {
-        estStart = calculateNextStartDate(lastEndDateForRole, blockedDates, weeklySchedule)
+        estStart = calculateNextStartDate(lastEndDateForRole, blockedDates, weeklySchedule) 
     }
     return estStart
 }
@@ -203,3 +203,181 @@ export const calculateWPEndDate = (tasks) => {
 
 
 
+export const addWorkingDays = (startDate, hoursToAdd, blockedDates = [], weeklySchedule = null, recurrentEvents = []) => {
+    let currentDate = dayjs(startDate)
+    let remainingHours = hoursToAdd
+    let safetyCounter = 0
+    const MAX_LOOPS = 500 
+
+    while (remainingHours > 0 && safetyCounter < MAX_LOOPS) {
+        safetyCounter++
+        
+        let dailyCapacity = 8 
+        
+        const isBlocked = blockedDates.includes(currentDate.format(DATE_FORMAT_API))
+        const schedule = isWorkingDay(currentDate, weeklySchedule) ? getDailySchedule(currentDate, weeklySchedule) : { active: false }
+        
+        if (!schedule.active || isBlocked) {
+            currentDate = currentDate.add(1, 'day').startOf('day')
+            continue
+        }
+
+        if (schedule.start && schedule.end) {
+            const [startH] = schedule.start.split(':').map(Number)
+            const [endH] = schedule.end.split(':').map(Number)
+            
+            let dayStartHour = startH
+            if (currentDate.hour() > startH) {
+                dayStartHour = currentDate.hour()
+                if (currentDate.minute() > 0) dayStartHour += 1
+            }
+            
+            dailyCapacity = Math.max(0, endH - dayStartHour)
+            
+            const totalSpan = endH - startH
+            if (totalSpan > 8) {
+                if (dayStartHour < 14) {
+                    dailyCapacity -= 1
+                }
+            }
+        }
+        
+        if (recurrentEvents && recurrentEvents.length > 0) {
+            recurrentEvents.forEach(event => {
+                let applies = false
+                
+                let evtStart = event.startDate || event.date
+                if (typeof evtStart === 'string' && /^\d+$/.test(evtStart)) {
+                    evtStart = parseInt(evtStart)
+                }
+                const evtDate = dayjs(evtStart)
+                
+
+                if (currentDate.isBefore(evtDate, 'day')) return
+                
+                if (event.endDate) {
+                    let evtEnd = event.endDate
+                    if (typeof evtEnd === 'string' && /^\d+$/.test(evtEnd)) {
+                        evtEnd = parseInt(evtEnd)
+                    }
+                    if (currentDate.isAfter(dayjs(evtEnd), 'day')) return
+                }
+
+                switch (event.type) {
+                    case 'DAILY':
+                        applies = true
+                        break
+                    case 'WEEKLY':
+                        if (currentDate.day() === event.dayOfWeek) applies = true
+                        break
+                    case 'MONTHLY':
+                        if (currentDate.date() === event.dayOfMonth) applies = true
+                        break
+                    case 'SPECIFIC':
+                         if (currentDate.isSame(dayjs(event.date), 'day')) applies = true
+                         break
+                }
+
+                if (applies) { dailyCapacity -= event.hours }
+            })
+        }
+
+        const effectiveCapacity = Math.max(0, dailyCapacity)
+        
+        if (effectiveCapacity > 0) {
+            if (remainingHours <= effectiveCapacity) {
+                const [startH, startM] = schedule.start.split(':').map(Number)
+                let finalTime = currentDate.hour(startH).minute(startM || 0).second(0)
+                
+                finalTime = finalTime.add(remainingHours, 'hour')
+                
+                 if (recurrentEvents && recurrentEvents.length > 0) {
+                     recurrentEvents.forEach(event => {
+                        let applies = false
+                        let evtStart = event.startDate || event.date
+                        if (typeof evtStart === 'string' && /^\d+$/.test(evtStart)) evtStart = parseInt(evtStart)
+                        const evtDate = dayjs(evtStart)
+
+                        if (currentDate.isBefore(evtDate, 'day')) return
+                        if (event.endDate) {
+                            let evtEnd = event.endDate
+                            if (typeof evtEnd === 'string' && /^\d+$/.test(evtEnd)) evtEnd = parseInt(evtEnd)
+                            if (currentDate.isAfter(dayjs(evtEnd), 'day')) return
+                        }
+
+                        switch (event.type) {
+                            case 'DAILY': applies = true; break;
+                            case 'WEEKLY': if (currentDate.day() === event.dayOfWeek) applies = true; break;
+                            case 'MONTHLY': if (currentDate.date() === event.dayOfMonth) applies = true; break;
+                            case 'SPECIFIC': if (currentDate.isSame(dayjs(event.date), 'day')) applies = true; break;
+                        }
+                        
+                        if (applies) {
+                            finalTime = finalTime.add(event.hours, 'hour')
+                        }
+                     })
+                 }
+                
+                return finalTime
+            } else {
+                remainingHours -= effectiveCapacity
+                currentDate = currentDate.add(1, 'day').startOf('day')
+            }
+        } else {
+            currentDate = currentDate.add(1, 'day').startOf('day')
+        }
+    }
+    
+    return currentDate.hour(18).minute(0).second(0)
+}
+
+export const calculateEstimation = ({
+    roleId,
+    hours,
+    taskIndex,
+    allTasks,
+    wpStartDateFormatted,
+    projectAllocations,
+    recurrentEvents,
+    forceStartDate,
+    existingEstimation
+}) => {
+    let estStart
+    let collaboratorId = null
+    
+    if (existingEstimation && existingEstimation.collaborator) {
+        collaboratorId = existingEstimation.collaborator.id
+    } else {
+        collaboratorId = findRoundRobinCollaborator(roleId, projectAllocations, taskIndex)
+    }
+
+    const allocation = projectAllocations.find(a => a.collaborator.id === collaboratorId)
+    const blockedDates = getBlockedDates(allocation?.collaborator)
+    const schedule = getComputedSchedule(allocation?.collaborator)
+
+    if (forceStartDate && dayjs(forceStartDate).isValid()) {
+        estStart = dayjs(forceStartDate)
+    } else if (existingEstimation && existingEstimation.startDate && parseDateSafe(existingEstimation.startDate)?.isValid()) {
+         estStart = parseDateSafe(existingEstimation.startDate)
+    } else {
+        const previousTasks = taskIndex > 0 ? allTasks.slice(0, taskIndex) : []
+        estStart = calculateSequentialStartDate(
+            roleId, 
+            previousTasks, 
+            wpStartDateFormatted, 
+            collaboratorId, 
+            blockedDates, 
+            schedule, 
+            recurrentEvents
+        )
+    }
+
+    const estEnd = addWorkingDays(estStart, hours, blockedDates, schedule, recurrentEvents)
+
+    return {
+        startDate: estStart,
+        endDate: estEnd,
+        collaboratorId,
+        hours
+    }
+}

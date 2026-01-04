@@ -7,6 +7,7 @@ export const WorkPackageSchema = gql`
     description: String
     projectId: String!
     tasks: [Task]
+    recurrentEvents: [WorkPackageRecurrentEvent]
     history: [WorkPackageHistory]
     startDate: String
     endDate: String
@@ -85,5 +86,21 @@ export const WorkPackageSchema = gql`
     createWorkPackageStatus(organizationId: ID!, name: String!, color: String, order: Int, isClosed: Boolean): WorkPackageStatus
     updateWorkPackageStatus(id: ID!, name: String, color: String, order: Int, isClosed: Boolean): WorkPackageStatus
     deleteWorkPackageStatus(id: ID!): Boolean
+
+    createWorkPackageRecurrentEvent(workPackageId: ID!, name: String!, type: String!, hours: Float!, startDate: String!, endDate: String, date: String, dayOfWeek: Int, dayOfMonth: Int): WorkPackageRecurrentEvent
+    deleteWorkPackageRecurrentEvent(id: ID!): Boolean
+  }
+
+  type WorkPackageRecurrentEvent {
+      id: ID!
+      name: String!
+      type: String!
+      hours: Float!
+      date: String
+      dayOfWeek: Int
+      dayOfMonth: Int
+      startDate: String!
+      endDate: String
+      workPackageId: String!
   }
 `

@@ -3,30 +3,15 @@
         <td class="py-2 pl-2 font-medium relative group align-top">
             <div class="flex flex-col gap-1">
                 <div class="flex items-center gap-2">
-                    <div class="relative">
-                        <button @click="toggleDescEdit" 
-                                class="text-gray-400 hover:text-blue-600 transition-colors"
-                                :class="{'text-blue-600': task.description}">
-                            <FileText :size="14" />
-                        </button>
+                    <button @click="$emit('open-detail', task)" 
+                            class="text-gray-400 hover:text-blue-600 transition-colors"
+                            :class="{'text-blue-600': task.description}">
+                        <FileText :size="14" />
+                    </button>
 
-                        <div v-if="isDescEditing" 
-                                class="absolute top-8 left-0 z-50 bg-white border shadow-lg rounded p-3 w-72">
-                            <textarea 
-                                :value="task.description" 
-                                @change="(e) => $emit('update-desc', task.id, e.target.value)"
-                                class="w-full text-xs border rounded p-2 h-24 focus:ring-2 focus:ring-blue-500 outline-none resize-none mb-2"
-                                placeholder="Añadir descripción..."
-                            ></textarea>
-                            <div class="flex justify-end gap-2">
-                                <button @click="isDescEditing = false" class="text-xs text-gray-500 hover:text-gray-800">Cerrar</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <input :value="task.name" 
-                            class="w-full bg-transparent border-none outline-none focus:ring-0 font-medium text-gray-700"
-                            @change="(e) => $emit('update-name', task.id, e.target.value)" />
+                    <button @click="$emit('open-detail', task)" class="text-left font-medium text-gray-700 hover:text-blue-600 truncate max-w-[200px]">
+                        {{ task.name }}
+                    </button>
                 </div>
                 <div class="pl-6 text-[10px] text-gray-400 flex items-center gap-2" v-if="summary.totalHours > 0">
                     <span class="font-bold text-gray-500">{{ summary.totalHours }}h</span>
@@ -116,12 +101,9 @@ const props = defineProps({
     tasksOptions: Array
 })
 
-defineEmits(['update-name', 'update-desc', 'update-est', 'delete-task', 'add-dependency', 'remove-dependency', 'open-assignment', 'start-work'])
+defineEmits(['update-name', 'update-desc', 'update-est', 'delete-task', 'add-dependency', 'remove-dependency', 'open-assignment', 'start-work', 'open-detail'])
 
-const isDescEditing = ref(false)
 const isAddingDep = ref(false)
-
-const toggleDescEdit = () => { isDescEditing.value = !isDescEditing.value }
 
 const summary = computed(() => getTaskSummary(props.task))
 </script>
