@@ -3,15 +3,21 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_PROJECTS } from '@/modules/Projects/graphql/project.queries'
-import { CREATE_PROJECT, UPDATE_PROJECT } from '@/graphql/mutations'
+import { CREATE_PROJECT, UPDATE_PROJECT, DELETE_PROJECT } from '@/graphql/mutations'
 import { FolderPlus, Clock, Edit2, SlidersHorizontal, Calendar, BarChart } from 'lucide-vue-next'
 import ProjectRequirementsModal from './ProjectRequirementsModal.vue'
 import ProjectVacationModal from './Project/ProjectVacationModal.vue'
+import { useNotificationStore } from '@/stores/notificationStore'
+import { useAuthStore } from '@/modules/Auth/stores/auth.store'
 
 const { result, loading, error } = useQuery(GET_PROJECTS)
 const { mutate: createProject } = useMutation(CREATE_PROJECT, { refetchQueries: ['GetProjects'] })
 const { mutate: updateProject } = useMutation(UPDATE_PROJECT, { refetchQueries: ['GetProjects'] })
 const router = useRouter()
+const notificationStore = useNotificationStore()
+const authStore = useAuthStore()
+
+const { mutate: deleteProject } = useMutation(DELETE_PROJECT, { refetchQueries: ['GetProjects'] })
 
 const goToEstimation = (projectId) => {
     router.push({ name: 'project-estimation', params: { id: projectId } })
@@ -41,6 +47,7 @@ const handleCreate = async () => {
   })
   form.value.name = ''
   form.value.contractedHours = 40
+  notificationStore.showToast('Proyecto creado', 'success')
 }
 
 const startEdit = (project) => {
@@ -61,6 +68,31 @@ const saveEdit = async () => {
         contractedHours: Number(editForm.value.contractedHours)
     })
     editingId.value = null
+}
+
+const handleDelete = async () => {
+    if (!editingId.value) return
+    
+    if (!authStore.isAdmin) {
+        notificationStore.showToast('Solo administradores pueden eliminar proyectos', 'error')
+        return
+    }
+
+    const confirmed = await notificationStore.showDialog(
+        '¿Estás seguro de que deseas eliminar este proyecto? Esta acción eliminará tareas, estimaciones y todo lo relacionado de forma permanente.',
+        'Eliminar Proyecto'
+    )
+    
+    if (confirmed) {
+        try {
+            await deleteProject({ id: editingId.value })
+            notificationStore.showToast('Proyecto eliminado correctamente', 'success')
+            editingId.value = null
+        } catch (e) {
+            console.error(e)
+            notificationStore.showToast('Error al eliminar el proyecto', 'error')
+        }
+    }
 }
 
 const openRequirements = (project) => {
@@ -177,9 +209,14 @@ const openVacations = (project) => {
                 <label class="text-xs font-bold text-gray-500">Horas</label>
                 <input v-model="editForm.contractedHours" type="number" class="w-full border rounded px-2 py-1 text-sm" />
             </div>
-            <div class="flex justify-end gap-2 mt-4">
-                <button @click="editingId = null" class="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">Cancelar</button>
-                <button @click="saveEdit" class="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Guardar</button>
+            <div class="flex justify-between items-center mt-4">
+                <button v-if="authStore.isAdmin" @click="handleDelete" class="text-xs text-red-500 hover:text-red-700 px-2 py-1">
+                    Eliminar
+                </button>
+                <div class="flex gap-2 ml-auto">
+                    <button @click="editingId = null" class="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">Cancelar</button>
+                    <button @click="saveEdit" class="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Guardar</button>
+                </div>
             </div>
         </div>
 

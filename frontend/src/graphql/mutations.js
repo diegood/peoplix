@@ -185,6 +185,12 @@ export const UPDATE_PROJECT = gql`
   ${PROJECT_FRAGMENT}
 `
 
+export const DELETE_PROJECT = gql`
+  mutation DeleteProject($id: ID!) {
+    deleteProject(id: $id)
+  }
+`
+
 export const ADD_PROJECT_REQUIREMENT = gql`
   mutation AddProjectRequirement($projectId: ID!, $roleId: ID!, $resourceCount: Int, $monthlyHours: Int) {
     addProjectRequirement(projectId: $projectId, roleId: $roleId, resourceCount: $resourceCount, monthlyHours: $monthlyHours) {

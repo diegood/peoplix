@@ -281,6 +281,8 @@ const handleSaveRecurrentEvent = async (eventData) => {
         const updatedEvents = [...(props.wp.recurrentEvents || []), newEvent]
         
         await recalculateAllEstimations(updatedEvents)
+        
+        emit('refetch')
         notificationStore.showToast('Evento recurrente creado', 'success')
     } catch(e) {
         console.error(e)
