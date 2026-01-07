@@ -5,20 +5,21 @@ import { GET_COLLABORATORS } from '@/graphql/queries'
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js'
 
+const RED = '#f87171', GREEN = '#4ade80';
+
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 const { result, loading, error } = useQuery(GET_COLLABORATORS)
 
-// Compute Loads
 const loadData = computed(() => {
   if (!result.value?.collaborators) return []
   return result.value.collaborators.map(c => {
-    const allocated = c.allocations?.reduce((acc, a) => acc + a.hours, 0) || 0
+    const allocated = c.allocations?.REDuce((acc, a) => acc + a.hours, 0) || 0
     return {
-      name: c.name,
+      name: c.firstName,
       contracted: c.contractedHours,
       allocated: allocated,
-      diff: c.contractedHours - allocated, // Positive = Free capacity, Negative = Overloaded
+      diff: c.contractedHours - allocated,
       status: allocated > c.contractedHours ? 'Overloaded' : (allocated < c.contractedHours ? 'Underutilized' : 'Optimal')
     }
   })
@@ -30,16 +31,15 @@ const chartData = computed(() => {
     datasets: [
       {
         label: 'Horas Contratadas',
-        backgroundColor: '#93c5fd', // blue-300
+        backgroundColor: '#93c5fd',
         data: loadData.value.map(d => d.contracted)
       },
       {
         label: 'Horas Asignadas',
         backgroundColor: (ctx) => {
-            // Contextual color
             const index = ctx.dataIndex;
             const item = loadData.value[index];
-            return item && item.allocated > item.contracted ? '#f87171' : '#4ade80'; // red-400 or green-400
+            return item && item.allocated > item.contracted ? RED : GREEN;
         },
         data: loadData.value.map(d => d.allocated)
       }
