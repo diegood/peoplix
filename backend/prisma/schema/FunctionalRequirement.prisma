@@ -1,0 +1,37 @@
+enum RequirementStatus {
+  DRAFT
+  PENDING_REVIEW
+  VALIDATED
+  DEPRECATED
+}
+
+model FunctionalRequirement {
+  id                 String  @id @default(uuid())
+  title              String
+  description        String
+  generalDescription String?
+  actors             String?
+  preconditions      String?
+  expectedInputs     String?
+  detailedFlow       String?
+  validations        String?
+  expectedOutputs    String?
+  systemMessages     String?
+  mockupUrl          String?
+  notes              String?
+
+  status  RequirementStatus @default(DRAFT)
+  version Int               @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  analystId String?
+  analyst   User?   @relation(fields: [analystId], references: [id])
+
+  history      FunctionalRequirementHistory[]
+  workPackages WorkPackage[]
+}

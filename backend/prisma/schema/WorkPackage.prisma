@@ -13,6 +13,9 @@ model WorkPackage {
   createdAt           DateTime                    @default(now())
   updatedAt           DateTime                    @updatedAt
   recurrentEvents     WorkPackageRecurrentEvent[]
+
+  functionalRequirementId String?
+  functionalRequirement   FunctionalRequirement? @relation(fields: [functionalRequirementId], references: [id])
 }
 
 enum RecurrentEventType {
@@ -28,9 +31,9 @@ model WorkPackageRecurrentEvent {
   type  RecurrentEventType
   hours Float
 
-  date       DateTime? 
-  dayOfWeek  Int? 
-  dayOfMonth Int? 
+  date       DateTime?
+  dayOfWeek  Int?
+  dayOfMonth Int?
 
   startDate DateTime
   endDate   DateTime?

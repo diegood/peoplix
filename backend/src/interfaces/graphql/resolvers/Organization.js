@@ -24,9 +24,15 @@ export const organizationResolvers = {
       if (tag) data.tag = tag
       if (workingSchedule) data.workingSchedule = workingSchedule
 
-      return prisma.organization.update({
+      return prisma.organization.upsert({
         where: { id: user.organizationId },
-        data
+        update: data,
+        create: {
+          id: user.organizationId,
+          name: name || 'Organization',
+          tag: tag || 'ORG',
+          ...(workingSchedule ? { workingSchedule } : {})
+        }
       })
     }
   }

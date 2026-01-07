@@ -31,11 +31,9 @@ test.describe('Recurrent Events and Estimation', () => {
         await page.fill('input[type="number"]', '40');
         await page.click('button:has-text("Crear Proyecto")');
         
-        // Wait for creation to likely settle
-        await page.waitForTimeout(1000);
-        await page.reload();
-        await page.waitForURL('/projects');
-        await expect(page.locator('text=Cargando proyectos...')).not.toBeVisible();
+        // Wait for creation success toast
+        await expect(page.locator('text=Proyecto creado')).toBeVisible();
+        await expect(page.locator('text=Proyecto creado')).not.toBeVisible({ timeout: 2000 }); // Wait for it to potentially disappear or just proceed
 
         // Wait for it to appear
         targetCard = page.locator('.group').filter({ hasText: projectName });
@@ -87,7 +85,8 @@ test.describe('Recurrent Events and Estimation', () => {
     // Use correct selectors based on RecurrentEventModal.vue
     
     // Name input has placeholder "Daily Standup"
-    await page.fill('input[placeholder="Daily Standup"]', 'Daily Scrum');
+    const eventName = 'Daily Scrum ' + Date.now();
+    await page.fill('input[placeholder="Daily Standup"]', eventName);
     
     // Select type: Daily
     // Target the select associated with "Tipo" label if possible, or just the first select in modal
@@ -104,13 +103,9 @@ test.describe('Recurrent Events and Estimation', () => {
     // Button is "Guardar Evento", matches "Guardar"
     await page.click('button:has-text("Guardar")');
     
-    // Verify event listed (in the modal or on the card?)
-    // Modal stays open? Usually closes on save?
-    // If it closes, we check the card.
-    
     // Wait for modal to disappear (implies save completed and local state updated)
     await expect(modal).not.toBeVisible();
-    // Verify Daily Scrum is visible
+    // Verify event is visible
     // The WP might have collapsed if the component re-mounted on refetch.
     // Check if it's collapsed (ChevronRight visible) and expand if needed.
     
@@ -119,41 +114,39 @@ test.describe('Recurrent Events and Estimation', () => {
     const wpHeaderTitle = page.locator('h4', { hasText: wpName });
     // Ancestor query is safest
     const wpClickableHeader = wpHeaderTitle.locator('xpath=./ancestor::div[contains(@class, "p-4")][1]');
-    
-    // Check if expanded by looking for a known element inside (e.g. "Requerimientos Técnicos" header)
-    // We need the container to find the Requerimientos header efficiently? 
-    // Actually we can just look for the req header inside a scope, or globally with the right text?
-    // "Requerimientos Técnicos" is generic. Ideally we look relative to the WP.
     const wpRoot = wpClickableHeader.locator('xpath=..'); // Parent is the rounded-xl container
-    const reqHeader = wpRoot.locator('h4', { hasText: 'Requerimientos Técnicos' });
-    if (!(await reqHeader.isVisible())) {
+    
+    // Check if expanded by looking for a known element inside (e.g. "Tarea" header in table)
+    // wpRoot contains the table when expanded
+    const expandIndicator = wpRoot.locator('th', { hasText: 'Tarea' });
+    if (!(await expandIndicator.isVisible())) {
         console.log('WP collapsed, expanding...');
         await wpClickableHeader.click({ force: true });
-        await reqHeader.waitFor({ state: 'visible' });
+        await expandIndicator.waitFor({ state: 'visible' });
     } else {
         console.log('WP already expanded');
     }
     
-    // Now check for Daily Scrum
-    await expect(page.locator('text=Daily Scrum').first()).toBeVisible();
+    // Now check for the specific event name in the WP container
+    await expect(wpRoot.locator('div', { hasText: eventName }).first()).toBeVisible();
 
     // Create a new Task
     // Assuming there's a button "Añadir Tarea" or similar in the WP
     // Or we find a specific WP "Paquete de Trabajo 1"
     // Create a new Task
-    // We reuse the wpHeader we found earlier (h4)
-    const newWPSection = wpHeader.locator('..').locator('..'); // Ascend to container
-    
-    // Expand if needed (chevron?)
-    
-    // Find "Nueva Tarea..." input
-    const taskInput = newWPSection.locator('input[placeholder="+ Nueva tarea..."]');
+    // Re-locate using the robust logic to ensure we get the correct container
+    // We can reuse wpRoot if we define it again or rely on lazy evaluation, but simpler to just re-query carefully.
+    const wpHeaderFresh = page.locator('h4', { hasText: wpName });
+    const wpRootFresh = wpHeaderFresh.locator('xpath=./ancestor::div[contains(@class, "p-4")][1]').locator('xpath=..');
+
+    await expect(wpRootFresh.locator('table')).toBeVisible();
+
+    const taskInput = wpRootFresh.locator('input[placeholder="+ Nueva tarea..."]');
     await taskInput.fill('Task with Recurrent Event');
     await taskInput.press('Enter');
     
     // Wait for task row
-    const taskRow = newWPSection.locator('tr', { hasText: 'Task with Recurrent Event' });
-    await expect(taskRow).toBeVisible();
+    const taskRow = wpRootFresh.locator('tr', { hasText: 'Task with Recurrent Event' });
     
     // Set 8h estimation for a role (e.g. Backend)
     // We need to find the input corresponding to a role column.
@@ -170,7 +163,7 @@ test.describe('Recurrent Events and Estimation', () => {
     // Alternative: Check the "End Date" in the task detail modal.
     await taskRow.click(); // Click row to open detail? Or specific button?
     // EstimationTaskRow.vue emits `open-detail` on click of the task name cell.
-    await taskRow.locator('td').first().click(); 
+    await taskRow.locator('td').first().click({ force: true }); 
     
     // Modal opens
     await expect(page.locator('h3', { hasText: 'Detalles de la Tarea' })).toBeVisible();

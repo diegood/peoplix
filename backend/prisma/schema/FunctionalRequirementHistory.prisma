@@ -1,0 +1,10 @@
+model FunctionalRequirementHistory {
+  id            String                @id @default(uuid())
+  requirementId String
+  requirement   FunctionalRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  version   Int
+  diff      String
+  changedBy String?
+  createdAt DateTime @default(now())
+}
