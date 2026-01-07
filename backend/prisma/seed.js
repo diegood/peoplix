@@ -2,8 +2,6 @@
 import { prisma } from '../src/infrastructure/database/client.js';
 
 async function main() {
-  console.log('Seeding database (User/Org Refactor)...');
-  
   try {
     const user = await prisma.user.upsert({
       where: { email: 'admin@workload.com' },
@@ -34,14 +32,14 @@ async function main() {
       },
     });
 
-    const roles = ['Frontender', 'Backender', 'Designer', 'Manager'].map(name => ({ name, organizationId: org.id }));
+    const roles = ['Front', 'Back', 'Desig', 'TL', 'BM'].map(name => ({ name, organizationId: org.id }));
     await prisma.role.createMany({ data: roles });
     
-    const skills = ['JavaScript', 'Vue.js', 'Node.js', 'Python', 'Java'].map(name => ({ name, organizationId: org.id }));
+    const skills = ['JavaScript', 'Vue.js', 'Node.js', 'Python', 'Java', 'TypeScript', '.NET', 'CSS', 'Indesign', 'Figma', 'Lead'].map(name => ({ name, organizationId: org.id }));
     await prisma.skill.createMany({ data: skills });
     
     const milestoneTypes = [
-        { name: 'Meeting', color: 'bg-blue-400', organizationId: org.id },
+        { name: 'Reunion semanal', color: 'bg-blue-400', organizationId: org.id },
         { name: 'Delivery', color: 'bg-green-400', organizationId: org.id }
     ];
     await prisma.milestoneType.createMany({ data: milestoneTypes });
@@ -50,8 +48,9 @@ async function main() {
     await prisma.technology.createMany({ data: technologies });
 
     const hierarchyTypes = [
-      { name: 'Line Management', rank: 1, organizationId: org.id },
-      { name: 'Project Management', rank: 2, organizationId: org.id }
+      { name: 'TL', rank: 1, organizationId: org.id },
+      { name: 'PL', rank: 2, organizationId: org.id },
+      { name: 'BM', rank: 3, organizationId: org.id }
     ];
     await prisma.hierarchyType.createMany({ data: hierarchyTypes });
 
@@ -70,12 +69,12 @@ async function main() {
         { name: 'por hacer', color: '#e5e7eb', order: 4, organizationId: org.id },
         { name: 'en progreso', color: '#3b82f6', order: 5, organizationId: org.id },
         { name: 'hecho', color: '#22c55e', order: 6, organizationId: org.id },
-        { name: 'uat', color: '#a855f7', order: 7, organizationId: org.id },
+        { name: 'UAT', color: '#a855f7', order: 7, organizationId: org.id },
         { name: 'finalizado', color: '#1f2937', order: 8, organizationId: org.id }
     ];
     await prisma.workPackageStatus.createMany({ data: workPackageStatuses });
 
-    console.log('Seeded:', { user, org, adminCollaborator, config: 'Default Configs Created' });
+    console.log('Creado todo esto a partir de seed:', { user, org, adminCollaborator, config: 'Con configuraciones por defecto' });
 
   } catch (error) {
     console.error('Error seeding:', error);
