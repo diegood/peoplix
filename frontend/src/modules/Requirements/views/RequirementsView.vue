@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import FunctionalRequirementForm from '@/modules/Requirements/components/FunctionalRequirementForm.vue'
@@ -45,6 +45,14 @@ const selectedRequirementFromURL = computed(() => {
     return requirements.value.find(r => r.number === parseInt(number))
   }
   return null
+})
+
+// Auto-open modal when accessing a requirement via URL
+watch(selectedRequirementFromURL, (req) => {
+  if (req) {
+    selectedRequirement.value = req
+    showForm.value = true
+  }
 })
 
 const statusLabels = {

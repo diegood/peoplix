@@ -6,6 +6,7 @@ export class PrismaProjectRepository {
         return prisma.project.findMany({
             where: { organizationId, ...args },
             include: {
+                organization: true,
                 allocations: {
                     include: {
                         collaborator: { include: { skills: { include: { skill: true } } } },
@@ -28,6 +29,7 @@ export class PrismaProjectRepository {
         return prisma.project.findUnique({
             where: { id },
             include: {
+                organization: true,
                 allocations: {
                     include: {
                         roles: { include: { role: true } }
