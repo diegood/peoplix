@@ -39,8 +39,8 @@ async function main() {
     await prisma.skill.createMany({ data: skills });
     
     const milestoneTypes = [
-        { name: 'Reunion semanal', color: 'bg-blue-400', organizationId: org.id },
-        { name: 'Delivery', color: 'bg-green-400', organizationId: org.id }
+        { name: 'Reunion semanal', color: '#001eff', organizationId: org.id },
+        { name: 'Delivery', color: '#ff0000', organizationId: org.id }
     ];
     await prisma.milestoneType.createMany({ data: milestoneTypes });
 

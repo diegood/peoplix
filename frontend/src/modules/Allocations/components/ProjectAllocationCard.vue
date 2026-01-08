@@ -158,7 +158,7 @@ const totalAllocatedHours = computed(() => {
                                <AlertCircle size="14" />
                            </div>
                            
-                           <button @click="emit('delete-allocation', element.id)" class="text-gray-300 hover:text-red-500 transition-colors">
+                           <button @click="emit('delete-allocation', element)" class="text-gray-300 hover:text-red-500 transition-colors">
                                <Trash2 size="14" />
                            </button>
                        </div>

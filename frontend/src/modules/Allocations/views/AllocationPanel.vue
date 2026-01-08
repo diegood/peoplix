@@ -48,6 +48,41 @@ const getISOWeek = (d = new Date()) => {
 }
 const selectedWeek = ref(getISOWeek())
 
+const parseWeekToDate = (weekStr) => {
+    if (!weekStr) return null
+    const [year, week] = weekStr.split('-W').map(Number)
+    if (!year || !week) return null
+    const anchor = dayjs(`${year}-01-04`).startOf('isoWeek') // ISO week 1 anchor
+    return anchor.add(week - 1, 'week')
+}
+
+const getPrevWeek = (weekStr) => {
+    const [y, w] = weekStr.split('-W').map(Number)
+    if (!y || !w) return null
+    if (w > 1) return `${y}-W${(w - 1).toString().padStart(2, '0')}`
+    return `${y - 1}-W52`
+}
+
+const isAllocationActiveInWeek = (allocation, weekStr) => {
+    // Primary: date-based ISO comparison
+    const target = parseWeekToDate(weekStr)
+    const start = parseWeekToDate(allocation?.startWeek)
+    const endDate = allocation?.endWeek ? parseWeekToDate(allocation.endWeek)?.endOf('isoWeek') : null
+    if (target && start) {
+        const targetMs = target.valueOf()
+        const startMs = start.valueOf()
+        if (!endDate) return startMs <= targetMs
+        return startMs <= targetMs && endDate.valueOf() >= targetMs
+    }
+    // Fallback: string compare in case of malformed dates
+    if (allocation?.startWeek && weekStr) {
+        const openEnded = !allocation.endWeek && allocation.startWeek <= weekStr
+        const bounded = allocation.endWeek && allocation.startWeek <= weekStr && allocation.endWeek >= weekStr
+        return openEnded || bounded
+    }
+    return false
+}
+
 const assignmentModalOpen = ref(false)
 const assignmentContext = ref({
     projectId: null,
@@ -92,7 +127,7 @@ const filteredProjects = computed(() => {
     if (!localProjects.value) return []
     return localProjects.value.map(p => {
         const activeAllocations = p.allocations.filter(a => {
-            return a.startWeek <= selectedWeek.value && (!a.endWeek || a.endWeek >= selectedWeek.value)
+            return isAllocationActiveInWeek(a, selectedWeek.value)
         })
         return {
             ...p,
@@ -152,7 +187,7 @@ const getGlobalOccupation = (collaboratorId) => {
     if (!collab || !collab.allocations) return 0
     
     return collab.allocations.reduce((acc, alloc) => {
-         const isActive = alloc.startWeek <= selectedWeek.value && (!alloc.endWeek || alloc.endWeek >= selectedWeek.value)
+         const isActive = isAllocationActiveInWeek(alloc, selectedWeek.value)
          return isActive ? acc + (alloc.dedicationPercentage || 0) : acc
     }, 0)
 }
@@ -160,8 +195,8 @@ const getGlobalOccupation = (collaboratorId) => {
 const gotToWeek = (direction) => {
     const operation = direction === 'prev' ? 'subtract' : 'add'
     const [y, w] = selectedWeek.value.split('-W').map(Number)
-    const d = dayjs().year(y).isoWeek(w).startOf('isoWeek')[operation](1, 'week')
-    selectedWeek.value = `${d.year()}-W${d.isoWeek().toString().padStart(2, '0')}`
+    const d = dayjs(`${y}-01-04`).startOf('isoWeek').add(w - 1, 'week')[operation](1, 'week')
+    selectedWeek.value = `${d.isoWeekYear()}-W${d.isoWeek().toString().padStart(2, '0')}`
 }
 
 const openHierarchy = (project) => {
@@ -176,7 +211,7 @@ const handleDrop = (evt, projectId) => {
     
     const sourceProject = localProjects.value.find(p => p.id === projectId)
     const existingActiveAllocation = sourceProject?.allocations?.find(a => {
-        const isActive = a.startWeek <= selectedWeek.value && (!a.endWeek || a.endWeek >= selectedWeek.value)
+        const isActive = isAllocationActiveInWeek(a, selectedWeek.value)
         if (!isActive) return false
         return a.collaborator?.id === collaborator.id
     })
@@ -202,9 +237,17 @@ const handleConfirmAssignment = async (data) => {
     assignmentModalOpen.value = false
 }
 
-const handleDeleteAllocation = async (allocationId) => {
-    if (await notificationStore.showDialog("¿Eliminar registro completo? (Para finalizar asignación, edita el porcentaje)")) {
-        await deleteAllocation({ id: allocationId })
+const handleDeleteAllocation = async (allocation) => {
+    if (!allocation) return
+    const confirmed = await notificationStore.showDialog("¿Eliminar asignación? Si comenzó antes, se cerrará hasta la semana previa.")
+    if (!confirmed) return
+
+    const isStartWeek = allocation.startWeek === selectedWeek.value
+    if (isStartWeek) {
+        await deleteAllocation({ id: allocation.id })
+    } else {
+        const prevWeek = getPrevWeek(selectedWeek.value)
+        await updateAllocation({ allocationId: allocation.id, percentage: allocation.dedicationPercentage || 0, endWeek: prevWeek })
     }
 }
 

@@ -1,5 +1,6 @@
 <script setup>
 import draggable from 'vuedraggable'
+import { dayjs } from '@/config'
 
 const props = defineProps({
     collaborators: { type: Array, default: () => [] },
@@ -9,10 +10,29 @@ const props = defineProps({
 
 const emit = defineEmits(['drag-start', 'drag-end'])
 
+const parseWeekToDate = (weekStr) => {
+  if (!weekStr) return null
+  const [year, week] = weekStr.split('-W').map(Number)
+  if (!year || !week) return null
+  const anchor = dayjs(`${year}-01-04`).startOf('isoWeek') // ISO week 1 anchor
+  return anchor.add(week - 1, 'week')
+}
+
+const isActiveInWeek = (allocation, weekStr) => {
+  const target = parseWeekToDate(weekStr)
+  const start = parseWeekToDate(allocation?.startWeek)
+  if (!target || !start) return false
+  const end = allocation?.endWeek ? parseWeekToDate(allocation.endWeek).endOf('isoWeek') : null
+  const targetMs = target.valueOf()
+  const startMs = start.valueOf()
+  if (!end) return startMs <= targetMs
+  return startMs <= targetMs && end.valueOf() >= targetMs
+}
+
 const getOccupation = (collab) => {
     if (!collab.allocations) return 0
     return collab.allocations.reduce((acc, alloc) => {
-        const isActive = alloc.startWeek <= props.selectedWeek && (!alloc.endWeek || alloc.endWeek >= props.selectedWeek)
+    const isActive = isActiveInWeek(alloc, props.selectedWeek)
         return isActive ? acc + (alloc.dedicationPercentage || 0) : acc
     }, 0)
 }
