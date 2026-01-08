@@ -58,6 +58,59 @@ export class PrismaWorkPackageRepository {
         })
     }
 
+    async createFromRequirements({ projectId, name, description, highLevelEstimation, startDate, requirementIds }) {
+        return prisma.$transaction(async (tx) => {
+            const workPackage = await tx.workPackage.create({
+                data: {
+                    projectId,
+                    name,
+                    description,
+                    highLevelEstimation,
+                    startDate,
+                    status: 'BACKLOG'
+                }
+            })
+
+            if (Array.isArray(requirementIds) && requirementIds.length > 0) {
+                const requirements = await tx.functionalRequirement.findMany({
+                    where: { id: { in: requirementIds } },
+                    select: {
+                        id: true,
+                        number: true,
+                        title: true,
+                        description: true,
+                        generalDescription: true,
+                        detailedFlow: true
+                    }
+                })
+
+                const tasksData = requirements.map((req) => ({
+                    workPackageId: workPackage.id,
+                    functionalRequirementId: req.id,
+                    name: `RF-${req.number}: ${req.title}`,
+                    description: req.description || req.generalDescription || req.detailedFlow || 'Sin detalle'
+                }))
+
+                if (tasksData.length > 0) {
+                    await tx.task.createMany({ data: tasksData })
+                }
+            }
+
+            return tx.workPackage.findUnique({
+                where: { id: workPackage.id },
+                include: {
+                    tasks: {
+                        include: {
+                            estimations: { include: { role: true, collaborator: true } },
+                            collaborator: true,
+                            functionalRequirement: true
+                        }
+                    }
+                }
+            })
+        })
+    }
+
     async update(id, data, userId = null) {
         return prisma.workPackage.update({
             where: { id },

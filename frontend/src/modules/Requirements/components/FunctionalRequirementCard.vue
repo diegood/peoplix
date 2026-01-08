@@ -7,10 +7,18 @@ const props = defineProps({
   requirement: {
     type: Object,
     required: true
+  },
+  selectable: {
+    type: Boolean,
+    default: false
+  },
+  selected: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['edit', 'delete'])
+const emit = defineEmits(['edit', 'delete', 'toggle-select'])
 
 const statusColors = {
   DRAFT: 'bg-gray-100 text-gray-800',
@@ -68,6 +76,15 @@ const formattedDate = computed(() => {
     class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer"
     @click="emit('edit')"
   >
+    <div v-if="selectable" class="flex items-center mb-2">
+      <input
+        type="checkbox"
+        :checked="selected"
+        @click.stop="emit('toggle-select')"
+        class="h-4 w-4 text-blue-600 border-gray-300 rounded"
+      />
+      <span class="text-xs text-gray-500 ml-2">Seleccionar</span>
+    </div>
     <div class="flex items-start justify-between mb-4">
       <div class="flex-1">
         <div class="flex items-center gap-2 mb-1">

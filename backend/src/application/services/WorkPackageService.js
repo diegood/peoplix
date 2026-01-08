@@ -20,6 +20,13 @@ export class WorkPackageService {
         return this.repository.create(data)
     }
 
+    async createFromRequirements(data) {
+        if (data.startDate) {
+            data.startDate = new Date(data.startDate)
+        }
+        return this.repository.createFromRequirements(data)
+    }
+
     async update(id, data, userId = null) {
         const current = await this.repository.findById(id)
         if (!current) throw new Error('Work Package not found')

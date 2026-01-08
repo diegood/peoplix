@@ -5,7 +5,8 @@ import { useQuery, useMutation } from '@vue/apollo-composable'
 import FunctionalRequirementForm from '@/modules/Requirements/components/FunctionalRequirementForm.vue'
 import FunctionalRequirementCard from '@/modules/Requirements/components/FunctionalRequirementCard.vue'
 import { GET_FUNCTIONAL_REQUIREMENTS } from '@/modules/Requirements/graphql/queries'
-import { DELETE_FUNCTIONAL_REQUIREMENT } from '@/modules/Requirements/graphql/mutations'
+import { DELETE_FUNCTIONAL_REQUIREMENT, CREATE_WORK_PACKAGE_FROM_REQUIREMENTS } from '@/modules/Requirements/graphql/mutations'
+import WorkPackageCreateModal from '@/modules/Requirements/components/WorkPackageCreateModal.vue'
 import { GET_PROJECTS } from '@/modules/Projects/graphql/project.queries'
 
 const route = useRoute()
@@ -34,6 +35,15 @@ const selectedRequirement = ref(null)
 const showForm = ref(false)
 const filterStatus = ref(null)
 const activeSection = ref(null)
+const selectedIds = ref(new Set())
+const showWpModal = ref(false)
+const wpForm = ref({
+  name: '',
+  description: '',
+  highLevelEstimation: null,
+  startDate: ''
+})
+const wpError = ref('')
 
 const { result, loading, error, refetch } = useQuery(
   GET_FUNCTIONAL_REQUIREMENTS,
@@ -45,6 +55,7 @@ const { result, loading, error, refetch } = useQuery(
 )
 
 const { mutate: deleteRequirement } = useMutation(DELETE_FUNCTIONAL_REQUIREMENT)
+const { mutate: createWpFromReqs } = useMutation(CREATE_WORK_PACKAGE_FROM_REQUIREMENTS)
 
 const requirements = computed(() => result.value?.functionalRequirements || [])
 
@@ -120,12 +131,63 @@ const handleFormClose = () => {
   }
 }
 
+const toggleSelect = (id) => {
+  const set = new Set(selectedIds.value)
+  if (set.has(id)) {
+    set.delete(id)
+  } else {
+    set.add(id)
+  }
+  selectedIds.value = set
+}
+
+const openWpModal = () => {
+  if (!anySelected.value) return
+  wpForm.value = {
+    name: `Paquete ${new Date().toLocaleDateString()}`,
+    description: '',
+    highLevelEstimation: null,
+    startDate: ''
+  }
+  wpError.value = ''
+  showWpModal.value = true
+}
+
+const submitWpModal = async () => {
+  const ids = Array.from(selectedIds.value)
+  if (ids.length === 0 || !projectId.value) return
+  wpError.value = ''
+  try {
+    await createWpFromReqs({
+      projectId: projectId.value,
+      requirementIds: ids,
+      name: wpForm.value.name,
+      description: wpForm.value.description || null,
+      highLevelEstimation: wpForm.value.highLevelEstimation ? Number(wpForm.value.highLevelEstimation) : null,
+      startDate: wpForm.value.startDate || null
+    })
+    selectedIds.value = new Set()
+    showWpModal.value = false
+    refetch()
+  } catch (e) {
+    console.error('Error creando paquete de trabajo', e)
+    wpError.value = 'No se pudo crear el paquete de trabajo. Intenta nuevamente.'
+  }
+}
+
+const closeWpModal = () => {
+  showWpModal.value = false
+  wpError.value = ''
+}
+
 const requirementStats = computed(() => ({
   total: requirements.value.length,
   draft: requirements.value.filter(r => r.status === 'DRAFT').length,
   validated: requirements.value.filter(r => r.status === 'VALIDATED').length,
   pending: requirements.value.filter(r => r.status === 'PENDING_REVIEW').length
 }))
+
+const anySelected = computed(() => selectedIds.value.size > 0)
 </script>
 
 <template>
@@ -137,12 +199,24 @@ const requirementStats = computed(() => ({
         </a>
         <h2 class="text-xl font-bold text-gray-900">Requisitos Funcionales - {{ projectName }}</h2>
       </div>
-      <button
-        @click="handleCreateNew"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-      >
-        + Nuevo Requisito
-      </button>
+      <div class="flex items-center gap-3">
+        <button
+          :disabled="!anySelected"
+          @click="openWpModal"
+          :class="[
+            'px-4 py-2 rounded-lg transition',
+            anySelected ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+          ]"
+        >
+          Crear paquete con seleccionados ({{ selectedIds.size }})
+        </button>
+        <button
+          @click="handleCreateNew"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        >
+          + Nuevo Requisito
+        </button>
+      </div>
     </div>
 
     <div class="bg-white p-6 grid grid-cols-4 gap-4">
@@ -182,6 +256,9 @@ const requirementStats = computed(() => ({
           v-for="req in requirements"
           :key="req.id"
           :requirement="req"
+          selectable
+          :selected="selectedIds.has(req.id)"
+          @toggle-select="toggleSelect(req.id)"
           @edit="handleEdit(req)"
           @delete="handleDelete(req.id)"
         />
@@ -196,6 +273,18 @@ const requirementStats = computed(() => ({
       :orgTag="route.params.orgTag"
       :projectTag="route.params.projectTag"
       @close="handleFormClose"
+    />
+
+    <WorkPackageCreateModal
+      :show="showWpModal"
+      :selected-count="selectedIds.size"
+      v-model:name="wpForm.name"
+      v-model:description="wpForm.description"
+      v-model:high-level-estimation="wpForm.highLevelEstimation"
+      v-model:start-date="wpForm.startDate"
+      :error-message="wpError"
+      @submit="submitWpModal"
+      @close="closeWpModal"
     />
   </div>
 </template>

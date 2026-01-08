@@ -8,24 +8,27 @@ export class PrismaTaskRepository {
                 estimations: { include: { role: true } },
                 collaborator: true,
                 workPackage: true,
+                functionalRequirement: true,
                 dependencies: true,
                 dependents: true
             }
         })
     }
 
-    async create({ workPackageId, name, description, startDate, collaboratorId }) {
+    async create({ workPackageId, name, description, startDate, collaboratorId, functionalRequirementId }) {
         return prisma.task.create({
             data: {
                 workPackageId,
                 name,
                 description,
                 startDate,
-                collaboratorId
+                collaboratorId,
+                functionalRequirementId
             },
             include: {
                 estimations: { include: { role: true } },
-                collaborator: true
+                collaborator: true,
+                functionalRequirement: true
             }
         })
     }
@@ -36,7 +39,8 @@ export class PrismaTaskRepository {
             data,
             include: {
                 estimations: { include: { role: true } },
-                collaborator: true
+                collaborator: true,
+                functionalRequirement: true
             }
         })
     }

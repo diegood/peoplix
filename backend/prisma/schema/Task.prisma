@@ -4,6 +4,8 @@ model Task {
   description    String?
   workPackageId  String?
   workPackage    WorkPackage?     @relation(fields: [workPackageId], references: [id])
+  functionalRequirementId String?
+  functionalRequirement   FunctionalRequirement? @relation(fields: [functionalRequirementId], references: [id])
   estimations    TaskEstimation[]
   startDate      DateTime?
   endDate        DateTime?

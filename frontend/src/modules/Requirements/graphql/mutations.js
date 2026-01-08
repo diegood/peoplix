@@ -82,6 +82,35 @@ export const DELETE_FUNCTIONAL_REQUIREMENT = gql`
   }
 `
 
+export const CREATE_WORK_PACKAGE_FROM_REQUIREMENTS = gql`
+  mutation CreateWorkPackageFromRequirements(
+    $projectId: ID!
+    $requirementIds: [ID!]!
+    $name: String!
+    $description: String
+    $highLevelEstimation: Int
+    $startDate: String
+  ) {
+    createWorkPackageFromRequirements(
+      projectId: $projectId
+      requirementIds: $requirementIds
+      name: $name
+      description: $description
+      highLevelEstimation: $highLevelEstimation
+      startDate: $startDate
+    ) {
+      id
+      name
+      status
+      tasks {
+        id
+        name
+        functionalRequirementId
+      }
+    }
+  }
+`
+
 export const ADD_REQUIREMENT_RELATION = gql`
   mutation AddFunctionalRequirementRelation(
     $fromId: String!

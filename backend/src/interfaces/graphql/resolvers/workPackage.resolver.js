@@ -14,6 +14,7 @@ export const workPackageResolvers = {
     },
     Mutation: {
         createWorkPackage: (_, args) => workPackageService.create(args),
+           createWorkPackageFromRequirements: (_, args) => workPackageService.createFromRequirements(args),
         updateWorkPackage: (_, { id, ...args }, context) => {
              const userId = context.user ? context.user.userId : null;
              return workPackageService.update(id, args, userId);

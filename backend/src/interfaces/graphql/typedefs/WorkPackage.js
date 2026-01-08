@@ -41,6 +41,8 @@ export const WorkPackageSchema = gql`
     description: String
     workPackageId: String
     workPackage: WorkPackage
+    functionalRequirementId: String
+    functionalRequirement: FunctionalRequirement
     estimations: [TaskEstimation]
     startDate: String
     endDate: String
@@ -71,6 +73,7 @@ export const WorkPackageSchema = gql`
 
   extend type Mutation {
     createWorkPackage(projectId: ID!, name: String!, description: String, highLevelEstimation: Int, startDate: String): WorkPackage
+    createWorkPackageFromRequirements(projectId: ID!, requirementIds: [ID!]!, name: String!, description: String, highLevelEstimation: Int, startDate: String): WorkPackage
     updateWorkPackage(id: ID!, name: String, description: String, highLevelEstimation: Int, startDate: String, status: String): WorkPackage
     deleteWorkPackage(id: ID!): Boolean
 
