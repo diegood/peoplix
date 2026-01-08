@@ -24,6 +24,10 @@ const goToEstimation = (projectId) => {
 }
 
 const goToRequirements = (project) => {
+    if (!project.organization?.tag || !project.tag) {
+        notificationStore.showToast('Organización o proyecto sin tag configurado', 'error')
+        return
+    }
     router.push({ 
         name: 'tagged-requirements', 
         params: { 
