@@ -3,7 +3,12 @@ import { ref, computed, watch } from 'vue'
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import { FileText, AlignLeft, Users, ArrowRight, CheckCircle2, Paperclip } from 'lucide-vue-next'
 import BaseModal from '@/components/BaseModal.vue'
-import TiptapEditor from '@/modules/Kanban/components/TiptapEditor.vue'
+import SectionBasic from './sections/SectionBasic.vue'
+import SectionDescripcion from './sections/SectionDescripcion.vue'
+import SectionActores from './sections/SectionActores.vue'
+import SectionFlujo from './sections/SectionFlujo.vue'
+import SectionValidaciones from './sections/SectionValidaciones.vue'
+import SectionAdicional from './sections/SectionAdicional.vue'
 import { GET_FUNCTIONAL_REQUIREMENT } from '@/modules/Requirements/graphql/queries'
 import {
   CREATE_FUNCTIONAL_REQUIREMENT,
@@ -131,186 +136,37 @@ const handleSubmit = async () => {
             <p class="text-gray-500">Cargando...</p>
           </div>
 
-          <div v-else class="max-w-4xl mx-auto">
-            <div v-show="activeSection === 'basico'" class="space-y-6">
-              <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                  Título de la Funcionalidad *
-                </label>
-                <input
-                  v-model="form.title"
-                  type="text"
-                  placeholder="Ej: Gestión de Usuarios"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                />
-                <p class="text-xs text-gray-500 mt-2">Breve y clara descripción de la funcionalidad</p>
-              </div>
+          <div v-else class="max-w-4xl mx-auto space-y-6">
+            <SectionBasic
+              v-show="activeSection === 'basico'"
+              :form="form"
+              :isEditing="isEditing"
+            />
 
-              <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                  Descripción Breve *
-                </label>
-                <div class="border border-gray-300 rounded-lg h-48">
-                  <TiptapEditor
-                    v-model="form.description"
-                    placeholder="Explica brevemente qué hace esta funcionalidad"
-                    menuType="fixed"
-                  />
-                </div>
-              </div>
+            <SectionDescripcion
+              v-show="activeSection === 'descripcion'"
+              :form="form"
+            />
 
-              <div v-if="isEditing" class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                  Estado
-                </label>
-                <select
-                  v-model="form.status"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="DRAFT">Borrador</option>
-                  <option value="PENDING_REVIEW">Pendiente de Revisión</option>
-                  <option value="VALIDATED">Validado</option>
-                  <option value="DEPRECATED">Deprecado</option>
-                </select>
-              </div>
-            </div>
+            <SectionActores
+              v-show="activeSection === 'actores'"
+              :form="form"
+            />
 
-            <div v-show="activeSection === 'descripcion'" class="space-y-6">
-              <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                  Descripción General
-                </label>
-                <div class="border border-gray-300 rounded-lg h-96">
-                  <TiptapEditor
-                    v-model="form.generalDescription"
-                    placeholder="Explica en detalle qué hace la funcionalidad y su propósito en el sistema"
-                    menuType="fixed"
-                  />
-                </div>
-              </div>
-            </div>
+            <SectionFlujo
+              v-show="activeSection === 'flujo'"
+              :form="form"
+            />
 
-            <div v-show="activeSection === 'actores'" class="space-y-6">
-              <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                  Actores Involucrados
-                </label>
-                <div class="border border-gray-300 rounded-lg h-48">
-                  <TiptapEditor
-                    v-model="form.actors"
-                    placeholder="¿Quién usará esta funcionalidad? (Ej: Administrador, Usuario Final, API externa)"
-                    menuType="fixed"
-                  />
-                </div>
-              </div>
+            <SectionValidaciones
+              v-show="activeSection === 'validaciones'"
+              :form="form"
+            />
 
-              <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                </label>
-                <div class="border border-gray-300 rounded-lg h-48">
-                  <TiptapEditor
-                    v-model="form.preconditions"
-                    placeholder="Requisitos o estado previo necesario (Ej: El usuario debe estar autenticado)"
-                    menuType="fixed"
-                  />
-                </div>
-              </div>
-
-              <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                </label>
-                <div class="border border-gray-300 rounded-lg h-48">
-                  <TiptapEditor
-                    v-model="form.expectedInputs"
-                    placeholder="Datos necesarios (Ej: Nombre de usuario, Email, Rol del usuario)"
-                    menuType="fixed"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div v-show="activeSection === 'flujo'" class="space-y-6">
-              <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                  Comportamiento / Flujo Detallado
-                </label>
-                <div class="border border-gray-300 rounded-lg h-96">
-                  <TiptapEditor
-                    v-model="form.detailedFlow"
-                    placeholder="Pasos secuenciales del funcionamiento (Ej: 1. El usuario accede... 2. Presiona... 3. El sistema...)"
-                    menuType="fixed"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div v-show="activeSection === 'validaciones'" class="space-y-6">
-              <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                  Validaciones y Reglas de Negocio
-                </label>
-                <div class="border border-gray-300 rounded-lg h-64">
-                  <TiptapEditor
-                    v-model="form.validations"
-                    placeholder="Condiciones o reglas que deben cumplirse (Ej: Email único, rol obligatorio)"
-                    menuType="fixed"
-                  />
-                </div>
-              </div>
-
-              <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                  Salidas / Resultados Esperados
-                </label>
-                <div class="border border-gray-300 rounded-lg h-64">
-                  <TiptapEditor
-                    v-model="form.expectedOutputs"
-                    placeholder="Qué debe generarse tras ejecutar (Ej: Usuario creado, notificación mostrada, datos guardados en BD)"
-                    menuType="fixed"
-                  />
-                </div>
-              </div>
-
-              <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                  Mensajes del Sistema / Errores
-                </label>
-                <div class="border border-gray-300 rounded-lg h-64">
-                  <TiptapEditor
-                    v-model="form.systemMessages"
-                    placeholder="Mensajes a mostrar al usuario (Ej: 'Usuario creado con éxito', 'El email ya está registrado')"
-                    menuType="fixed"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div v-show="activeSection === 'adicional'" class="space-y-6">
-              <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                  URL del Mockup / Diseño
-                </label>
-                <input
-                  v-model="form.mockupUrl"
-                  type="url"
-                  placeholder="https://..."
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                  Notas Adicionales
-                </label>
-                <div class="border border-gray-300 rounded-lg h-64">
-                  <TiptapEditor
-                    v-model="form.notes"
-                    placeholder="Aclaraciones para evitar suposiciones o malentendidos"
-                    menuType="fixed"
-                  />
-                </div>
-              </div>
-            </div>
+            <SectionAdicional
+              v-show="activeSection === 'adicional'"
+              :form="form"
+            />
           </div>
         </div>
       </div>
