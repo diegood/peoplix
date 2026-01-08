@@ -42,11 +42,6 @@ const router = createRouter({
       component: () => import('@/views/MonthlyPlanningView.vue')
     },
     {
-      path: '/projects/:id/requirements',
-      name: 'project-requirements',
-      component: () => import('@/modules/Requirements/views/RequirementsView.vue')
-    },
-    {
       path: '/:orgTag/projects/:projectTag/requirements',
       name: 'tagged-requirements',
       component: () => import('@/modules/Requirements/views/RequirementsView.vue')

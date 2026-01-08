@@ -24,18 +24,13 @@ const goToEstimation = (projectId) => {
 }
 
 const goToRequirements = (project) => {
-    if (project.organization?.tag && project.tag) {
-        router.push({ 
-            name: 'tagged-requirements', 
-            params: { 
-                orgTag: project.organization.tag,
-                projectTag: project.tag 
-            } 
-        })
-    } else {
-        // Fallback a la ruta antigua si no hay org tag
-        router.push({ name: 'project-requirements', params: { id: project.id } })
-    }
+    router.push({ 
+        name: 'tagged-requirements', 
+        params: { 
+            orgTag: project.organization.tag,
+            projectTag: project.tag 
+        } 
+    })
 }
 
 const form = ref({
