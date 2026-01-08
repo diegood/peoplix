@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import FunctionalRequirementForm from '@/modules/Requirements/components/FunctionalRequirementForm.vue'
 import FunctionalRequirementCard from '@/modules/Requirements/components/FunctionalRequirementCard.vue'
@@ -8,7 +8,12 @@ import { GET_FUNCTIONAL_REQUIREMENTS } from '@/modules/Requirements/graphql/quer
 import { DELETE_FUNCTIONAL_REQUIREMENT } from '@/modules/Requirements/graphql/mutations'
 
 const route = useRoute()
-const projectId = computed(() => route.params.id)
+const router = useRouter()
+
+const projectId = computed(() => {
+  if (route.params.id) return route.params.id
+  return route.params.projectTag || null
+})
 
 const selectedRequirement = ref(null)
 const showForm = ref(false)
@@ -26,6 +31,14 @@ const { mutate: deleteRequirement } = useMutation(DELETE_FUNCTIONAL_REQUIREMENT)
 
 const requirements = computed(() => result.value?.functionalRequirements || [])
 
+const selectedRequirementFromURL = computed(() => {
+  const number = route.params.requirementNumber
+  if (number) {
+    return requirements.value.find(r => r.number === parseInt(number))
+  }
+  return null
+})
+
 const statusLabels = {
   DRAFT: 'Borrador',
   PENDING_REVIEW: 'Pendiente de Revisión',
@@ -41,6 +54,16 @@ const handleCreateNew = () => {
 const handleEdit = (req) => {
   selectedRequirement.value = req
   showForm.value = true
+  if (route.name.startsWith('tagged-')) {
+    router.push({
+      name: 'tagged-requirement-detail',
+      params: {
+        orgTag: route.params.orgTag,
+        projectTag: route.params.projectTag,
+        requirementNumber: req.number
+      }
+    })
+  }
 }
 
 const handleDelete = async (id) => {
@@ -57,6 +80,15 @@ const handleFormClose = () => {
   showForm.value = false
   selectedRequirement.value = null
   refetch()
+  if (route.name.startsWith('tagged-')) {
+    router.push({
+      name: 'tagged-requirements',
+      params: {
+        orgTag: route.params.orgTag,
+        projectTag: route.params.projectTag
+      }
+    })
+  }
 }
 
 const requirementStats = computed(() => ({

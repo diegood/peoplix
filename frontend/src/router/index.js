@@ -47,6 +47,21 @@ const router = createRouter({
       component: () => import('@/modules/Requirements/views/RequirementsView.vue')
     },
     {
+      path: '/:orgTag/projects/:projectTag/requirements',
+      name: 'tagged-requirements',
+      component: () => import('@/modules/Requirements/views/RequirementsView.vue')
+    },
+    {
+      path: '/:orgTag/projects/:projectTag/requirements/:requirementNumber',
+      name: 'tagged-requirement-detail',
+      component: () => import('@/modules/Requirements/views/RequirementsView.vue')
+    },
+    {
+      path: '/:orgTag/projects/:projectTag/requirements/:requirementNumber/section/:section',
+      name: 'tagged-requirement-section',
+      component: () => import('@/modules/Requirements/views/RequirementsView.vue')
+    },
+    {
       path: '/projects/:id/estimation',
       name: 'project-estimation',
       component: () => import('@/modules/Allocations/views/ProjectEstimationView.vue')

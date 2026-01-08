@@ -19,6 +19,7 @@ export default gql`
 
   type FunctionalRequirement {
     id: ID!
+    number: Int!
     title: String!
     description: String!
     generalDescription: String

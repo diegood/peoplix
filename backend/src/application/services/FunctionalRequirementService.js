@@ -56,13 +56,22 @@ class FunctionalRequirementService {
   async create(data, userId) {
     const { projectId, ...rest } = data;
     
+    const lastRequirement = await prisma.functionalRequirement.findFirst({
+      where: { projectId },
+      orderBy: { number: 'desc' },
+      select: { number: true }
+    });
+    
+    const nextNumber = (lastRequirement?.number || 0) + 1;
+    
     return prisma.functionalRequirement.create({
       data: {
         ...rest,
         projectId,
         analystId: userId,
         status: 'DRAFT',
-        version: 1
+        version: 1,
+        number: nextNumber
       }
     });
   }

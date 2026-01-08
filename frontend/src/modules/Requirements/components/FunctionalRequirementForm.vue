@@ -180,7 +180,10 @@ const sectionAudits = computed(() => ({
     @close="emit('close')"
   >
     <template #title>
-      {{ isEditing ? 'Editar Requisito' : 'Nuevo Requisito Funcional' }}
+      <div class="flex items-center gap-3">
+        <span v-if="isEditing && detailData?.number" class="text-xs font-bold px-2 py-0.5 bg-blue-100 text-blue-700 rounded">RF-{{ detailData.number }}</span>
+        {{ isEditing ? 'Editar Requisito' : 'Nuevo Requisito Funcional' }}
+      </div>
     </template>
 
     <div class="flex gap-6 h-[70vh] -m-6">

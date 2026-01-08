@@ -70,7 +70,10 @@ const formattedDate = computed(() => {
   >
     <div class="flex items-start justify-between mb-4">
       <div class="flex-1">
-        <h3 class="font-bold text-lg text-gray-900">{{ requirement.title }}</h3>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-xs font-bold px-2 py-0.5 bg-blue-100 text-blue-700 rounded">RF-{{ requirement.number }}</span>
+          <h3 class="font-bold text-lg text-gray-900">{{ requirement.title }}</h3>
+        </div>
         <p class="text-sm text-gray-600 mt-1 line-clamp-2">{{ truncatedDescription }}</p>
       </div>
       <span :class="['text-xs px-3 py-1 rounded-full font-medium flex-shrink-0 ml-4', statusColors[requirement.status]]">

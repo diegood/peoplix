@@ -7,6 +7,7 @@ enum RequirementStatus {
 
 model FunctionalRequirement {
   id                 String  @id @default(uuid())
+  number             Int     @default(0)
   title              String
   description        String
   generalDescription String?
