@@ -20,6 +20,9 @@ export const GET_FUNCTIONAL_REQUIREMENTS = gql`
         }
       }
       history {
+        id
+        diff
+        createdAt
         changedBy {
           id
           email
@@ -67,6 +70,9 @@ export const GET_FUNCTIONAL_REQUIREMENT = gql`
         }
       }
       history {
+        id
+        diff
+        createdAt
         changedBy {
           id
           email

@@ -140,7 +140,7 @@ const requirementStats = computed(() => ({
       </div>
 
       <div v-else-if="requirements.length === 0" class="bg-gray-100 p-12 rounded-lg text-center">
-        <p class="text-gray-600">No hay requisitos funcionales. Comienza creando uno.</p>
+        <p class="text-gray-600">No hay requisitos funcionales.</p>
       </div>
 
       <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4">

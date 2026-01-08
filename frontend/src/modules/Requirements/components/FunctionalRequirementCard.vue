@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { parseDateSafe } from '@/helper/Date'
+import { getAvatarColor, getInitials, displayName as getDisplayName } from '@/helper/userDisplay'
 
 const props = defineProps({
   requirement: {
@@ -60,38 +61,6 @@ const formattedDate = computed(() => {
   return date ? date.format('DD/MM/YYYY') : ''
 })
 
-const getAvatarColor = (userId) => {
-  const colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500']
-  let hash = 0
-  const key = typeof userId === 'string' ? userId : ''
-  for (let i = 0; i < key.length; i++) {
-    hash = key.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  return colors[Math.abs(hash) % colors.length]
-}
-
-const getInitials = (user) => {
-  if (!user) return '??'
-  const first = user.collaborator?.firstName?.[0] || ''
-  const last = user.collaborator?.lastName?.[0] || ''
-  const fromNames = (first + last).toUpperCase()
-  if (fromNames) return fromNames
-  if (typeof user.email === 'string' && user.email.length >= 2) {
-    return user.email.slice(0, 2).toUpperCase()
-  }
-  if (typeof user.id === 'string' && user.id.length >= 2) {
-    return user.id.slice(0, 2).toUpperCase()
-  }
-  return '??'
-}
-
-const getDisplayName = (user) => {
-  if (!user) return 'Usuario'
-  const fn = user.collaborator?.firstName || ''
-  const ln = user.collaborator?.lastName || ''
-  const name = `${fn} ${ln}`.trim()
-  return name || user.email || user.id || 'Usuario'
-}
 </script>
 
 <template>
@@ -128,10 +97,8 @@ const getDisplayName = (user) => {
             <div
               v-for="(user, idx) in analysts"
               :key="user.id || idx"
-              :class="[
-                'w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold',
-                getAvatarColor(user.id)
-              ]"
+              class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+              :style="{ backgroundColor: getAvatarColor(user) }"
               :title="`Editor: ${getDisplayName(user)}`"
             >
               {{ getInitials(user) }}

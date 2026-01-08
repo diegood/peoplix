@@ -9,6 +9,7 @@ import SectionActores from './sections/SectionActores.vue'
 import SectionFlujo from './sections/SectionFlujo.vue'
 import SectionValidaciones from './sections/SectionValidaciones.vue'
 import SectionAdicional from './sections/SectionAdicional.vue'
+import { parseDateSafe } from '@/helper/Date'
 import { GET_FUNCTIONAL_REQUIREMENT } from '@/modules/Requirements/graphql/queries'
 import {
   CREATE_FUNCTIONAL_REQUIREMENT,
@@ -94,6 +95,82 @@ const handleSubmit = async () => {
     console.error('Error saving requirement:', error)
   }
 }
+
+const historyEntries = computed(() => detailData.value?.history || props.requirement?.history || [])
+
+const saveField = async (patch) => {
+  if (!isEditing.value || !props.requirement?.id) return
+  await updateReq({ id: props.requirement.id, ...patch })
+  await refetchDetail()
+}
+
+const displayName = (user) => {
+  if (!user) return 'Usuario'
+  const fn = user.collaborator?.firstName || ''
+  const ln = user.collaborator?.lastName || ''
+  const name = `${fn} ${ln}`.trim()
+  return name || user.email || user.id || 'Usuario'
+}
+
+const fieldAudits = computed(() => {
+  const map = {}
+  const history = detailData.value?.history || props.requirement?.history || []
+  for (const entry of history) {
+    if (!entry?.diff) continue
+    let diff
+    try {
+      diff = JSON.parse(entry.diff)
+    } catch (e) {
+      continue
+    }
+    for (const [field, change] of Object.entries(diff)) {
+      if (!map[field]) {
+        map[field] = {
+          by: entry.changedBy,
+          at: entry.createdAt,
+          old: change?.old,
+          new: change?.new
+        }
+      }
+    }
+  }
+  return map
+})
+
+const formatAudit = (audit) => {
+  if (!audit) return ''
+  const when = audit.at ? parseDateSafe(audit.at)?.format('DD/MM/YYYY HH:mm') : ''
+  const who = displayName(audit.by)
+  return [who, when].filter(Boolean).join(' · ')
+}
+
+const sectionAudits = computed(() => ({
+  basico: {
+    title: formatAudit(fieldAudits.value.title),
+    description: formatAudit(fieldAudits.value.description),
+    status: formatAudit(fieldAudits.value.status)
+  },
+  descripcion: {
+    generalDescription: formatAudit(fieldAudits.value.generalDescription)
+  },
+  actores: {
+    actors: formatAudit(fieldAudits.value.actors),
+    preconditions: formatAudit(fieldAudits.value.preconditions),
+    expectedInputs: formatAudit(fieldAudits.value.expectedInputs)
+  },
+  flujo: {
+    detailedFlow: formatAudit(fieldAudits.value.detailedFlow)
+  },
+  validaciones: {
+    validations: formatAudit(fieldAudits.value.validations),
+    expectedOutputs: formatAudit(fieldAudits.value.expectedOutputs),
+    systemMessages: formatAudit(fieldAudits.value.systemMessages)
+  },
+  adicional: {
+    mockupUrl: formatAudit(fieldAudits.value.mockupUrl),
+    notes: formatAudit(fieldAudits.value.notes)
+  }
+}))
 </script>
 
 <template>
@@ -107,7 +184,7 @@ const handleSubmit = async () => {
     </template>
 
     <div class="flex gap-6 h-[70vh] -m-6">
-      <div class="w-64 bg-gray-50 border-r flex flex-col">
+      <div class="w-64 bg-gray-50 flex flex-col">
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
           <button
             v-for="section in sections"
@@ -141,31 +218,49 @@ const handleSubmit = async () => {
               v-show="activeSection === 'basico'"
               :form="form"
               :isEditing="isEditing"
+              :audit="sectionAudits.basico"
+              :history="historyEntries"
+              :onSaveField="saveField"
             />
 
             <SectionDescripcion
               v-show="activeSection === 'descripcion'"
               :form="form"
+              :audit="sectionAudits.descripcion"
+              :history="historyEntries"
+              :onSaveField="saveField"
             />
 
             <SectionActores
               v-show="activeSection === 'actores'"
               :form="form"
+              :audit="sectionAudits.actores"
+              :history="historyEntries"
+              :onSaveField="saveField"
             />
 
             <SectionFlujo
               v-show="activeSection === 'flujo'"
               :form="form"
+              :audit="sectionAudits.flujo"
+              :history="historyEntries"
+              :onSaveField="saveField"
             />
 
             <SectionValidaciones
               v-show="activeSection === 'validaciones'"
               :form="form"
+              :audit="sectionAudits.validaciones"
+              :history="historyEntries"
+              :onSaveField="saveField"
             />
 
             <SectionAdicional
               v-show="activeSection === 'adicional'"
               :form="form"
+              :audit="sectionAudits.adicional"
+              :history="historyEntries"
+              :onSaveField="saveField"
             />
           </div>
         </div>
