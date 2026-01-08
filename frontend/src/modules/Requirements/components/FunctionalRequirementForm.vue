@@ -24,6 +24,10 @@ const props = defineProps({
   requirement: {
     type: Object,
     default: null
+  },
+  activeSection: {
+    type: String,
+    default: null
   }
 })
 
@@ -65,15 +69,24 @@ watch(detailData, (newVal) => {
   }
 }, { immediate: true })
 
-const activeSection = ref('basico')
+const activeSection = ref('basic')
+
+// Set active section from prop if provided
+watch(() => props.activeSection, (newSection) => {
+  if (newSection) {
+    activeSection.value = newSection
+  } else {
+    activeSection.value = 'basic'
+  }
+}, { immediate: true })
 
 const sections = [
-  { id: 'basico', label: 'Básico', icon: FileText },
-  { id: 'descripcion', label: 'Descripción', icon: AlignLeft },
-  { id: 'actores', label: 'Actores', icon: Users },
-  { id: 'flujo', label: 'Flujo', icon: ArrowRight },
-  { id: 'validaciones', label: 'Validaciones', icon: CheckCircle2 },
-  { id: 'adicional', label: 'Adicional', icon: Paperclip }
+  { id: 'basic', label: 'Básico', icon: FileText },
+  { id: 'description', label: 'Descripción', icon: AlignLeft },
+  { id: 'actors', label: 'Actores', icon: Users },
+  { id: 'flow', label: 'Flujo', icon: ArrowRight },
+  { id: 'validations', label: 'Validaciones', icon: CheckCircle2 },
+  { id: 'additional', label: 'Adicional', icon: Paperclip }
 ]
 
 const handleSubmit = async () => {
@@ -145,28 +158,28 @@ const formatAudit = (audit) => {
 }
 
 const sectionAudits = computed(() => ({
-  basico: {
+  basic: {
     title: formatAudit(fieldAudits.value.title),
     description: formatAudit(fieldAudits.value.description),
     status: formatAudit(fieldAudits.value.status)
   },
-  descripcion: {
+  description: {
     generalDescription: formatAudit(fieldAudits.value.generalDescription)
   },
-  actores: {
+  actors: {
     actors: formatAudit(fieldAudits.value.actors),
     preconditions: formatAudit(fieldAudits.value.preconditions),
     expectedInputs: formatAudit(fieldAudits.value.expectedInputs)
   },
-  flujo: {
+  flow: {
     detailedFlow: formatAudit(fieldAudits.value.detailedFlow)
   },
-  validaciones: {
+  validations: {
     validations: formatAudit(fieldAudits.value.validations),
     expectedOutputs: formatAudit(fieldAudits.value.expectedOutputs),
     systemMessages: formatAudit(fieldAudits.value.systemMessages)
   },
-  adicional: {
+  additional: {
     mockupUrl: formatAudit(fieldAudits.value.mockupUrl),
     notes: formatAudit(fieldAudits.value.notes)
   }
@@ -218,50 +231,50 @@ const sectionAudits = computed(() => ({
 
           <div v-else class="max-w-4xl mx-auto space-y-6">
             <SectionBasic
-              v-show="activeSection === 'basico'"
+              v-show="activeSection === 'basic'"
               :form="form"
               :isEditing="isEditing"
-              :audit="sectionAudits.basico"
+              :audit="sectionAudits.basic"
               :history="historyEntries"
               :onSaveField="saveField"
             />
 
             <SectionDescripcion
-              v-show="activeSection === 'descripcion'"
+              v-show="activeSection === 'description'"
               :form="form"
-              :audit="sectionAudits.descripcion"
+              :audit="sectionAudits.description"
               :history="historyEntries"
               :onSaveField="saveField"
             />
 
             <SectionActores
-              v-show="activeSection === 'actores'"
+              v-show="activeSection === 'actors'"
               :form="form"
-              :audit="sectionAudits.actores"
+              :audit="sectionAudits.actors"
               :history="historyEntries"
               :onSaveField="saveField"
             />
 
             <SectionFlujo
-              v-show="activeSection === 'flujo'"
+              v-show="activeSection === 'flow'"
               :form="form"
-              :audit="sectionAudits.flujo"
+              :audit="sectionAudits.flow"
               :history="historyEntries"
               :onSaveField="saveField"
             />
 
             <SectionValidaciones
-              v-show="activeSection === 'validaciones'"
+              v-show="activeSection === 'validations'"
               :form="form"
-              :audit="sectionAudits.validaciones"
+              :audit="sectionAudits.validations"
               :history="historyEntries"
               :onSaveField="saveField"
             />
 
             <SectionAdicional
-              v-show="activeSection === 'adicional'"
+              v-show="activeSection === 'additional'"
               :form="form"
-              :audit="sectionAudits.adicional"
+              :audit="sectionAudits.additional"
               :history="historyEntries"
               :onSaveField="saveField"
             />

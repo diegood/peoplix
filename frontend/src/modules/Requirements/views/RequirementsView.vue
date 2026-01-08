@@ -25,6 +25,7 @@ const projectId = computed(() => {
 const selectedRequirement = ref(null)
 const showForm = ref(false)
 const filterStatus = ref(null)
+const activeSection = ref(null)
 
 const { result, loading, error, refetch } = useQuery(
   GET_FUNCTIONAL_REQUIREMENTS,
@@ -52,6 +53,12 @@ watch(selectedRequirementFromURL, (req) => {
   if (req) {
     selectedRequirement.value = req
     showForm.value = true
+    // Set active section from URL parameter if provided
+    if (route.params.section) {
+      activeSection.value = route.params.section
+    } else {
+      activeSection.value = null
+    }
   }
 })
 
@@ -206,6 +213,7 @@ const requirementStats = computed(() => ({
       v-if="showForm"
       :projectId="projectId"
       :requirement="selectedRequirement"
+      :activeSection="activeSection"
       @close="handleFormClose"
     />
   </div>
