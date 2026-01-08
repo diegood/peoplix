@@ -22,6 +22,14 @@ const projectId = computed(() => {
   return null
 })
 
+const projectName = computed(() => {
+  if (route.params.projectTag) {
+    const project = projects.value.find(p => p.tag === route.params.projectTag)
+    return project?.name || 'Desconocido'
+  }
+  return 'Desconocido'
+})
+
 const selectedRequirement = ref(null)
 const showForm = ref(false)
 const filterStatus = ref(null)
@@ -48,12 +56,10 @@ const selectedRequirementFromURL = computed(() => {
   return null
 })
 
-// Auto-open modal when accessing a requirement via URL
 watch(selectedRequirementFromURL, (req) => {
   if (req) {
     selectedRequirement.value = req
     showForm.value = true
-    // Set active section from URL parameter if provided
     if (route.params.section) {
       activeSection.value = route.params.section
     } else {
@@ -124,12 +130,12 @@ const requirementStats = computed(() => ({
 
 <template>
   <div class="h-full flex flex-col bg-gray-50">
-    <div class="border-b bg-white p-6 flex items-center justify-between">
-      <div class="flex items-center gap-4">
+    <div class="bg-white p-6 flex items-center justify-between">
+      <div class="flex flex-col items-start gap-4">
         <a href="/projects" class="text-gray-500 hover:text-gray-700">
-          ← Volver a Proyectos
+          Proyectos
         </a>
-        <h1 class="text-3xl font-bold text-gray-900">Relevamiento - Requisitos Funcionales</h1>
+        <h2 class="text-xl font-bold text-gray-900">Requisitos Funcionales - {{ projectName }}</h2>
       </div>
       <button
         @click="handleCreateNew"
@@ -139,52 +145,25 @@ const requirementStats = computed(() => ({
       </button>
     </div>
 
-    <div class="bg-white border-b p-6 grid grid-cols-4 gap-4">
-      <div class="bg-gray-50 p-4 rounded-lg">
+    <div class="bg-white p-6 grid grid-cols-4 gap-4">
+      <div class="bg-gray-50 p-4 rounded-lg cursor-pointer" @click="filterStatus = null">
         <p class="text-gray-600 text-sm">Total</p>
         <p class="text-2xl font-bold">{{ requirementStats.total }}</p>
       </div>
-      <div class="bg-yellow-50 p-4 rounded-lg">
+      <div class="bg-yellow-50 p-4 rounded-lg cursor-pointer" @click="filterStatus = 'DRAFT'">
         <p class="text-yellow-600 text-sm">Borradores</p>
         <p class="text-2xl font-bold">{{ requirementStats.draft }}</p>
       </div>
-      <div class="bg-blue-50 p-4 rounded-lg">
+      <div class="bg-blue-50 p-4 rounded-lg cursor-pointer" @click="filterStatus = 'PENDING_REVIEW'">
         <p class="text-blue-600 text-sm">Pendientes de Revisión</p>
         <p class="text-2xl font-bold">{{ requirementStats.pending }}</p>
       </div>
-      <div class="bg-green-50 p-4 rounded-lg">
+      <div class="bg-green-50 p-4 rounded-lg cursor-pointer" @click="filterStatus = 'VALIDATED'">
         <p class="text-green-600 text-sm">Validados</p>
         <p class="text-2xl font-bold">{{ requirementStats.validated }}</p>
       </div>
     </div>
-
-    <div class="bg-white border-b p-6 flex gap-2">
-      <button
-        @click="filterStatus = null"
-        :class="[
-          'px-4 py-2 rounded-lg transition',
-          filterStatus === null
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-        ]"
-      >
-        Todos
-      </button>
-      <button
-        v-for="status in ['DRAFT', 'PENDING_REVIEW', 'VALIDATED']"
-        :key="status"
-        @click="filterStatus = status"
-        :class="[
-          'px-4 py-2 rounded-lg transition',
-          filterStatus === status
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-        ]"
-      >
-        {{ statusLabels[status] }}
-      </button>
-    </div>
-
+    <h2 class="text-xl font-semibold mb-4 ml-6 text-gray-700"> {{ filterStatus ? statusLabels[filterStatus] : 'Todos' }}</h2>
     <div class="flex-1 overflow-auto p-6">
       <div v-if="loading" class="text-center py-12">
         <p class="text-gray-500">Cargando requisitos...</p>
