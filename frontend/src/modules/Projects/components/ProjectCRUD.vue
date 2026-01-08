@@ -23,8 +23,19 @@ const goToEstimation = (projectId) => {
     router.push({ name: 'project-estimation', params: { id: projectId } })
 }
 
-const goToRequirements = (projectId) => {
-    router.push({ name: 'project-requirements', params: { id: projectId } })
+const goToRequirements = (project) => {
+    if (project.organization?.tag && project.tag) {
+        router.push({ 
+            name: 'tagged-requirements', 
+            params: { 
+                orgTag: project.organization.tag,
+                projectTag: project.tag 
+            } 
+        })
+    } else {
+        // Fallback a la ruta antigua si no hay org tag
+        router.push({ name: 'project-requirements', params: { id: project.id } })
+    }
 }
 
 const form = ref({
@@ -194,7 +205,7 @@ const openVacations = (project) => {
                 <button @click="goToEstimation(project.id)" class="w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition flex items-center justify-center gap-2">
                     <BarChart size="16" /> Estimación
                 </button>
-                <button @click="goToRequirements(project.id)" class="w-full py-2 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 transition flex items-center justify-center gap-2">
+                <button @click="goToRequirements(project)" class="w-full py-2 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 transition flex items-center justify-center gap-2">
                     <BookCopy size="16" /> Toma de requisitos
                 </button>
                 <button @click="openVacations(project)" class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2">

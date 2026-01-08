@@ -4,6 +4,7 @@ export const GET_FUNCTIONAL_REQUIREMENTS = gql`
   query GetFunctionalRequirements($projectId: String!, $status: RequirementStatus) {
     functionalRequirements(projectId: $projectId, status: $status) {
       id
+      number
       title
       description
       status
@@ -44,6 +45,7 @@ export const GET_FUNCTIONAL_REQUIREMENT = gql`
   query GetFunctionalRequirement($id: String!) {
     functionalRequirement(id: $id) {
       id
+      number
       title
       description
       generalDescription

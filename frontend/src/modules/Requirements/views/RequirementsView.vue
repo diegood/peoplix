@@ -6,13 +6,22 @@ import FunctionalRequirementForm from '@/modules/Requirements/components/Functio
 import FunctionalRequirementCard from '@/modules/Requirements/components/FunctionalRequirementCard.vue'
 import { GET_FUNCTIONAL_REQUIREMENTS } from '@/modules/Requirements/graphql/queries'
 import { DELETE_FUNCTIONAL_REQUIREMENT } from '@/modules/Requirements/graphql/mutations'
+import { GET_PROJECTS } from '@/modules/Projects/graphql/project.queries'
 
 const route = useRoute()
 const router = useRouter()
 
+// Fetch projects to resolve tag -> id mapping
+const { result: projectsResult } = useQuery(GET_PROJECTS)
+const projects = computed(() => projectsResult.value?.projects || [])
+
 const projectId = computed(() => {
   if (route.params.id) return route.params.id
-  return route.params.projectTag || null
+  if (route.params.projectTag) {
+    const project = projects.value.find(p => p.tag === route.params.projectTag)
+    return project?.id || null
+  }
+  return null
 })
 
 const selectedRequirement = ref(null)
@@ -24,7 +33,8 @@ const { result, loading, error, refetch } = useQuery(
   () => ({
     projectId: projectId.value,
     status: filterStatus.value
-  })
+  }),
+  () => ({ enabled: !!projectId.value })
 )
 
 const { mutate: deleteRequirement } = useMutation(DELETE_FUNCTIONAL_REQUIREMENT)
