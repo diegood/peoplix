@@ -81,3 +81,34 @@ export const DELETE_FUNCTIONAL_REQUIREMENT = gql`
     }
   }
 `
+
+export const ADD_REQUIREMENT_RELATION = gql`
+  mutation AddFunctionalRequirementRelation(
+    $fromId: String!
+    $toId: String!
+    $type: String
+  ) {
+    addFunctionalRequirementRelation(
+      fromId: $fromId
+      toId: $toId
+      type: $type
+    ) {
+      id
+      fromId
+      toId
+      type
+    }
+  }
+`
+
+export const REMOVE_REQUIREMENT_RELATION = gql`
+  mutation RemoveFunctionalRequirementRelation(
+    $fromId: String!
+    $toId: String!
+  ) {
+    removeFunctionalRequirementRelation(
+      fromId: $fromId
+      toId: $toId
+    )
+  }
+`

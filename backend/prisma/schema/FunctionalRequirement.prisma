@@ -35,4 +35,8 @@ model FunctionalRequirement {
 
   history      FunctionalRequirementHistory[]
   workPackages WorkPackage[]
+  
+  // Relations to other requirements
+  relatedTo   FunctionalRequirementRelation[] @relation("relatedFrom")
+  relatedFrom FunctionalRequirementRelation[] @relation("relatedTo")
 }

@@ -214,6 +214,8 @@ const requirementStats = computed(() => ({
       :projectId="projectId"
       :requirement="selectedRequirement"
       :activeSection="activeSection"
+      :orgTag="route.params.orgTag"
+      :projectTag="route.params.projectTag"
       @close="handleFormClose"
     />
   </div>

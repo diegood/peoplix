@@ -1,0 +1,16 @@
+model FunctionalRequirementRelation {
+  id        String   @id @default(uuid())
+  
+  fromId    String
+  from      FunctionalRequirement @relation("relatedFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  
+  toId      String
+  to        FunctionalRequirement @relation("relatedTo", fields: [toId], references: [id], onDelete: Cascade)
+  
+  type      String   @default("related") // related, depends_on, blocks, etc.
+  createdAt DateTime @default(now())
+
+  @@unique([fromId, toId])
+  @@index([fromId])
+  @@index([toId])
+}

@@ -37,6 +37,16 @@ export const GET_FUNCTIONAL_REQUIREMENTS = gql`
       workPackages {
         id
       }
+      relatedTo {
+        id
+        number
+        title
+      }
+      relatedFrom {
+        id
+        number
+        title
+      }
     }
   }
 `
@@ -87,6 +97,16 @@ export const GET_FUNCTIONAL_REQUIREMENT = gql`
       }
       workPackages {
         id
+      }
+      relatedTo {
+        id
+        number
+        title
+      }
+      relatedFrom {
+        id
+        number
+        title
       }
     }
   }

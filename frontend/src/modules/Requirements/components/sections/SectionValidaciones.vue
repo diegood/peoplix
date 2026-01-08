@@ -1,6 +1,6 @@
 <script setup>
 import { watch, computed } from 'vue'
-import TiptapEditor from '@/modules/Kanban/components/TiptapEditor.vue'
+import EditorWithReferences from '@/modules/Requirements/components/EditorWithReferences.vue'
 import FieldHistory from '@/modules/Requirements/components/FieldHistory.vue'
 
 const props = defineProps({
@@ -18,6 +18,22 @@ const props = defineProps({
   },
   onSaveField: {
     type: Function,
+    default: null
+  },
+  projectId: {
+    type: String,
+    default: null
+  },
+  requirementId: {
+    type: String,
+    default: null
+  },
+  orgTag: {
+    type: String,
+    default: null
+  },
+  projectTag: {
+    type: String,
     default: null
   }
 })
@@ -64,9 +80,13 @@ const revertTo = (field, entry) => {
         Validaciones y Reglas de Negocio
       </label>
       <p v-if="audit?.validations" class="text-xs text-gray-500">Último cambio: {{ audit.validations }}</p>
-      <div class="border border-gray-300 rounded-lg h-64">
-        <TiptapEditor
+      <div class="border border-gray-300 rounded-lg">
+        <EditorWithReferences
           v-model="form.validations"
+          :projectId="projectId"
+          :currentRequirementId="requirementId"
+          :orgTag="orgTag"
+          :projectTag="projectTag"
           placeholder="Condiciones o reglas que deben cumplirse (Ej: Email único, rol obligatorio)"
           menuType="fixed"
         />
@@ -87,9 +107,13 @@ const revertTo = (field, entry) => {
         Salidas / Resultados Esperados
       </label>
       <p v-if="audit?.expectedOutputs" class="text-xs text-gray-500">Último cambio: {{ audit.expectedOutputs }}</p>
-      <div class="border border-gray-300 rounded-lg h-64">
-        <TiptapEditor
+      <div class="border border-gray-300 rounded-lg">
+        <EditorWithReferences
           v-model="form.expectedOutputs"
+          :projectId="projectId"
+          :currentRequirementId="requirementId"
+          :orgTag="orgTag"
+          :projectTag="projectTag"
           placeholder="Qué debe generarse tras ejecutar (Ej: Usuario creado, notificación mostrada, datos guardados en BD)"
           menuType="fixed"
         />
@@ -110,9 +134,13 @@ const revertTo = (field, entry) => {
         Mensajes del Sistema / Errores
       </label>
       <p v-if="audit?.systemMessages" class="text-xs text-gray-500">Último cambio: {{ audit.systemMessages }}</p>
-      <div class="border border-gray-300 rounded-lg h-64">
-        <TiptapEditor
+      <div class="border border-gray-300 rounded-lg">
+        <EditorWithReferences
           v-model="form.systemMessages"
+          :projectId="projectId"
+          :currentRequirementId="requirementId"
+          :orgTag="orgTag"
+          :projectTag="projectTag"
           placeholder="Mensajes a mostrar al usuario (Ej: 'Usuario creado con éxito', 'El email ya está registrado')"
           menuType="fixed"
         />

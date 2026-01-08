@@ -1,6 +1,6 @@
 <script setup>
 import { watch, computed } from 'vue'
-import TiptapEditor from '@/modules/Kanban/components/TiptapEditor.vue'
+import EditorWithReferences from '@/modules/Requirements/components/EditorWithReferences.vue'
 import FieldHistory from '@/modules/Requirements/components/FieldHistory.vue'
 
 const props = defineProps({
@@ -18,6 +18,22 @@ const props = defineProps({
   },
   onSaveField: {
     type: Function,
+    default: null
+  },
+  projectId: {
+    type: String,
+    default: null
+  },
+  requirementId: {
+    type: String,
+    default: null
+  },
+  orgTag: {
+    type: String,
+    default: null
+  },
+  projectTag: {
+    type: String,
     default: null
   }
 })
@@ -63,9 +79,13 @@ const revertTo = (field, entry) => {
       <label class="block text-sm font-medium text-gray-700">
         Actores Involucrados
       </label>
-      <div class="border border-gray-300 rounded-lg h-48">
-        <TiptapEditor
+      <div class="border border-gray-300 rounded-lg">
+        <EditorWithReferences
           v-model="form.actors"
+          :projectId="projectId"
+          :currentRequirementId="requirementId"
+          :orgTag="orgTag"
+          :projectTag="projectTag"
           placeholder="¿Quién usará esta funcionalidad? (Ej: Administrador, Usuario Final, API externa)"
           menuType="fixed"
         />
@@ -85,9 +105,13 @@ const revertTo = (field, entry) => {
       <label class="block text-sm font-medium text-gray-700">
         Condiciones Previas
       </label>
-      <div class="border border-gray-300 rounded-lg h-48">
-        <TiptapEditor
+      <div class="border border-gray-300 rounded-lg">
+        <EditorWithReferences
           v-model="form.preconditions"
+          :projectId="projectId"
+          :currentRequirementId="requirementId"
+          :orgTag="orgTag"
+          :projectTag="projectTag"
           placeholder="Requisitos o estado previo necesario (Ej: El usuario debe estar autenticado)"
           menuType="fixed"
         />
@@ -107,9 +131,13 @@ const revertTo = (field, entry) => {
       <label class="block text-sm font-medium text-gray-700">
         Entradas Esperadas
       </label>
-      <div class="border border-gray-300 rounded-lg h-48">
-        <TiptapEditor
+      <div class="border border-gray-300 rounded-lg">
+        <EditorWithReferences
           v-model="form.expectedInputs"
+          :projectId="projectId"
+          :currentRequirementId="requirementId"
+          :orgTag="orgTag"
+          :projectTag="projectTag"
           placeholder="Datos necesarios (Ej: Nombre de usuario, Email, Rol del usuario)"
           menuType="fixed"
         />

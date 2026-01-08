@@ -22,7 +22,13 @@ class FunctionalRequirementService {
             collaborator: true
           }
         },
-        workPackages: true
+        workPackages: true,
+        relatedTo: {
+          include: { to: true }
+        },
+        relatedFrom: {
+          include: { from: true }
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -48,7 +54,13 @@ class FunctionalRequirementService {
           }
         },
         workPackages: true,
-        project: true
+        project: true,
+        relatedTo: {
+          include: { to: true }
+        },
+        relatedFrom: {
+          include: { from: true }
+        }
       }
     });
   }

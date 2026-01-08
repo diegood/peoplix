@@ -1,6 +1,6 @@
 <script setup>
 import { watch, computed } from 'vue'
-import TiptapEditor from '@/modules/Kanban/components/TiptapEditor.vue'
+import EditorWithReferences from '@/modules/Requirements/components/EditorWithReferences.vue'
 import FieldHistory from '@/modules/Requirements/components/FieldHistory.vue'
 
 const props = defineProps({
@@ -18,6 +18,22 @@ const props = defineProps({
   },
   onSaveField: {
     type: Function,
+    default: null
+  },
+  projectId: {
+    type: String,
+    default: null
+  },
+  requirementId: {
+    type: String,
+    default: null
+  },
+  orgTag: {
+    type: String,
+    default: null
+  },
+  projectTag: {
+    type: String,
     default: null
   }
 })
@@ -60,9 +76,13 @@ const revertTo = (entry) => {
         Comportamiento / Flujo Detallado
       </label>
       <p v-if="audit?.detailedFlow" class="text-xs text-gray-500">Último cambio: {{ audit.detailedFlow }}</p>
-      <div class="border border-gray-300 rounded-lg h-96">
-        <TiptapEditor
+      <div class="border border-gray-300 rounded-lg">
+        <EditorWithReferences
           v-model="form.detailedFlow"
+          :projectId="projectId"
+          :currentRequirementId="requirementId"
+          :orgTag="orgTag"
+          :projectTag="projectTag"
           placeholder="Pasos secuenciales del funcionamiento (Ej: 1. El usuario accede... 2. Presiona... 3. El sistema...)"
           menuType="fixed"
         />

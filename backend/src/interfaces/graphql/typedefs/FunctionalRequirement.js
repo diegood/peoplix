@@ -17,6 +17,16 @@ export default gql`
     createdAt: String!
   }
 
+  type FunctionalRequirementRelation {
+    id: ID!
+    fromId: String!
+    from: FunctionalRequirement!
+    toId: String!
+    to: FunctionalRequirement!
+    type: String!
+    createdAt: String!
+  }
+
   type FunctionalRequirement {
     id: ID!
     number: Int!
@@ -41,6 +51,8 @@ export default gql`
     analyst: User
     history: [FunctionalRequirementHistory!]
     workPackages: [WorkPackage!]
+    relatedTo: [FunctionalRequirement!]
+    relatedFrom: [FunctionalRequirement!]
   }
 
   extend type Query {
@@ -83,5 +95,16 @@ export default gql`
     ): FunctionalRequirement
 
     deleteFunctionalRequirement(id: String!): FunctionalRequirement
+
+    addFunctionalRequirementRelation(
+      fromId: String!,
+      toId: String!,
+      type: String
+    ): FunctionalRequirementRelation
+
+    removeFunctionalRequirementRelation(
+      fromId: String!,
+      toId: String!
+    ): Boolean
   }
 `;

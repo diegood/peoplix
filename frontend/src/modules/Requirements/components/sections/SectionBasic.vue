@@ -1,6 +1,6 @@
 <script setup>
 import { watch, computed } from 'vue'
-import TiptapEditor from '@/modules/Kanban/components/TiptapEditor.vue'
+import EditorWithReferences from '@/modules/Requirements/components/EditorWithReferences.vue'
 import FieldHistory from '@/modules/Requirements/components/FieldHistory.vue'
 
 const props = defineProps({
@@ -22,6 +22,22 @@ const props = defineProps({
   },
   onSaveField: {
     type: Function,
+    default: null
+  },
+  projectId: {
+    type: String,
+    default: null
+  },
+  requirementId: {
+    type: String,
+    default: null
+  },
+  orgTag: {
+    type: String,
+    default: null
+  },
+  projectTag: {
+    type: String,
     default: null
   }
 })
@@ -92,9 +108,13 @@ const revertTo = (field, entry) => {
             Descripción Breve *
           </label>
         </div>
-        <div class="border-gray-300 rounded-lg h-48">
-          <TiptapEditor
+        <div class="border-gray-300 rounded-lg">
+          <EditorWithReferences
             v-model="form.description"
+            :projectId="projectId"
+            :currentRequirementId="requirementId"
+            :orgTag="orgTag"
+            :projectTag="projectTag"
             placeholder="Explica brevemente qué hace esta funcionalidad"
             menuType="fixed"
           />

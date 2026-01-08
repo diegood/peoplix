@@ -28,6 +28,14 @@ const props = defineProps({
   activeSection: {
     type: String,
     default: null
+  },
+  orgTag: {
+    type: String,
+    default: null
+  },
+  projectTag: {
+    type: String,
+    default: null
   }
 })
 
@@ -195,7 +203,7 @@ const sectionAudits = computed(() => ({
     <template #title>
       <div class="flex items-center gap-3">
         <span v-if="isEditing && detailData?.number" class="text-xs font-bold px-2 py-0.5 bg-blue-100 text-blue-700 rounded">RF-{{ detailData.number }}</span>
-        {{ isEditing ? 'Editar Requisito' : 'Nuevo Requisito Funcional' }}
+        {{ isEditing ? detailData?.title : 'Nuevo Requisito Funcional' }}
       </div>
     </template>
 
@@ -237,6 +245,10 @@ const sectionAudits = computed(() => ({
               :audit="sectionAudits.basic"
               :history="historyEntries"
               :onSaveField="saveField"
+              :projectId="props.projectId"
+              :requirementId="props.requirement?.id"
+              :orgTag="props.orgTag"
+              :projectTag="props.projectTag"
             />
 
             <SectionDescripcion
@@ -245,6 +257,10 @@ const sectionAudits = computed(() => ({
               :audit="sectionAudits.description"
               :history="historyEntries"
               :onSaveField="saveField"
+              :projectId="props.projectId"
+              :requirementId="props.requirement?.id"
+              :orgTag="props.orgTag"
+              :projectTag="props.projectTag"
             />
 
             <SectionActores
@@ -253,6 +269,10 @@ const sectionAudits = computed(() => ({
               :audit="sectionAudits.actors"
               :history="historyEntries"
               :onSaveField="saveField"
+              :projectId="props.projectId"
+              :requirementId="props.requirement?.id"
+              :orgTag="props.orgTag"
+              :projectTag="props.projectTag"
             />
 
             <SectionFlujo
@@ -261,6 +281,10 @@ const sectionAudits = computed(() => ({
               :audit="sectionAudits.flow"
               :history="historyEntries"
               :onSaveField="saveField"
+              :projectId="props.projectId"
+              :requirementId="props.requirement?.id"
+              :orgTag="props.orgTag"
+              :projectTag="props.projectTag"
             />
 
             <SectionValidaciones
@@ -269,6 +293,10 @@ const sectionAudits = computed(() => ({
               :audit="sectionAudits.validations"
               :history="historyEntries"
               :onSaveField="saveField"
+              :projectId="props.projectId"
+              :requirementId="props.requirement?.id"
+              :orgTag="props.orgTag"
+              :projectTag="props.projectTag"
             />
 
             <SectionAdicional
@@ -277,6 +305,13 @@ const sectionAudits = computed(() => ({
               :audit="sectionAudits.additional"
               :history="historyEntries"
               :onSaveField="saveField"
+              :requirementId="props.requirement?.id"
+              :projectId="props.projectId"
+              :orgTag="props.orgTag"
+              :projectTag="props.projectTag"
+              :relatedTo="detailData?.relatedTo || []"
+              :relatedFrom="detailData?.relatedFrom || []"
+              :onRefreshRelations="refetchDetail"
             />
           </div>
         </div>

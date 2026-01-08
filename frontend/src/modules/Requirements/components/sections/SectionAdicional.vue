@@ -1,7 +1,8 @@
 <script setup>
 import { watch, computed } from 'vue'
-import TiptapEditor from '@/modules/Kanban/components/TiptapEditor.vue'
+import EditorWithReferences from '@/modules/Requirements/components/EditorWithReferences.vue'
 import FieldHistory from '@/modules/Requirements/components/FieldHistory.vue'
+import RelatedRequirements from '@/modules/Requirements/components/RelatedRequirements.vue'
 
 const props = defineProps({
   form: {
@@ -19,6 +20,34 @@ const props = defineProps({
   onSaveField: {
     type: Function,
     default: null
+  },
+  requirementId: {
+    type: String,
+    default: null
+  },
+  projectId: {
+    type: String,
+    default: null
+  },
+  orgTag: {
+    type: String,
+    default: null
+  },
+  projectTag: {
+    type: String,
+    default: null
+  },
+  relatedTo: {
+    type: Array,
+    default: () => []
+  },
+  relatedFrom: {
+    type: Array,
+    default: () => []
+  },
+  onRefreshRelations: {
+    type: Function,
+    default: () => {}
   }
 })
 
@@ -84,9 +113,13 @@ const revertTo = (field, entry) => {
         Notas Adicionales
       </label>
       <p v-if="audit?.notes" class="text-xs text-gray-500">Último cambio: {{ audit.notes }}</p>
-      <div class="border border-gray-300 rounded-lg h-64">
-        <TiptapEditor
+      <div class="border border-gray-300 rounded-lg">
+        <EditorWithReferences
           v-model="form.notes"
+          :projectId="projectId"
+          :currentRequirementId="requirementId"
+          :orgTag="orgTag"
+          :projectTag="projectTag"
           placeholder="Aclaraciones para evitar suposiciones o malentendidos"
           menuType="fixed"
         />
@@ -99,6 +132,16 @@ const revertTo = (field, entry) => {
         label="Notas"
         :min-height="100"
         @revert="(val) => revertTo('notes', val)"
+      />
+    </div>
+
+    <div v-if="requirementId && projectId" class="bg-white p-6 rounded-lg shadow-sm border">
+      <RelatedRequirements
+        :requirementId="requirementId"
+        :projectId="projectId"
+        :relatedTo="relatedTo"
+        :relatedFrom="relatedFrom"
+        :onRefresh="onRefreshRelations"
       />
     </div>
   </div>
