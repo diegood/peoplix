@@ -14,7 +14,7 @@ const { result, loading, error } = useQuery(GET_COLLABORATORS)
 const loadData = computed(() => {
   if (!result.value?.collaborators) return []
   return result.value.collaborators.map(c => {
-    const allocated = c.allocations?.REDuce((acc, a) => acc + a.hours, 0) || 0
+    const allocated = c.allocations?.Reduce((acc, a) => acc + a.hours, 0) || 0
     return {
       name: c.firstName,
       contracted: c.contractedHours,

@@ -1,7 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-import dayjs from 'dayjs';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../infrastructure/database/client.js';
 
 class FunctionalRequirementService {
   async list(projectId, { status } = {}) {
@@ -11,8 +8,20 @@ class FunctionalRequirementService {
     return prisma.functionalRequirement.findMany({
       where,
       include: {
-        history: true,
-        analyst: true,
+        history: {
+          include: {
+            changedBy: {
+              include: {
+                collaborator: true
+              }
+            }
+          }
+        },
+        analyst: {
+          include: {
+            collaborator: true
+          }
+        },
         workPackages: true
       },
       orderBy: { createdAt: 'desc' }
@@ -24,9 +33,20 @@ class FunctionalRequirementService {
       where: { id },
       include: {
         history: {
-          orderBy: { version: 'desc' }
+          orderBy: { version: 'desc' },
+          include: {
+            changedBy: {
+              include: {
+                collaborator: true
+              }
+            }
+          }
         },
-        analyst: true,
+        analyst: {
+          include: {
+            collaborator: true
+          }
+        },
         workPackages: true,
         project: true
       }
@@ -54,7 +74,7 @@ class FunctionalRequirementService {
     const significantFields = [
       'title', 'description', 'generalDescription', 'actors', 
       'preconditions', 'expectedInputs', 'detailedFlow', 
-      'validations', 'expectedOutputs', 'systemMessages', 'notes'
+      'validations', 'expectedOutputs', 'systemMessages', 'notes', 'status'
     ];
 
     let hasChanges = false;
@@ -70,13 +90,14 @@ class FunctionalRequirementService {
     
     if (hasChanges) {
        updateData.version = existing.version + 1;
+       if (userId) { updateData.analystId = userId}
        
        await prisma.functionalRequirementHistory.create({
          data: {
            requirementId: id,
            version: existing.version,
            diff: JSON.stringify(diff),
-           changedBy: userId
+           changedById: userId
          }
        });
     }

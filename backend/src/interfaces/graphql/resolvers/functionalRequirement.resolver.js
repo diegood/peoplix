@@ -1,4 +1,4 @@
-import FunctionalRequirementService from '../../../../application/services/FunctionalRequirementService.js';
+import FunctionalRequirementService from '../../../application/services/FunctionalRequirementService.js';
 
 export default {
   Query: {
@@ -11,11 +11,11 @@ export default {
   },
   Mutation: {
     createFunctionalRequirement: async (_, args, { user }) => {
-      const userId = user?.id || null; 
+      const userId = user?.userId || null; 
       return FunctionalRequirementService.create(args, userId);
     },
     updateFunctionalRequirement: async (_, { id, ...data }, { user }) => {
-      const userId = user?.id || null;
+      const userId = user?.userId || null;
       return FunctionalRequirementService.update(id, data, userId);
     },
     deleteFunctionalRequirement: async (_, { id }) => {

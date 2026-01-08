@@ -175,7 +175,7 @@ const items = [
             :key="index"
             class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition-colors"
             :class="{ 'bg-gray-200 text-blue-600': item.isActive && item.isActive() }"
-            @click="item.action"
+            @mousedown.prevent="item.action"
             :title="item.title"
           >
             <component :is="item.icon" size="16" />

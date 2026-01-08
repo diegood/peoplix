@@ -18,6 +18,7 @@ import { WorkPackageSchema } from './typedefs/WorkPackage.js';
 import { AuthSchema } from './typedefs/Auth.js';
 import { OrganizationSchema } from './typedefs/Organization.js';
 import { KanbanSchema } from './typedefs/Kanban.js';
+import FunctionalRequirementSchema from './typedefs/FunctionalRequirement.js';
 
 const baseSchema = `
   scalar JSON
@@ -54,5 +55,6 @@ export const schema = [
   print(WorkPackageSchema),
   print(AuthSchema),
   print(OrganizationSchema),
-  print(KanbanSchema)
+  print(KanbanSchema),
+  print(FunctionalRequirementSchema)
 ].join('\n');

@@ -5,6 +5,7 @@ model FunctionalRequirementHistory {
 
   version   Int
   diff      String
-  changedBy String?
+  changedById String?
+  changedBy   User?   @relation(fields: [changedById], references: [id])
   createdAt DateTime @default(now())
 }

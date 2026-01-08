@@ -13,7 +13,7 @@ export default gql`
     requirementId: String!
     version: Int!
     diff: String
-    changedBy: String
+    changedBy: User
     createdAt: String!
   }
 

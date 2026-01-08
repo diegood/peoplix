@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_PROJECTS } from '@/modules/Projects/graphql/project.queries'
 import { CREATE_PROJECT, UPDATE_PROJECT, DELETE_PROJECT } from '@/graphql/mutations'
-import { FolderPlus, Clock, Edit2, SlidersHorizontal, Calendar, BarChart } from 'lucide-vue-next'
+import { FolderPlus, Clock, Edit2, SlidersHorizontal, Calendar, BarChart, BookCopy } from 'lucide-vue-next'
 import ProjectRequirementsModal from './ProjectRequirementsModal.vue'
 import ProjectVacationModal from './Project/ProjectVacationModal.vue'
 import { useNotificationStore } from '@/stores/notificationStore'
@@ -21,6 +21,10 @@ const { mutate: deleteProject } = useMutation(DELETE_PROJECT, { refetchQueries: 
 
 const goToEstimation = (projectId) => {
     router.push({ name: 'project-estimation', params: { id: projectId } })
+}
+
+const goToRequirements = (projectId) => {
+    router.push({ name: 'project-requirements', params: { id: projectId } })
 }
 
 const form = ref({
@@ -189,6 +193,9 @@ const openVacations = (project) => {
              <div class="border-t border-gray-100 pt-3 flex flex-col gap-2">
                 <button @click="goToEstimation(project.id)" class="w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition flex items-center justify-center gap-2">
                     <BarChart size="16" /> Estimación
+                </button>
+                <button @click="goToRequirements(project.id)" class="w-full py-2 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 transition flex items-center justify-center gap-2">
+                    <BookCopy size="16" /> Toma de requisitos
                 </button>
                 <button @click="openVacations(project)" class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2">
                     <Calendar size="16" /> Ver Calendario de Vacaciones

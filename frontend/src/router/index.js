@@ -42,6 +42,11 @@ const router = createRouter({
       component: () => import('@/views/MonthlyPlanningView.vue')
     },
     {
+      path: '/projects/:id/requirements',
+      name: 'project-requirements',
+      component: () => import('@/modules/Requirements/views/RequirementsView.vue')
+    },
+    {
       path: '/projects/:id/estimation',
       name: 'project-estimation',
       component: () => import('@/modules/Allocations/views/ProjectEstimationView.vue')
