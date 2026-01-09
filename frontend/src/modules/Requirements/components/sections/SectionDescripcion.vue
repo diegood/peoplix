@@ -71,12 +71,12 @@ const revertTo = (entry) => {
 
 <template>
   <div class="space-y-6">
-    <div class="bg-white p-6 rounded-lg shadow-sm border space-y-3">
+    <div class="bg-white p-6 rounded-lg shadow-sm space-y-3">
       <label class="block text-sm font-medium text-gray-700">
         Descripción General
       </label>
       <p v-if="audit?.generalDescription" class="text-xs text-gray-500">Último cambio: {{ audit.generalDescription }}</p>
-      <div class="border border-gray-300 rounded-lg">
+      <div class="border-gray-300 rounded-lg">
         <EditorWithReferences
           v-model="form.generalDescription"
           :projectId="projectId"

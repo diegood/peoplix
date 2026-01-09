@@ -80,7 +80,7 @@
 </template>
 
 <script setup>
-import { computed, watch, ref } from 'vue'
+import { watch, ref } from 'vue'
 
 const props = defineProps({
   show: { type: Boolean, required: true },

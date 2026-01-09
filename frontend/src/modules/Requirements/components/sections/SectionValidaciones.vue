@@ -75,12 +75,12 @@ const revertTo = (field, entry) => {
 
 <template>
   <div class="space-y-6">
-    <div class="bg-white p-6 rounded-lg shadow-sm border space-y-3">
+    <div class="bg-white p-6 rounded-lg shadow-sm space-y-3">
       <label class="block text-sm font-medium text-gray-700">
         Validaciones y Reglas de Negocio
       </label>
       <p v-if="audit?.validations" class="text-xs text-gray-500">Último cambio: {{ audit.validations }}</p>
-      <div class="border border-gray-300 rounded-lg">
+      <div class="border-gray-300 rounded-lg">
         <EditorWithReferences
           v-model="form.validations"
           :projectId="projectId"
@@ -102,12 +102,12 @@ const revertTo = (field, entry) => {
       />
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-sm border space-y-3">
+    <div class="bg-white p-6 rounded-lg shadow-sm space-y-3">
       <label class="block text-sm font-medium text-gray-700">
         Salidas / Resultados Esperados
       </label>
       <p v-if="audit?.expectedOutputs" class="text-xs text-gray-500">Último cambio: {{ audit.expectedOutputs }}</p>
-      <div class="border border-gray-300 rounded-lg">
+      <div class="border-gray-300 rounded-lg">
         <EditorWithReferences
           v-model="form.expectedOutputs"
           :projectId="projectId"
@@ -129,12 +129,12 @@ const revertTo = (field, entry) => {
       />
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-sm border space-y-3">
+    <div class="bg-white p-6 rounded-lg shadow-sm space-y-3">
       <label class="block text-sm font-medium text-gray-700">
         Mensajes del Sistema / Errores
       </label>
       <p v-if="audit?.systemMessages" class="text-xs text-gray-500">Último cambio: {{ audit.systemMessages }}</p>
-      <div class="border border-gray-300 rounded-lg">
+      <div class="border-gray-300 rounded-lg">
         <EditorWithReferences
           v-model="form.systemMessages"
           :projectId="projectId"

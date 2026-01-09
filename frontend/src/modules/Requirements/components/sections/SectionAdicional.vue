@@ -86,7 +86,7 @@ const revertTo = (field, entry) => {
 
 <template>
   <div class="space-y-6">
-    <div class="bg-white p-6 rounded-lg shadow-sm border space-y-3">
+    <div class="bg-white p-6 rounded-lg shadow-sm space-y-3">
       <label class="block text-sm font-medium text-gray-700">
         URL del Mockup / Diseño
       </label>
@@ -108,7 +108,7 @@ const revertTo = (field, entry) => {
       />
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-sm border space-y-3">
+    <div class="bg-white p-6 rounded-lg shadow-sm space-y-3">
       <label class="block text-sm font-medium text-gray-700">
         Notas Adicionales
       </label>

@@ -75,11 +75,11 @@ const revertTo = (field, entry) => {
 
 <template>
   <div class="space-y-6">
-    <div class="bg-white p-6 rounded-lg shadow-sm border space-y-3">
+    <div class="bg-white p-6 rounded-lg shadow-sm space-y-3">
       <label class="block text-sm font-medium text-gray-700">
         Actores Involucrados
       </label>
-      <div class="border border-gray-300 rounded-lg">
+      <div class="order-gray-300 rounded-lg">
         <EditorWithReferences
           v-model="form.actors"
           :projectId="projectId"
@@ -101,11 +101,11 @@ const revertTo = (field, entry) => {
       />
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-sm border space-y-3">
+    <div class="bg-white p-6 rounded-lg shadow-sm space-y-3">
       <label class="block text-sm font-medium text-gray-700">
         Condiciones Previas
       </label>
-      <div class="border border-gray-300 rounded-lg">
+      <div class="border-gray-300 rounded-lg">
         <EditorWithReferences
           v-model="form.preconditions"
           :projectId="projectId"
@@ -127,11 +127,11 @@ const revertTo = (field, entry) => {
       />
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-sm border space-y-3">
+    <div class="bg-white p-6 rounded-lg shadow-sm space-y-3">
       <label class="block text-sm font-medium text-gray-700">
         Entradas Esperadas
       </label>
-      <div class="border border-gray-300 rounded-lg">
+      <div class="border-gray-300 rounded-lg">
         <EditorWithReferences
           v-model="form.expectedInputs"
           :projectId="projectId"

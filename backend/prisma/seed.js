@@ -12,52 +12,82 @@ async function main() {
       }
     });
 
-    const org = await prisma.organization.create({
-      data: {
+
+    const org = await prisma.organization.upsert({
+      where: { tag: 'principal' },
+      update: {},
+      create: {
         name: 'Principal Organization',
+        tag: 'principal'
       }
     });
 
-    const adminCollaborator = await prisma.collaborator.create({
-      data: {
+    const roles = ['Front', 'Back', 'Desig', 'TL', 'BM', 'Manual tester', 'Automation Tester', 'Full Stack', ].map(name => ({ name, organizationId: org.id }));
+    await prisma.role.createMany({ data: roles });
+    
+    const skills = ['JavaScript', 'Vue.js', 'Node.js', 'Python', 'Java', 'TypeScript', '.NET', 'CSS', 'Indesign', 'Figma', 'Lead', 'manual testing', 'automation testing', 'postgressql', 'MySQL', 'SQL server', 'mySql', ].map(name => ({ name, organizationId: org.id }));
+    await prisma.skill.createMany({ data: skills });
+
+    const workCenter = await prisma.workCenter.create({
+        data: {
+            name: 'Madrid HQ',
+            countryCode: 'ES',
+            organizationId: org.id
+        }
+    });
+
+    const adminCollaborator = await prisma.collaborator.upsert({
+      where: { userId: user.id },
+      update: {},
+      create: {
         userId: user.id,
         organizationId: org.id,
-        userName: 'admin2',
+        userName: 'admin',
         firstName: 'System',
         lastName: 'Admin',
         contractedHours: 40,
         systemRole: 1,
         joinDate: new Date(),
-        isActive: true
-      },
+        isActive: true,
+        workCenterId: workCenter.id
+      }
     });
 
-    const collaboratorsData = [
-      { firstName: 'Bruno', lastName: 'Guerra', userName: 'bguerra', skills: [{ name: 'SQL server', level: 4 }, { name: '.NET', level: 3 }] },
-      { firstName: 'Jesus', lastName: 'de IRO', userName: 'jiro', skills: [{ name: 'manual testing', level: 2 }, { name: 'Lead', level: 1 }] },
-      { firstName: 'Ernesto', lastName: 'Oicnenev', userName: 'eoicnenev', skills: [{ name: 'Node.js', level: 4 }, { name: 'postgressql', level: 3 }, { name: 'Lead', level: 3 }] },
-      { firstName: 'Rodrigo', lastName: 'Perabaja', userName: 'rperabaja', skills: [{ name: 'Full Stack', level: 4 }, { name: 'Node.js', level: 3 }, { name: 'Vue.js', level: 2 }, { name: '.NET', level: 2 }, { name: 'TypeScript', level: 3 }] },
-      { firstName: 'Javi', lastName: 'Ario', userName: 'jario', skills: [{ name: '.NET', level: 2 }, { name: 'MySQL', level: 2 }] },
-      { firstName: 'Angel', lastName: 'less', userName: 'aless', skills: [{ name: 'Figma', level: 3 }, { name: 'Indesign', level: 2 }] },
-      { firstName: 'Wen', lastName: 'sulanga', userName: 'wsulanga', skills: [{ name: 'Node.js', level: 2 }, { name: 'Python', level: 1 }] },
-      { firstName: 'Jor', lastName: 'G', userName: 'jorg', skills: [{ name: 'Node.js', level: 3 }, { name: 'Vue.js', level: 3 }, { name: 'postgressql', level: 2 }] },
-      { firstName: 'Antuan', lastName: 'Brazano', userName: 'abraza', skills: [{ name: 'Vue.js', level: 3 }, { name: 'JavaScript', level: 2 }, { name: 'Python', level: 1 }] }
+    const usersData = [
+      { email: 'bguerra@workload.com', firstName: 'Bruno', lastName: 'Guerra', userName: 'bguerra', skills: [{ name: 'SQL server', level: 4 }, { name: '.NET', level: 3 }] },
+      { email: 'jiro@workload.com', firstName: 'Jesus', lastName: 'de IRO', userName: 'jiro', skills: [{ name: 'manual testing', level: 2 }, { name: 'Lead', level: 1 }] },
+      { email: 'eoicnenev@workload.com', firstName: 'Ernesto', lastName: 'Oicnenev', userName: 'eoicnenev', skills: [{ name: 'Node.js', level: 4 }, { name: 'postgressql', level: 3 }, { name: 'Lead', level: 3 }] },
+      { email: 'rperabaja@workload.com', firstName: 'Rodrigo', lastName: 'Perabaja', userName: 'rperabaja', skills: [{ name: 'Full Stack', level: 4 }, { name: 'Node.js', level: 3 }, { name: 'Vue.js', level: 2 }, { name: '.NET', level: 2 }, { name: 'TypeScript', level: 3 }] },
+      { email: 'jario@workload.com', firstName: 'Javi', lastName: 'Ario', userName: 'jario', skills: [{ name: '.NET', level: 2 }, { name: 'MySQL', level: 2 }] },
+      { email: 'aless@workload.com', firstName: 'Angel', lastName: 'less', userName: 'aless', skills: [{ name: 'Figma', level: 3 }, { name: 'Indesign', level: 2 }] },
+      { email: 'wsulanga@workload.com', firstName: 'Wen', lastName: 'sulanga', userName: 'wsulanga', skills: [{ name: 'Node.js', level: 2 }, { name: 'Python', level: 1 }] },
+      { email: 'jorg@workload.com', firstName: 'Jor', lastName: 'G', userName: 'jorg', skills: [{ name: 'Node.js', level: 3 }, { name: 'Vue.js', level: 3 }, { name: 'postgressql', level: 2 }] },
+      { email: 'abraza@workload.com', firstName: 'Antuan', lastName: 'Brazano', userName: 'abraza', skills: [{ name: 'Vue.js', level: 3 }, { name: 'JavaScript', level: 2 }, { name: 'Python', level: 1 }] }
     ];
 
-    for (const collab of collaboratorsData) {
+    for (const collabData of usersData) {
+      const collabUser = await prisma.user.create({
+        data: {
+          email: collabData.email,
+          password: 'password'
+        }
+      });
+
       const collaborator = await prisma.collaborator.create({
         data: {
-          userName: collab.userName,
-          firstName: collab.firstName,
-          lastName: collab.lastName,
+          userName: collabData.userName,
+          firstName: collabData.firstName,
+          lastName: collabData.lastName,
           organizationId: org.id,
+          userId: collabUser.id,
+          workCenterId: workCenter.id,
           contractedHours: 40,
           joinDate: new Date(),
           isActive: true
         }
       });
 
-      for (const skill of collab.skills) {
+      for (const skill of collabData.skills) {
         const skillRecord = await prisma.skill.findFirst({
           where: { name: skill.name, organizationId: org.id }
         });
@@ -66,18 +96,13 @@ async function main() {
             data: {
               collaboratorId: collaborator.id,
               skillId: skillRecord.id,
-              proficiencyLevel: skill.level
+              level: skill.level
             }
           });
+
         }
       }
     }
-
-    const roles = ['Front', 'Back', 'Desig', 'TL', 'BM', 'Manual tester', 'Automation Tester', 'Full Stack', ].map(name => ({ name, organizationId: org.id }));
-    await prisma.role.createMany({ data: roles });
-    
-    const skills = ['JavaScript', 'Vue.js', 'Node.js', 'Python', 'Java', 'TypeScript', '.NET', 'CSS', 'Indesign', 'Figma', 'Lead', 'manual testing', 'automation testing', 'postgressql', 'MySQL', 'SQL server', 'mySql', ].map(name => ({ name, organizationId: org.id }));
-    await prisma.skill.createMany({ data: skills });
     
     const milestoneTypes = [
         { name: 'Reunion semanal', color: '#001eff', organizationId: org.id },
@@ -94,14 +119,6 @@ async function main() {
       { name: 'BM', rank: 3, organizationId: org.id }
     ];
     await prisma.hierarchyType.createMany({ data: hierarchyTypes });
-
-    await prisma.workCenter.create({
-        data: {
-            name: 'Madrid HQ',
-            countryCode: 'ES',
-            organizationId: org.id
-        }
-    });
 
     const workPackageStatuses = [
         { name: 'a estimar', color: '#fbbf24', order: 1, organizationId: org.id },
