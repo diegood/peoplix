@@ -83,7 +83,8 @@ const statusLabels = {
   DRAFT: 'Borrador',
   PENDING_REVIEW: 'Pendiente de Revisión',
   VALIDATED: 'Validado',
-  DEPRECATED: 'Deprecado'
+  DEPRECATED: 'Deprecado',
+  BLOCKED: 'Bloqueado'
 }
 
 const handleCreateNew = () => {
@@ -106,13 +107,19 @@ const handleEdit = (req) => {
   }
 }
 
+import { useNotificationStore } from '@/stores/notificationStore'
+const notificationStore = useNotificationStore()
+
 const handleDelete = async (id) => {
-  if (!confirm('¿Estás seguro de que deseas eliminar este requisito?')) return
+  const ok = await notificationStore.showDialog('¿Eliminar requisito funcional?', 'Eliminar Requisito')
+  if (!ok) return
   try {
     await deleteRequirement({ id })
+    notificationStore.showToast('Requisito eliminado', 'success')
     refetch()
   } catch (err) {
     console.error('Error deleting requirement:', err)
+    notificationStore.showToast('No se pudo eliminar', 'error')
   }
 }
 
@@ -184,7 +191,8 @@ const requirementStats = computed(() => ({
   total: requirements.value.length,
   draft: requirements.value.filter(r => r.status === 'DRAFT').length,
   validated: requirements.value.filter(r => r.status === 'VALIDATED').length,
-  pending: requirements.value.filter(r => r.status === 'PENDING_REVIEW').length
+  pending: requirements.value.filter(r => r.status === 'PENDING_REVIEW').length,
+  blocked: requirements.value.filter(r => r.status === 'BLOCKED').length
 }))
 
 const anySelected = computed(() => selectedIds.value.size > 0)
@@ -219,7 +227,7 @@ const anySelected = computed(() => selectedIds.value.size > 0)
       </div>
     </div>
 
-    <div class="bg-white p-6 grid grid-cols-4 gap-4">
+    <div class="bg-white p-6 grid grid-cols-5 gap-4">
       <div class="bg-gray-50 p-4 rounded-lg cursor-pointer" @click="filterStatus = null">
         <p class="text-gray-600 text-sm">Total</p>
         <p class="text-2xl font-bold">{{ requirementStats.total }}</p>
@@ -235,6 +243,10 @@ const anySelected = computed(() => selectedIds.value.size > 0)
       <div class="bg-green-50 p-4 rounded-lg cursor-pointer" @click="filterStatus = 'VALIDATED'">
         <p class="text-green-600 text-sm">Validados</p>
         <p class="text-2xl font-bold">{{ requirementStats.validated }}</p>
+      </div>
+      <div class="bg-gray-100 p-4 rounded-lg cursor-pointer" @click="filterStatus = 'BLOCKED'">
+        <p class="text-gray-600 text-sm">Bloqueados</p>
+        <p class="text-2xl font-bold">{{ requirementStats.blocked }}</p>
       </div>
     </div>
     <h2 class="text-xl font-semibold mb-4 ml-6 text-gray-700"> {{ filterStatus ? statusLabels[filterStatus] : 'Todos' }}</h2>

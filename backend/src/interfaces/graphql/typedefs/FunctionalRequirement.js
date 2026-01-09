@@ -6,12 +6,15 @@ export default gql`
     PENDING_REVIEW
     VALIDATED
     DEPRECATED
+    BLOCKED
   }
 
   type FunctionalRequirementHistory {
     id: ID!
     requirementId: String!
-    version: Int!
+    versionMajor: Int!
+    versionMinor: Int!
+    versionPatch: Int!
     diff: String
     changedBy: User
     createdAt: String!
@@ -43,12 +46,17 @@ export default gql`
     mockupUrl: String
     notes: String
     status: RequirementStatus!
-    version: Int!
+    versionMajor: Int!
+    versionMinor: Int!
+    versionPatch: Int!
     createdAt: String!
     updatedAt: String!
     projectId: String!
     analystId: String
     analyst: User
+    originalRequirementId: String
+    originalRequirement: FunctionalRequirement
+    evolutions: [FunctionalRequirement!]
     history: [FunctionalRequirementHistory!]
     workPackages: [WorkPackage!]
     relatedTo: [FunctionalRequirement!]
@@ -91,7 +99,8 @@ export default gql`
         systemMessages: String,
         mockupUrl: String,
         notes: String,
-        status: RequirementStatus
+        status: RequirementStatus,
+        versionBump: String
     ): FunctionalRequirement
 
     deleteFunctionalRequirement(id: String!): FunctionalRequirement
@@ -106,5 +115,14 @@ export default gql`
       fromId: String!,
       toId: String!
     ): Boolean
+
+    createEvolution(
+      originalRequirementId: String!
+    ): FunctionalRequirement
+
+    unlockRequirement(
+      id: String!
+      status: RequirementStatus!
+    ): FunctionalRequirement
   }
 `;

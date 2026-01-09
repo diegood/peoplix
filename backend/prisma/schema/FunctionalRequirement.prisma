@@ -3,6 +3,7 @@ enum RequirementStatus {
   PENDING_REVIEW
   VALIDATED
   DEPRECATED
+  BLOCKED
 }
 
 model FunctionalRequirement {
@@ -21,8 +22,16 @@ model FunctionalRequirement {
   mockupUrl          String?
   notes              String?
 
-  status  RequirementStatus @default(DRAFT)
-  version Int               @default(1)
+  status       RequirementStatus @default(DRAFT)
+  // Versionado semántico
+  versionMajor Int               @default(1)
+  versionMinor Int               @default(0)
+  versionPatch Int               @default(0)
+
+  // For evolutivos: reference to the original requirement
+  originalRequirementId String?
+  originalRequirement   FunctionalRequirement?  @relation("RequirementEvolution", fields: [originalRequirementId], references: [id], onDelete: SetNull)
+  evolutions            FunctionalRequirement[] @relation("RequirementEvolution")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -36,7 +45,7 @@ model FunctionalRequirement {
   history      FunctionalRequirementHistory[]
   workPackages WorkPackage[]
   tasks        Task[]
-  
+
   // Relations to other requirements
   relatedTo   FunctionalRequirementRelation[] @relation("relatedFrom")
   relatedFrom FunctionalRequirementRelation[] @relation("relatedTo")

@@ -9,11 +9,14 @@ import SectionActores from './sections/SectionActores.vue'
 import SectionFlujo from './sections/SectionFlujo.vue'
 import SectionValidaciones from './sections/SectionValidaciones.vue'
 import SectionAdicional from './sections/SectionAdicional.vue'
+import VersionBumpModal from './VersionBumpModal.vue'
 import { parseDateSafe } from '@/helper/Date'
+import { useNotificationStore } from '@/stores/notificationStore'
 import { GET_FUNCTIONAL_REQUIREMENT } from '@/modules/Requirements/graphql/queries'
 import {
   CREATE_FUNCTIONAL_REQUIREMENT,
-  UPDATE_FUNCTIONAL_REQUIREMENT
+  UPDATE_FUNCTIONAL_REQUIREMENT,
+  CREATE_EVOLUTION
 } from '@/modules/Requirements/graphql/mutations'
 
 const props = defineProps({
@@ -46,14 +49,25 @@ const isEditing = computed(() => !!props.requirement)
 const { result: detailResult, loading: detailLoading, refetch: refetchDetail } = useQuery(
   GET_FUNCTIONAL_REQUIREMENT,
   () => ({ id: props.requirement?.id }),
-  () => ({ enabled: isEditing.value })
+  () => ({ enabled: isEditing.value && !!props.requirement?.id })
 )
 
 const { mutate: createReq, loading: createLoading } = useMutation(CREATE_FUNCTIONAL_REQUIREMENT)
 const { mutate: updateReq, loading: updateLoading } = useMutation(UPDATE_FUNCTIONAL_REQUIREMENT)
+const { mutate: createEvolutionMut, loading: evolutionLoading } = useMutation(CREATE_EVOLUTION)
+const notificationStore = useNotificationStore()
 
 const loading = computed(() => createLoading.value || updateLoading.value)
 const detailData = computed(() => detailResult.value?.functionalRequirement)
+const isBlocked = computed(() => detailData.value?.status === 'BLOCKED')
+
+const showVersionModal = ref(false)
+
+const currentVersion = computed(() => ({
+  major: detailData.value?.versionMajor ?? 1,
+  minor: detailData.value?.versionMinor ?? 0,
+  patch: detailData.value?.versionPatch ?? 0
+}))
 
 const form = ref({
   title: '',
@@ -98,22 +112,39 @@ const sections = [
 ]
 
 const handleSubmit = async () => {
-  try {
-    if (isEditing.value) {
-      await updateReq({
-        id: props.requirement.id,
-        ...form.value
-      })
-      await refetchDetail()
-    } else {
+  if (isEditing.value) {
+    if (isBlocked.value) return
+    // Abrir modal de selección de versión
+    showVersionModal.value = true
+  } else {
+    // Crear nuevo requisito
+    try {
       await createReq({
         projectId: props.projectId,
         ...form.value
       })
+      emit('close')
+    } catch (error) {
+      console.error('Error creating requirement:', error)
+      notificationStore.showToast('Error al crear requisito', 'error')
     }
+  }
+}
+
+const confirmVersionBump = async (versionBump) => {
+  showVersionModal.value = false
+  try {
+    await updateReq({
+      id: props.requirement.id,
+      ...form.value,
+      versionBump
+    })
+    notificationStore.showToast('Requisito actualizado', 'success')
+    await refetchDetail()
     emit('close')
   } catch (error) {
-    console.error('Error saving requirement:', error)
+    console.error('Error updating requirement:', error)
+    notificationStore.showToast('Error al actualizar requisito', 'error')
   }
 }
 
@@ -121,6 +152,7 @@ const historyEntries = computed(() => detailData.value?.history || props.require
 
 const saveField = async (patch) => {
   if (!isEditing.value || !props.requirement?.id) return
+  if (isBlocked.value) return
   await updateReq({ id: props.requirement.id, ...patch })
   await refetchDetail()
 }
@@ -192,6 +224,46 @@ const sectionAudits = computed(() => ({
     notes: formatAudit(fieldAudits.value.notes)
   }
 }))
+
+const blockRequirement = async () => {
+  if (!isEditing.value || !props.requirement?.id) return
+  if (isBlocked.value) return
+  await updateReq({ id: props.requirement.id, status: 'BLOCKED' })
+  notificationStore.showToast('Requisito bloqueado', 'success')
+  await refetchDetail()
+}
+
+const createEvolution = async () => {
+  if (!isEditing.value || !props.requirement?.id) return
+  const ok = await notificationStore.showDialog('¿Crear evolutivo clonado del original?', 'Crear Evolutivo')
+  if (!ok) return
+  try {
+    await createEvolutionMut({ originalRequirementId: props.requirement.id })
+    notificationStore.showToast('Evolutivo creado', 'success')
+    emit('close')
+  } catch (e) {
+    console.error('Error creando evolutivo', e)
+    notificationStore.showToast('No se pudo crear el evolutivo', 'error')
+  }
+}
+
+import { UNLOCK_REQUIREMENT } from '@/modules/Requirements/graphql/mutations'
+const { mutate: unlockReq, loading: unlockLoading } = useMutation(UNLOCK_REQUIREMENT)
+import { useAuthStore } from '@/modules/Auth/stores/auth.store'
+const authStore = useAuthStore()
+const canUnlock = computed(() => isBlocked.value && authStore.isAdmin)
+const unlockRequirement = async () => {
+  if (!isEditing.value || !props.requirement?.id || !canUnlock.value) return
+  const ok = await notificationStore.showDialog('¿Desbloquear requisito para edición?', 'Desbloquear Requisito')
+  if (!ok) return
+  try {
+    await unlockReq({ id: props.requirement.id, status: 'DRAFT' })
+    notificationStore.showToast('Requisito desbloqueado', 'success')
+    await refetchDetail()
+  } catch (e) {
+    notificationStore.showToast('No se pudo desbloquear', 'error')
+  }
+}
 </script>
 
 <template>
@@ -204,6 +276,7 @@ const sectionAudits = computed(() => ({
       <div class="flex items-center gap-3">
         <span v-if="isEditing && detailData?.number" class="text-xs font-bold px-2 py-0.5 bg-blue-100 text-blue-700 rounded">RF-{{ detailData.number }}</span>
         {{ isEditing ? detailData?.title : 'Nuevo Requisito Funcional' }}
+        <span v-if="isBlocked" class="ml-2 text-xs px-2 py-1 rounded bg-gray-200 text-gray-800">Bloqueado</span>
       </div>
     </template>
 
@@ -326,12 +399,42 @@ const sectionAudits = computed(() => ({
         Cancelar
       </button>
       <button
+        v-if="isEditing && !isBlocked"
+        @click="createEvolution"
+        :disabled="evolutionLoading"
+        class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition mr-2"
+      >
+        {{ evolutionLoading ? 'Creando...' : 'Crear Evolutivo' }}
+      </button>
+      <button
+        v-if="isEditing && !isBlocked"
+        @click="blockRequirement"
+        class="px-6 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg transition mr-2"
+      >
+        Bloquear
+      </button>
+      <button
+        v-if="isEditing && canUnlock"
+        @click="unlockRequirement"
+        :disabled="unlockLoading"
+        class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition mr-2"
+      >
+        {{ unlockLoading ? 'Desbloqueando...' : 'Desbloquear' }}
+      </button>
+      <button
         @click="handleSubmit"
-        :disabled="loading || !form.title || !form.description"
+        :disabled="loading || isBlocked || !form.title || !form.description"
         class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {{ loading ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}
       </button>
     </template>
   </BaseModal>
+
+  <VersionBumpModal
+    :show="showVersionModal"
+    :currentVersion="currentVersion"
+    @close="showVersionModal = false"
+    @confirm="confirmVersionBump"
+  />
 </template>

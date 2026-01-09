@@ -3,9 +3,12 @@ model FunctionalRequirementHistory {
   requirementId String
   requirement   FunctionalRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
 
-  version   Int
-  diff      String
-  changedById String?
-  changedBy   User?   @relation(fields: [changedById], references: [id])
-  createdAt DateTime @default(now())
+  // Version del registro anterior
+  versionMajor Int      @default(1)
+  versionMinor Int      @default(0)
+  versionPatch Int      @default(0)
+  diff         String
+  changedById  String?
+  changedBy    User?    @relation(fields: [changedById], references: [id])
+  createdAt    DateTime @default(now())
 }

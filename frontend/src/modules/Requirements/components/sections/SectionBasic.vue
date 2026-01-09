@@ -144,6 +144,7 @@ const revertTo = (field, entry) => {
           <option value="PENDING_REVIEW">Pendiente de Revisión</option>
           <option value="VALIDATED">Validado</option>
           <option value="DEPRECATED">Deprecado</option>
+          <option value="BLOCKED">Bloqueado</option>
         </select>
 
         <FieldHistory

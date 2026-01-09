@@ -24,14 +24,16 @@ const statusColors = {
   DRAFT: 'bg-gray-100 text-gray-800',
   PENDING_REVIEW: 'bg-yellow-100 text-yellow-800',
   VALIDATED: 'bg-green-100 text-green-800',
-  DEPRECATED: 'bg-red-100 text-red-800'
+  DEPRECATED: 'bg-red-100 text-red-800',
+  BLOCKED: 'bg-gray-300 text-gray-900'
 }
 
 const statusLabels = {
   DRAFT: 'Borrador',
   PENDING_REVIEW: 'Pendiente de Revisión',
   VALIDATED: 'Validado',
-  DEPRECATED: 'Deprecado'
+  DEPRECATED: 'Deprecado',
+  BLOCKED: 'Bloqueado'
 }
 
 const plainText = computed(() => {
@@ -69,6 +71,12 @@ const formattedDate = computed(() => {
   return date ? date.format('DD/MM/YYYY') : ''
 })
 
+const versionLabel = computed(() => {
+  const r = props.requirement
+  if (r?.versionMajor == null) return ''
+  return `${r.versionMajor}.${r.versionMinor}.${r.versionPatch}`
+})
+
 </script>
 
 <template>
@@ -101,7 +109,7 @@ const formattedDate = computed(() => {
     <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
       <div>
         <p class="text-gray-500">Versión</p>
-        <p class="font-semibold">{{ requirement.version }}</p>
+        <p class="font-semibold">{{ versionLabel }}</p>
       </div>
       <div>
         <p class="text-gray-500">Paquetes de trabajo</p>

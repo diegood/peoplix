@@ -23,6 +23,8 @@ class FunctionalRequirementService {
           }
         },
         workPackages: true,
+        originalRequirement: true,
+        evolutions: true,
         relatedTo: {
           include: { to: true }
         },
@@ -39,7 +41,11 @@ class FunctionalRequirementService {
       where: { id },
       include: {
         history: {
-          orderBy: { version: 'desc' },
+          orderBy: [
+            { versionMajor: 'desc' },
+            { versionMinor: 'desc' },
+            { versionPatch: 'desc' }
+          ],
           include: {
             changedBy: {
               include: {
@@ -55,6 +61,8 @@ class FunctionalRequirementService {
         },
         workPackages: true,
         project: true,
+        originalRequirement: true,
+        evolutions: true,
         relatedTo: {
           include: { to: true }
         },
@@ -82,15 +90,28 @@ class FunctionalRequirementService {
         projectId,
         analystId: userId,
         status: 'DRAFT',
-        version: 1,
+        versionMajor: 1,
+        versionMinor: 0,
+        versionPatch: 0,
         number: nextNumber
       }
     });
   }
-
   async update(id, data, userId) {
     const existing = await this.getById(id);
     if (!existing) throw new Error('Requirement not found');
+
+    // Extraer versionBump del objeto data antes de procesarlo
+    const versionBump = data.versionBump;
+    const updateData = { ...data };
+    delete updateData.versionBump;
+
+    // Validar que si está BLOCKED, solo admins pueden modificar
+    if (existing.status === 'BLOCKED' && updateData.status !== 'BLOCKED') {
+      // TODO: Implementar validación de rol admin cuando esté disponible
+      // Por ahora permitimos la modificación
+      // throw new Error('Cannot modify a BLOCKED requirement. Only admins can unlock it.');
+    }
 
     const significantFields = [
       'title', 'description', 'generalDescription', 'actors', 
@@ -101,22 +122,41 @@ class FunctionalRequirementService {
     let hasChanges = false;
     const diff = {};
     for (const field of significantFields) {
-      if (data[field] !== undefined && data[field] !== existing[field]) {
+      if (updateData[field] !== undefined && updateData[field] !== existing[field]) {
         hasChanges = true;
-        diff[field] = { old: existing[field], new: data[field] };
+        diff[field] = { old: existing[field], new: updateData[field] };
       }
     }
 
-    const updateData = { ...data };
-    
     if (hasChanges) {
-       updateData.version = existing.version + 1;
-       if (userId) { updateData.analystId = userId}
+       // Determinar bump de versión
+       const bump = versionBump || 'patch';
+       const major = existing.versionMajor ?? 1;
+       const minor = existing.versionMinor ?? 0;
+       const patch = existing.versionPatch ?? 0;
+
+       if (bump === 'major') {
+         updateData.versionMajor = major + 1;
+         updateData.versionMinor = 0;
+         updateData.versionPatch = 0;
+       } else if (bump === 'minor') {
+         updateData.versionMajor = major;
+         updateData.versionMinor = minor + 1;
+         updateData.versionPatch = 0;
+       } else {
+         updateData.versionMajor = major;
+         updateData.versionMinor = minor;
+         updateData.versionPatch = patch + 1;
+       }
+
+       if (userId) { updateData.analystId = userId }
        
        await prisma.functionalRequirementHistory.create({
          data: {
            requirementId: id,
-           version: existing.version,
+           versionMajor: major,
+           versionMinor: minor,
+           versionPatch: patch,
            diff: JSON.stringify(diff),
            changedById: userId
          }
@@ -132,6 +172,56 @@ class FunctionalRequirementService {
   async delete(id) {
     return prisma.functionalRequirement.delete({
       where: { id }
+    });
+  }
+
+  async createEvolution(originalRequirementId, data, userId) {
+    // Obtener el requisito original
+    const original = await this.getById(originalRequirementId);
+    if (!original) throw new Error('Original requirement not found');
+
+    // El evolutivo hereda el projectId del original y clona toda la definición
+    const evolutionData = {
+      title: original.title,
+      description: original.description,
+      generalDescription: original.generalDescription,
+      actors: original.actors,
+      preconditions: original.preconditions,
+      expectedInputs: original.expectedInputs,
+      detailedFlow: original.detailedFlow,
+      validations: original.validations,
+      expectedOutputs: original.expectedOutputs,
+      systemMessages: original.systemMessages,
+      mockupUrl: original.mockupUrl,
+      notes: original.notes,
+      projectId: original.projectId,
+      originalRequirementId,
+      status: 'DRAFT',
+      versionMajor: 1,
+      versionMinor: 0,
+      versionPatch: 0,
+      analystId: userId
+    };
+
+    // Obtener el siguiente número para el proyecto
+    const lastRequirement = await prisma.functionalRequirement.findFirst({
+      where: { projectId: original.projectId },
+      orderBy: { number: 'desc' },
+      select: { number: true }
+    });
+    
+    evolutionData.number = (lastRequirement?.number || 0) + 1;
+
+    return prisma.functionalRequirement.create({
+      data: evolutionData,
+      include: {
+        originalRequirement: true,
+        analyst: {
+          include: {
+            collaborator: true
+          }
+        }
+      }
     });
   }
 }

@@ -52,6 +52,7 @@ export const UPDATE_FUNCTIONAL_REQUIREMENT = gql`
     $mockupUrl: String
     $notes: String
     $status: RequirementStatus
+    $versionBump: String
   ) {
     updateFunctionalRequirement(
       id: $id
@@ -68,6 +69,7 @@ export const UPDATE_FUNCTIONAL_REQUIREMENT = gql`
       mockupUrl: $mockupUrl
       notes: $notes
       status: $status
+      versionBump: $versionBump
     ) {
       id
     }
@@ -139,5 +141,26 @@ export const REMOVE_REQUIREMENT_RELATION = gql`
       fromId: $fromId
       toId: $toId
     )
+  }
+`
+
+export const CREATE_EVOLUTION = gql`
+  mutation CreateEvolution($originalRequirementId: String!) {
+    createEvolution(originalRequirementId: $originalRequirementId) {
+      id
+      number
+      title
+      status
+      originalRequirementId
+    }
+  }
+`
+
+export const UNLOCK_REQUIREMENT = gql`
+  mutation UnlockRequirement($id: String!, $status: RequirementStatus!) {
+    unlockRequirement(id: $id, status: $status) {
+      id
+      status
+    }
   }
 `

@@ -22,6 +22,18 @@ export default {
     deleteFunctionalRequirement: async (_, { id }) => {
       return FunctionalRequirementService.delete(id);
     },
+    createEvolution: async (_, { originalRequirementId }, { user }) => {
+      const userId = user?.userId || null;
+      return FunctionalRequirementService.createEvolution(originalRequirementId, {}, userId);
+    },
+    unlockRequirement: async (_, { id, status }, context) => {
+      const ADMIN_ROLE = 1;
+      if (!context.user || context.user.role !== ADMIN_ROLE) {
+        throw new Error('Unauthorized: Admin access required');
+      }
+      // Cambiar estado desde BLOCKED a otro permitido
+      return FunctionalRequirementService.update(id, { status }, context.user.userId);
+    },
     addFunctionalRequirementRelation: async (_, { fromId, toId, type = 'related' }) => {
       return prisma.functionalRequirementRelation.create({
         data: {
@@ -61,6 +73,18 @@ export default {
         include: { from: true }
       });
       return relations.map(r => r.from);
+    },
+    originalRequirement: async (requirement) => {
+      if (!requirement.originalRequirementId) return null;
+      return prisma.functionalRequirement.findUnique({
+        where: { id: requirement.originalRequirementId }
+      });
+    },
+    evolutions: async (requirement) => {
+      return prisma.functionalRequirement.findMany({
+        where: { originalRequirementId: requirement.id },
+        orderBy: { createdAt: 'asc' }
+      });
     }
   }
 };

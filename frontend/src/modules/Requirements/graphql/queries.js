@@ -8,9 +8,23 @@ export const GET_FUNCTIONAL_REQUIREMENTS = gql`
       title
       description
       status
-      version
+      versionMajor
+      versionMinor
+      versionPatch
       createdAt
       updatedAt
+      originalRequirementId
+      originalRequirement {
+        id
+        number
+        title
+      }
+      evolutions {
+        id
+        number
+        title
+        status
+      }
       analyst {
         id
         email
@@ -69,9 +83,23 @@ export const GET_FUNCTIONAL_REQUIREMENT = gql`
       mockupUrl
       notes
       status
-      version
+      versionMajor
+      versionMinor
+      versionPatch
       createdAt
       updatedAt
+      originalRequirementId
+      originalRequirement {
+        id
+        number
+        title
+      }
+      evolutions {
+        id
+        number
+        title
+        status
+      }
       analyst {
         id
         email
