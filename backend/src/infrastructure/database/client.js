@@ -7,7 +7,7 @@ import { PrismaPg } from '@prisma/adapter-pg'
 
 const { Pool } = pg
 
-const connectionString = process.env.DATABASE_URL
+const connectionString = process.env.POOL_DATABASE_URL || process.env.DATABASE_URL
 const pool = new Pool({ connectionString })
 const adapter = new PrismaPg(pool)
 
