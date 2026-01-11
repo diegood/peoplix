@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite -l info",
-    "build": "vite build",
+    "build": "vite build --mode production",
     "preview": "vite preview",
     "test": "vitest",
     "test:unit": "vitest",

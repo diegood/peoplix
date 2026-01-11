@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: peoplix-postgres-prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-peoplix_db}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - peoplix_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: peoplix-backend
+    environment:
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET:-supersecretkey}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-peoplix_db}?schema=public
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:8080}
+    depends_on:
+      - postgres
+    networks:
+      - peoplix_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_HTTP_URL: ${VITE_API_HTTP_URL:-http://localhost:3000/graphql}
+        VITE_API_WS_URL: ${VITE_API_WS_URL:-ws://localhost:3000/graphql}
+    container_name: peoplix-frontend
+    environment:
+      API_HTTP_URL: ${API_HTTP_URL:-/graphql}
+      API_WS_URL: ${API_WS_URL:-/graphql}
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - peoplix_net
+
+volumes:
+  pgdata:
+
+networks:
+  peoplix_net:
+    driver: bridge

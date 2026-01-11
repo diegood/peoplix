@@ -4,12 +4,42 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions'
 import { createClient } from 'graphql-ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 
+const runtimeConfig = typeof window !== 'undefined' ? (window.__APP_CONFIG__ || {}) : {}
+const rawHttp = runtimeConfig.API_HTTP_URL || import.meta.env?.VITE_API_HTTP_URL || 'http://localhost:3000/graphql'
+const rawWs = runtimeConfig.API_WS_URL || import.meta.env?.VITE_API_WS_URL
+
+const toAbsoluteHttp = (url) => {
+  if (!url) return null
+  if (url.startsWith('http')) return url
+  if (typeof window !== 'undefined' && url.startsWith('/')) return `${window.location.origin}${url}`
+  return url
+}
+
+const deriveWsFromHttp = (httpUrl) => {
+  if (!httpUrl) return null
+  try {
+    const u = new URL(httpUrl)
+    u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:'
+    return u.toString()
+  } catch {
+    if (typeof window !== 'undefined') {
+      const isHttps = window.location.protocol === 'https:'
+      const path = httpUrl.startsWith('/') ? httpUrl : `/${httpUrl}`
+      return `${isHttps ? 'wss' : 'ws'}://${window.location.host}${path}`
+    }
+    return httpUrl
+  }
+}
+
+const HTTP_URL = toAbsoluteHttp(rawHttp)
+const WS_URL = rawWs && rawWs.startsWith('ws') ? rawWs : deriveWsFromHttp(HTTP_URL)
+
 const httpLink = new HttpLink({
-  uri: 'http://localhost:3000/graphql',
+  uri: HTTP_URL,
 })
 
 const wsLink = new GraphQLWsLink(createClient({
-  url: 'ws://localhost:3000/graphql',
+  url: WS_URL,
   connectionParams: () => {
       const token = localStorage.getItem('token')
       return {
