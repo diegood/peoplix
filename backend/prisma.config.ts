@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import { defineConfig, env } from "prisma/config";
 
-const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env";
+const envFile = process.env.ENV_FILE || (process.env.NODE_ENV === "production" ? ".env.production" : ".env");
 dotenv.config({ path: envFile });
 
 const hasDirectUrl = !!process.env.DIRECT_DATABASE_URL;

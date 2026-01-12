@@ -50,6 +50,7 @@ module.exports = {
         NODE_ENV: 'production',
         LOG_LEVEL: 'debug', // info, debug, warn, error
         PORT: 3001,
+        ENV_FILE: '.env.production-eu',
       },
       env_development: {
         NODE_ENV: 'development',
