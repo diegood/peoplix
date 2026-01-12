@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   apps: [
     {
       name: 'back',
@@ -32,6 +32,6 @@ export default {
     max_size: '10M',
     max_files: 10,
     compress: true,
-    dateFormat: 'YYYY-MM-DD_HH-mm-ss',
+    dateFormat: 'DD-MM-YYYY_HH-mm-ss',
   },
 }
