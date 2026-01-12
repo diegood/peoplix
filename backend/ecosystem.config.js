@@ -3,9 +3,10 @@ module.exports = {
     {
       name: 'back',
       script: "./index.js",
-      cwd: '/var/logs/peoplix',
+      cwd: '/var/www/peoplix/backend',
       instances: 1,
       exec_mode: 'fork',
+      watch: false,
       env: {
         NODE_ENV: 'production',
       },

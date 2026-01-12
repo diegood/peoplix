@@ -94,20 +94,20 @@ pm2 start ecosystem.config.js --env development
 
 ```bash
 # Activar modo debug
-pm2 restart backend --update-env -- LOG_LEVEL=debug
+pm2 restart back --update-env -- LOG_LEVEL=debug
 
 # Volver a modo info
-pm2 restart backend --update-env -- LOG_LEVEL=info
+pm2 restart back --update-env -- LOG_LEVEL=info
 
 # Solo errores
-pm2 restart backend --update-env -- LOG_LEVEL=error
+pm2 restart back --update-env -- LOG_LEVEL=error
 ```
 
 **Ver logs en tiempo real:**
 
 ```bash
-pm2 logs backend              # Solo backend
-pm2 logs backend --lines 100  # Últimas 100 líneas
+pm2 logs back              # Solo backend
+pm2 logs back --lines 100  # Últimas 100 líneas
 pm2 logs                      # Todos los procesos
 ```
 
