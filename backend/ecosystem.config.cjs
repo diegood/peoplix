@@ -37,6 +37,9 @@ module.exports = {
       watch: false,
       env: {
         NODE_ENV: 'production',
+        LOG_LEVEL: 'debug',
+        PORT: 3001,
+        ENV_FILE: '.env.production-eu',
       },
       env_file: '.env.production-eu',
       log_date_format: 'DD-MM-YYYY HH:mm:ss Z',

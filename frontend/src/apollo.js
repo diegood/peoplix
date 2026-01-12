@@ -5,8 +5,24 @@ import { createClient } from 'graphql-ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 
 const runtimeConfig = typeof window !== 'undefined' ? (window.__APP_CONFIG__ || {}) : {}
-const rawHttp = runtimeConfig.API_HTTP_URL || import.meta.env?.VITE_API_HTTP_URL || 'http://localhost:3000/graphql'
+const rawHttp = runtimeConfig.API_HTTP_URL || import.meta.env?.VITE_API_HTTP_URL || getDefaultHttpUrl()
 const rawWs = runtimeConfig.API_WS_URL || import.meta.env?.VITE_API_WS_URL
+
+function getDefaultHttpUrl () {
+  if (typeof window === 'undefined') return 'http://localhost:3000/graphql'
+  const host = window.location.hostname
+  const isLocal =
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '0.0.0.0' ||
+    host === '[::1]' ||
+    host.endsWith('.local')
+  if (isLocal) return 'http://localhost:3000/graphql'
+  if (host.endsWith('.eu')) return 'https://api.peoplix.eu/graphql'
+  if (host.endsWith('.app')) return 'https://api.peoplix.eu/graphql'
+  if (host.endsWith('.es')) return 'https://api.peoplix.es/graphql'
+  return 'https://api.peoplix.es/graphql'
+}
 
 const toAbsoluteHttp = (url) => {
   if (!url) return null
