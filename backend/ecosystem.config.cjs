@@ -38,6 +38,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
       },
+      env_file: '.env.production-eu',
       log_date_format: 'DD-MM-YYYY HH:mm:ss Z',
       out_file: '/var/logs/peoplix/backend-eu-out.log',
       error_file: '/var/logs/peoplix/backend-eu-error.log',
