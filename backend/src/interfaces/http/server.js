@@ -6,6 +6,7 @@ import { schema } from '../graphql/schema.js'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const LOG_LEVEL = process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info')
+const PORT = process.env.PORT || 3000
 
 export const app = Fastify({
   logger: {
@@ -77,8 +78,8 @@ export const startServer = async () => {
   console.log('Log level:', LOG_LEVEL)
   console.log('Frontend origin:', FRONTEND_ORIGIN)
   try {
-    await app.listen({ port: 3000, host: '0.0.0.0' })
-    console.log('Server listening on http://localhost:3000/graphql')
+    await app.listen({ port: PORT, host: '0.0.0.0' })
+    console.log(`Server listening on http://localhost:${PORT}/graphql`)
   } catch (err) {
     console.error(err)
     process.exit(1)

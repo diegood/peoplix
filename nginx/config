@@ -1,0 +1,20 @@
+## esta en /etc/nginx/sites-available/peoplix
+
+# Configuración para España demo
+server {
+    listen 80;
+    server_name api.peoplix.es peoplix.es;
+
+    location / {
+        proxy_pass http://localhost:3000;
+    }
+}
+
+# Configuración para Europa uso interno
+server {
+    listen 80;
+    server_name api.peoplix.eu peoplix.eu;
+
+    location / {
+        proxy_pass http://localhost:3001;
+}
