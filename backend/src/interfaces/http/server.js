@@ -4,10 +4,26 @@ import cors from '@fastify/cors'
 import { resolvers } from '../graphql/resolvers/index.js'
 import { schema } from '../graphql/schema.js'
 
-export const app = Fastify()
+const isDevelopment = process.env.NODE_ENV !== 'production'
+const LOG_LEVEL = process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info')
+
+export const app = Fastify({
+  logger: {
+    level: LOG_LEVEL,
+    transport: isDevelopment
+      ? {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+            ignore: 'pid,hostname',
+            singleLine: false,
+          },
+        }
+      : undefined,
+  },
+})
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:8080'
-const isDevelopment = process.env.NODE_ENV !== 'production'
 
 await app.register(cors, {
   origin: (origin, cb) => {
@@ -55,6 +71,11 @@ app.get('/', async function (req, reply) {
 
 
 export const startServer = async () => {
+  console.log('Starting server...')
+  console.log('isDevelopment:', isDevelopment)
+  console.log('Environment:', process.env.NODE_ENV)
+  console.log('Log level:', LOG_LEVEL)
+  console.log('Frontend origin:', FRONTEND_ORIGIN)
   try {
     await app.listen({ port: 3000, host: '0.0.0.0' })
     console.log('Server listening on http://localhost:3000/graphql')

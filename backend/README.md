@@ -44,6 +44,106 @@ Para levantar el proyecto por primera vez, sigue estos pasos:
 *   **Ver Datos (Prisma Studio):** `npx prisma studio` (Abre una interfaz web en localhost:5555)
 *   **Generar Cliente:** `npx prisma generate` (Necesario si cambias el schema pero no lo detecta el código).
 
+## Logging y Monitoreo
+
+El backend utiliza **Pino** como logger (integrado en Fastify) con **pino-pretty** para un formato legible en desarrollo.
+
+### Niveles de Log
+
+- `debug`: Todos los logs (desarrollo)
+- `info`: Info + Warnings + Errores (producción por defecto)
+- `warn`: Solo warnings y errores
+- `error`: Solo errores
+
+### Configurar Logs en Desarrollo
+
+En local, los logs se muestran coloridos y formateados:
+
+```bash
+pnpm dev
+# Verás logs tipo:
+# 📖 QUERY: GetUser
+# 🔄 MUTATION: CreateTask
+# duration: 45ms
+```
+
+Para cambiar nivel de logs en desarrollo (sin reiniciar):
+
+```bash
+export LOG_LEVEL=debug    # Máximo detalle
+export LOG_LEVEL=info     # Normal
+export LOG_LEVEL=warn     # Solo advertencias
+```
+
+### PM2 en Producción
+
+Usamos **PM2** para gestionar procesos y logs en producción. La configuración está en `ecosystem.config.js` en la raíz del proyecto.
+
+**Iniciar con PM2:**
+
+```bash
+# Con logs en nivel producción (info)
+cd /var/logs/peoplix
+pm2 start ecosystem.config.js
+
+# Con logs en desarrollo (debug)
+pm2 start ecosystem.config.js --env development
+```
+
+**Cambiar nivel de logs en vivo (sin reiniciar):**
+
+```bash
+# Activar modo debug
+pm2 restart backend --update-env -- LOG_LEVEL=debug
+
+# Volver a modo info
+pm2 restart backend --update-env -- LOG_LEVEL=info
+
+# Solo errores
+pm2 restart backend --update-env -- LOG_LEVEL=error
+```
+
+**Ver logs en tiempo real:**
+
+```bash
+pm2 logs backend              # Solo backend
+pm2 logs backend --lines 100  # Últimas 100 líneas
+pm2 logs                      # Todos los procesos
+```
+
+**Ver archivos de logs:**
+
+```bash
+# Logs de salida (stdout)
+tail -f /var/logs/peoplix/logs/backend-out.log
+
+# Logs de error (stderr)
+tail -f /var/logs/peoplix/logs/backend-error.log
+```
+
+### Llamadas GraphQL en Logs
+
+Todas las llamadas GraphQL (queries, mutations, subscriptions) se logean automáticamente con:
+
+- **Operación**: Nombre de la query/mutation (ej: `GetUser`, `CreateTask`)
+- **Tipo**: QUERY | MUTATION | SUBSCRIPTION
+- **Usuario**: ID del usuario autenticado (o "Anonymous")
+- **Status HTTP**: 200, 400, 500, etc.
+- **Duración**: Tiempo total en ms
+- **Variables**: Parámetros enviados (en debug)
+
+Ejemplo en logs:
+
+```
+ⓘ 2026-01-12T10:30:45.123Z
+  operation: "GetUser"
+  type: "QUERY"
+  user: "User#123"
+  status: 200
+  duration: "45ms"
+  📖 QUERY: GetUser
+```
+
 ## Estructura de Carpetas
 
 La estructura del backend está organizada para ser modular y escalable usando GraphQL:
