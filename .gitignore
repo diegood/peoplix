@@ -3,3 +3,4 @@
 backend/.env.production
 backend/.env.production
 backend/.env.production-eu
+node_modules/

@@ -1,0 +1,21 @@
+{
+  "name": "peoplix",
+  "version": "1.0.0",
+  "description": "Mono repor de peoplix",
+  "private": true,
+  "scripts": {
+    "postinstall": "pnpm exec husky install",
+    "install:all": "pnpm install && cd backend && pnpm install && cd ../frontend && pnpm install",
+    "dev:backend": "cd backend && pnpm dev",
+    "dev:frontend": "cd frontend && pnpm dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:backend": "cd backend && pnpm build",
+    "build:frontend": "cd frontend && pnpm build",
+    "build": "npm run build:backend && npm run build:frontend"
+  },
+  "devDependencies": {
+    ".husky": "link:.husky",
+    "concurrently": "^9.2.1",
+    "husky": "^9.1.7"
+  }
+}

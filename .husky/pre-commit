@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Subir versión patch en backend y frontend antes de commit
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "📦 Bumping patch version..."
+
+# Backend
+if [ -f "backend/package.json" ]; then
+  cd backend
+  npm version patch --no-git-tag-version
+  git add package.json
+  cd ..
+fi
+
+# Frontend
+if [ -f "frontend/package.json" ]; then
+  cd frontend
+  npm version patch --no-git-tag-version
+  git add package.json
+  cd ..
+fi
+
+echo "🎉 Version bumped successfully"
