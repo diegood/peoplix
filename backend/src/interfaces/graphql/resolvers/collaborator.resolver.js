@@ -3,18 +3,18 @@ import { CollaboratorService } from '../../../application/services/CollaboratorS
 
 const service = new CollaboratorService()
 const ADMIN_ROLE = 1
+const SUPER_ADMIN_ROLE = 0
 
 const checkAdmin = (context) => {
     if (!context.user) throw new Error('Unauthorized');
-    // Allow 0 (Super Admin) and 1 (Org Admin)
     if (context.user.role > ADMIN_ROLE) { 
         throw new Error('Unauthorized: Admin access required')
     }
-}
+}   
 
 const checkOwnerOrAdmin = (context, resourceId) => {
     if (!context.user) throw new Error('Unauthorized');
-    if (context.user.role <= ADMIN_ROLE) return; // Allow Super Admin (0) and Org Admin (1)
+    if (context.user.role <= ADMIN_ROLE) return;
     if (context.user.userId === resourceId) return;
     throw new Error('Unauthorized: You can only edit your own profile');
 }
@@ -26,13 +26,9 @@ export const collaboratorResolver = {
         
         let targetOrgId = context.user.organizationId;
         
-        // Allow Super Admin to list collaborators from any org
         if (context.user.role === 0 && organizationId) {
             targetOrgId = organizationId;
         }
-        
-        // If no organizationId (SUPER ADMIN with no specific target), maybe allow listing ALL? 
-        // For now, let's assume specific org targeting for the "Promote" UI.
         
         return service.getAll(targetOrgId, search) 
     },
@@ -48,8 +44,7 @@ export const collaboratorResolver = {
         
         let targetOrgId = context.user.organizationId;
 
-        // If Super Admin (0) and organizationId is provided, allow override
-        if (context.user.role === 0 && organizationId) {
+        if (context.user.role === SUPER_ADMIN_ROLE && organizationId) {
             targetOrgId = organizationId;
         }
 
@@ -57,15 +52,11 @@ export const collaboratorResolver = {
     },
     updateCollaborator: (_, { id, ...data }, context) => {
         if (data.systemRole !== undefined) {
-             if (!context.user || context.user.role > 1) { 
+             if (!context.user || context.user.role > ADMIN_ROLE) { 
                  throw new Error('Unauthorized: You cannot change system roles');
              }
-             // Org Admin restrictions
-             if (context.user.role === 1) {
+             if (context.user.role === SUPER_ADMIN_ROLE) {
                 if (data.systemRole === 0) throw new Error('Unauthorized: Org Admins cannot promote to Super Admin');
-                // Could actially allow OrgAdmin to demote other OrgAdmins? Or only themselves? 
-                // Previous logic didn't restrict demoting others if role was 1. 
-                // Let's keep it simple: Roles 0 and 1 can manage roles. 1 cannot create 0.
              }
         }
         checkOwnerOrAdmin(context, id);

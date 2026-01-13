@@ -53,7 +53,6 @@ const projectId = computed(() => route.params.id)
                 <UserCog size="20" />
                 <span>Usuarios</span>
               </RouterLink>
-               <!-- Super Admin Only -->
                <RouterLink v-if="authStore.isSuperAdmin" to="/superadmin/organizations" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-colors" exact-active-class="bg-purple-50 text-purple-600 font-medium">
                 <LayoutDashboard size="20" />
                 <span>Organizaciones</span>

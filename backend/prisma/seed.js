@@ -37,9 +37,7 @@ async function main() {
     await prisma.skill.createMany({ data: skills, skipDuplicates: true });
 
     const workCenter = await prisma.workCenter.upsert({
-        where: { name: 'Madrid HQ' }, // Assuming name is unique or we can use another unique field. 
-        // Checking schema: WorkCenter has id, name. Name is likely not unique constraint unless defined. 
-        // Error says: Unique constraint failed on the fields: (`name`). So yes, name is unique.
+        where: { name: 'Madrid HQ' }, 
         update: {},
         create: {
             name: 'Madrid HQ',
@@ -48,7 +46,6 @@ async function main() {
         }
     });
 
-    // Super Admin Collaborator (Must be Role 0)
     await prisma.collaborator.upsert({
         where: { userId: sadmin.id }, 
         update: { systemRole: 0 },
@@ -126,7 +123,6 @@ async function main() {
           where: { name: skill.name, organizationId: org.id }
         });
         if (skillRecord) {
-            // Find existing
           const existingSkill = await prisma.collaboratorSkill.findFirst({
               where: { collaboratorId: collaborator.id, skillId: skillRecord.id }
           })

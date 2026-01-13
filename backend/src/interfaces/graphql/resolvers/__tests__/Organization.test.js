@@ -3,7 +3,6 @@ import { describe, it, expect, vi } from 'vitest'
 import { organizationResolvers } from '../Organization.js'
 import { prisma } from '../../../../infrastructure/database/client.js'
 
-// Mock Prisma
 vi.mock('../../../../infrastructure/database/client.js', () => ({
   prisma: {
     organization: {
