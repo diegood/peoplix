@@ -2,7 +2,7 @@ name: Deploy Backend to Google Cloud
 on:
   push:
     branches:
-      - main
+      - eu
     paths:
       - 'backend/**'
 
@@ -17,8 +17,10 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             cd /var/www/peoplix-eu/backend
-            git pull origin main
+            git pull origin eu
             
             pnpm install
             # npx prisma generate
