@@ -6,7 +6,7 @@ import { X } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { getAcronym } from '@/helper/StringHelper'
 
-const props = defineProps({
+defineProps({
   modelValue: Boolean
 })
 

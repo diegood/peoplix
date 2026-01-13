@@ -1,9 +1,9 @@
 module.exports = {
   apps: [
     {
-      name: 'back',
+      name: 'back-es',
       script: "./index.js",
-      cwd: '/var/www/peoplix/backend',
+      cwd: '/var/www/peoplix-es/backend',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
@@ -31,7 +31,7 @@ module.exports = {
     {
       name: 'back-eu',
       script: "./index.js",
-      cwd: '/var/www/peoplix/backend',
+      cwd: '/var/www/peoplix-eu/backend',
       instances: 1,
       exec_mode: 'fork',
       watch: false,

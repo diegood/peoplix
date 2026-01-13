@@ -17,11 +17,11 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/peoplix-es/backend
+            cd /var/www/peoplix-eu/backend
             git pull origin main
             
             pnpm install
             # npx prisma generate
             
-            pm2 restart ecosystem.config.cjs --env production --only back-es
+            pm2 restart ecosystem.config.cjs --env production-eu --only back-eu
             pm2 save

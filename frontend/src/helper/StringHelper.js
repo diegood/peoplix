@@ -37,3 +37,10 @@ export function getAcronym(str) {
   }
   return words.map((word) => word.charAt(0).toUpperCase()).join('')
 }
+
+/**
+ * Capitalize first letter of string
+ * @param {string} word string to capitalize first letter
+ * @returns {string} string with first letter capitalized
+ */
+export const firstCapitalize = (word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`

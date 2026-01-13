@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { useMutation } from '@vue/apollo-composable'
 import { UPDATE_ORGANIZATION_MUTATION } from '../graphql/organization.queries'
 import { X, Edit2, Building2 } from 'lucide-vue-next'
