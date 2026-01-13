@@ -16,6 +16,8 @@ model WorkPackage {
 
   functionalRequirementId String?
   functionalRequirement   FunctionalRequirement? @relation(fields: [functionalRequirementId], references: [id])
+
+  responsibilities Responsibility[]
 }
 
 enum RecurrentEventType {

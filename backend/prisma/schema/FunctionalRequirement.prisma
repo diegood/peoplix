@@ -23,12 +23,10 @@ model FunctionalRequirement {
   notes              String?
 
   status       RequirementStatus @default(DRAFT)
-  // Versionado semántico
   versionMajor Int               @default(1)
   versionMinor Int               @default(0)
   versionPatch Int               @default(0)
 
-  // For evolutivos: reference to the original requirement
   originalRequirementId String?
   originalRequirement   FunctionalRequirement?  @relation("RequirementEvolution", fields: [originalRequirementId], references: [id], onDelete: SetNull)
   evolutions            FunctionalRequirement[] @relation("RequirementEvolution")
@@ -42,11 +40,11 @@ model FunctionalRequirement {
   analystId String?
   analyst   User?   @relation(fields: [analystId], references: [id])
 
-  history      FunctionalRequirementHistory[]
-  workPackages WorkPackage[]
-  tasks        Task[]
+  history          FunctionalRequirementHistory[]
+  workPackages     WorkPackage[]
+  tasks            Task[]
+  responsibilities Responsibility[]
 
-  // Relations to other requirements
   relatedTo   FunctionalRequirementRelation[] @relation("relatedFrom")
   relatedFrom FunctionalRequirementRelation[] @relation("relatedTo")
 }

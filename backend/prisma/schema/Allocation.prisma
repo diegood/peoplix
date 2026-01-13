@@ -13,4 +13,7 @@ model Allocation {
 
   subordinatesHierarchy AllocationHierarchy[] @relation("AllocationSupervisor")
   supervisorsHierarchy  AllocationHierarchy[] @relation("AllocationSubordinate")
+
+  responsibilities         Responsibility[] @relation("AllocationResponsibility")
+  targetedResponsibilities Responsibility[] @relation("AllocatedResponsibilityTarget")
 }

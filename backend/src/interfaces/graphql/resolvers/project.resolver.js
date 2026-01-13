@@ -1,5 +1,6 @@
 import { ProjectService } from '../../../application/services/ProjectService.js'
 import { WorkPackageService } from '../../../application/services/WorkPackageService.js'
+import FunctionalRequirementService from '../../../application/services/FunctionalRequirementService.js'
 
 const service = new ProjectService()
 const workPackageService = new WorkPackageService()
@@ -44,6 +45,7 @@ export const projectResolver = {
       name: (parent) => parent.name || parent.skill?.name
   },
   Project: {
-      workPackages: (parent, { status }) => workPackageService.getByProject(parent.id, status)
+      workPackages: (parent, { status }) => workPackageService.getByProject(parent.id, status),
+      functionalRequirements: (parent) => FunctionalRequirementService.list(parent.id)
   }
 }

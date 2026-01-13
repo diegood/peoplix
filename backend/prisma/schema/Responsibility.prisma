@@ -1,0 +1,30 @@
+enum RasciRole {
+  RESPONSIBLE
+  ACCOUNTABLE
+  SUPPORT
+  CONSULTED
+  INFORMED
+}
+
+model Responsibility {
+  id   String    @id @default(uuid())
+  role RasciRole
+
+  allocationId String
+  allocation   Allocation @relation("AllocationResponsibility", fields: [allocationId], references: [id], onDelete: Cascade)
+
+  workPackageId String?
+  workPackage   WorkPackage? @relation(fields: [workPackageId], references: [id], onDelete: Cascade)
+
+  functionalRequirementId String?
+  functionalRequirement   FunctionalRequirement? @relation(fields: [functionalRequirementId], references: [id], onDelete: Cascade)
+
+  targetAllocationId String?
+  targetAllocation   Allocation? @relation("AllocatedResponsibilityTarget", fields: [targetAllocationId], references: [id], onDelete: Cascade)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -2,11 +2,13 @@
 import { ref, computed } from 'vue'
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import { ADD_ALLOCATION_HIERARCHY, REMOVE_ALLOCATION_HIERARCHY } from '@/graphql/mutations'
-import { gql } from 'graphql-tag'
 import { Shield, Network, Trash2, Plus, X, List, GitGraph, Settings } from 'lucide-vue-next'
 import HierarchyTreeNode from './HierarchyTreeNode.vue'
 import HierarchyTypeManager from './HierarchyTypeManager.vue'
+import RasciMatrix from '../modules/Rasci/components/RasciMatrix.vue'
+import SimpleTabs from './SimpleTabs.vue'
 import { useNotificationStore } from '@/stores/notificationStore'
+import { GET_HIERARCHY_TYPES } from '../modules/Rasci/graphql/allocation'
 
 const notificationStore = useNotificationStore()
 
@@ -25,22 +27,16 @@ const selectedTypeId = ref('')
 const showAddForm = ref(false)
 const viewMode = ref('tree') // 'list' | 'tree'
 const showTypeManager = ref(false)
+const activeTab = ref('hierarchy')
 
-// Queries
-const GET_HIERARCHY_TYPES = gql`
-  query GetHierarchyTypes {
-    hierarchyTypes {
-      id
-      name
-      color
-      rank
-    }
-  }
-`
+const tabs = [
+    { id: 'hierarchy', label: 'Arbol de relaciones' },
+    { id: 'rasci', label: 'Matriz RASCI' }
+]
+
 const { result: typesResult } = useQuery(GET_HIERARCHY_TYPES)
 const hierarchyTypes = computed(() => typesResult.value?.hierarchyTypes || [])
 
-// Mutations
 const { mutate: addHierarchy } = useMutation(ADD_ALLOCATION_HIERARCHY, { 
     refetchQueries: ['GetProjects'] 
 })
@@ -48,7 +44,6 @@ const { mutate: removeHierarchy } = useMutation(REMOVE_ALLOCATION_HIERARCHY, {
     refetchQueries: ['GetProjects'] 
 })
 
-// Computed
 const allocations = computed(() => props.project?.allocations || [])
 
 const availableSupervisors = computed(() => {
@@ -59,7 +54,6 @@ const activeSupervisors = (allocation) => {
     return allocation.supervisors || []
 }
 
-// Tree Builder
 const treeRoots = computed(() => {
     const roots = allocations.value.filter(a => !a.supervisors || a.supervisors.length === 0)
     return roots.sort((a,b) => {
@@ -70,12 +64,11 @@ const treeRoots = computed(() => {
 })
 
 const buildTreeFrom = (rootAlloc, visitedIds = new Set()) => {
-    if (visitedIds.has(rootAlloc.id)) return null // Cycle protection
+    if (visitedIds.has(rootAlloc.id)) return null
     
     const newVisited = new Set(visitedIds)
     newVisited.add(rootAlloc.id)
     
-    // rootAlloc.subordinates contains { subordinate: Allocation, hierarchyType: Object }
     const children = (rootAlloc.subordinates || []).map(rel => {
         const fullSub = allocations.value.find(a => a.id === rel.subordinate.id) || rel.subordinate
         
@@ -101,7 +94,6 @@ const treeData = computed(() => {
     return treeRoots.value.map(root => buildTreeFrom(root))
 })
 
-// Logic
 const startEdit = (allocation) => {
     editingAllocationId.value = allocation.id
     selectedSupervisorId.value = ''
@@ -162,13 +154,15 @@ const getName = (allocId) => {
             <div>
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
                     <Network class="text-blue-600"/>
-                    Jerarquía del Proyecto
+                    Matriz de Responsabilidades
                 </h2>
                 <p class="text-sm text-gray-500">{{ project.name }}</p>
             </div>
             
             <div class="flex items-center gap-4">
-                 <div class="bg-white border border-gray-200 rounded-lg p-1 flex shadow-sm">
+                 <SimpleTabs :tabs="tabs" @change="(id) => activeTab = id" class="mr-4" />
+                 
+                 <div v-if="activeTab === 'hierarchy'" class="bg-white border border-gray-200 rounded-lg p-1 flex shadow-sm">
                      <button @click="viewMode = 'list'" :class="['p-2 rounded transition', viewMode === 'list' ? 'bg-blue-50 text-blue-600' : 'text-gray-400 hover:text-gray-600']" title="Lista">
                          <List size="20"/>
                      </button>
@@ -177,7 +171,7 @@ const getName = (allocId) => {
                      </button>
                  </div>
 
-                 <button @click="showTypeManager = true" class="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition flex items-center gap-2 text-sm font-bold">
+                 <button v-if="activeTab === 'hierarchy'" @click="showTypeManager = true" class="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition flex items-center gap-2 text-sm font-bold">
                     <Settings size="16"/> Configurar Tipos
                  </button>
                  
@@ -187,7 +181,7 @@ const getName = (allocId) => {
             </div>
         </div>
 
-        <div class="flex-1 overflow-hidden flex">
+        <div v-if="activeTab === 'hierarchy'" class="flex-1 overflow-hidden flex">
             <div class="flex-1 overflow-auto p-6 bg-gray-50/50 relative">
                 
                 <div v-if="viewMode === 'list'" class="space-y-3">
@@ -311,6 +305,10 @@ const getName = (allocId) => {
                     <p class="text-sm">para editar sus relaciones</p>
                 </div>
             </div>
+        </div>
+        
+        <div v-if="activeTab === 'rasci'" class="flex-1 overflow-hidden">
+            <RasciMatrix :project="project" :allocations="allocations" />
         </div>
         
         <HierarchyTypeManager v-if="showTypeManager" @close="showTypeManager = false" />

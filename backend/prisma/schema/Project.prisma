@@ -15,6 +15,7 @@ model Project {
   workPackages           WorkPackage[]
   functionalRequirements FunctionalRequirement[]
   kanbanCards            KanbanCard[]
+  responsibilities       Responsibility[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

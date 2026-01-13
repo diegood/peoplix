@@ -13,6 +13,7 @@ type Project {
   sprints: [Sprint!]
   milestones: [Milestone!]
   workPackages(status: String): [WorkPackage]
+  functionalRequirements: [FunctionalRequirement!]
 }
 
 type ProjectRequirement {
@@ -34,7 +35,7 @@ type ProjectRequirementSkill {
 
   projects(search: String): [Project!]!
 
-  project: Project!
+  project(id: ID!): Project
   }
 
   extend type Mutation {
