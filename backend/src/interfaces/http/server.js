@@ -3,6 +3,8 @@ import mercurius from 'mercurius'
 import cors from '@fastify/cors'
 import { resolvers } from '../graphql/resolvers/index.js'
 import { schema } from '../graphql/schema.js'
+import { prisma } from '../../infrastructure/database/client.js'
+
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const LOG_LEVEL = process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info')
@@ -50,13 +52,23 @@ app.register(mercurius, {
   resolvers,
   graphiql: process.env.NODE_ENV !== 'production',
   subscription: true,
-  context: (request) => {
+  context: async (request) => {
     const token = request.headers.authorization || ''
     try {
       if (token) {
         const cleanToken = token.replace('Bearer ', '')
         const decoded = jwt.verify(cleanToken, JWT_SECRET)
-        return { user: decoded, pubsub: request.server.graphql.pubsub }
+        
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId }
+        });
+
+        const contextUser = {
+            ...decoded,
+            isSuperAdmin: user?.isSuperAdmin || false
+        };
+
+        return { user: contextUser, pubsub: request.server.graphql.pubsub }
       }
     } catch (e) {
       console.error('Invalid token:', e.message)

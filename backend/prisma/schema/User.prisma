@@ -5,11 +5,13 @@ model User {
 
   collaborator Collaborator?
 
-  cardComments           CardComment[]
-  cardEvents             CardEvent[]
-  cardCommentReactions   CardCommentReaction[]
-  cardCommentHistory     CardCommentHistory[]
-  documentedRequirements FunctionalRequirement[]
+  isSuperAdmin Boolean @default(false)
+
+  cardComments                   CardComment[]
+  cardEvents                     CardEvent[]
+  cardCommentReactions           CardCommentReaction[]
+  cardCommentHistory             CardCommentHistory[]
+  documentedRequirements         FunctionalRequirement[]
   functionalRequirementHistories FunctionalRequirementHistory[]
 
   createdAt DateTime @default(now())

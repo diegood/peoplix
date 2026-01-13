@@ -3,10 +3,10 @@ import { CollaboratorService } from '../../../application/services/CollaboratorS
 
 const service = new CollaboratorService()
 const ADMIN_ROLE = 1
-const SUPER_ADMIN_ROLE = 0
 
 const checkAdmin = (context) => {
     if (!context.user) throw new Error('Unauthorized');
+    if (context.user.isSuperAdmin) return; // Super Admin bypass
     if (context.user.role > ADMIN_ROLE) { 
         throw new Error('Unauthorized: Admin access required')
     }
@@ -26,7 +26,7 @@ export const collaboratorResolver = {
         
         let targetOrgId = context.user.organizationId;
         
-        if (context.user.role === 0 && organizationId) {
+        if (context.user.isSuperAdmin && organizationId) {
             targetOrgId = organizationId;
         }
         
@@ -44,7 +44,7 @@ export const collaboratorResolver = {
         
         let targetOrgId = context.user.organizationId;
 
-        if (context.user.role === SUPER_ADMIN_ROLE && organizationId) {
+        if (context.user.isSuperAdmin && organizationId) {
             targetOrgId = organizationId;
         }
 
@@ -55,8 +55,8 @@ export const collaboratorResolver = {
              if (!context.user || context.user.role > ADMIN_ROLE) { 
                  throw new Error('Unauthorized: You cannot change system roles');
              }
-             if (context.user.role === SUPER_ADMIN_ROLE) {
-                if (data.systemRole === 0) throw new Error('Unauthorized: Org Admins cannot promote to Super Admin');
+             if (!context.user.isSuperAdmin) {
+                 if (data.systemRole === 0) throw new Error('Unauthorized: Org Admins cannot promote to Super Admin');
              }
         }
         checkOwnerOrAdmin(context, id);

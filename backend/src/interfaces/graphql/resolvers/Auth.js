@@ -36,22 +36,25 @@ export const authResolvers = {
         include: { organization: true }
       });
 
-      if (!collaborators.length) {
+      if (!collaborators.length && !user.isSuperAdmin) {
          throw new Error('User is not associated with any organization');
       }
 
-      const activeProfile = collaborators[0];
+      const activeProfile = collaborators[0] || null;
       
-      if (activeProfile.organization && !activeProfile.organization.isActive) {
+      if (activeProfile && activeProfile.organization && !activeProfile.organization.isActive) {
           throw new Error('Organization is blocked. Contact support.');
       }
 
-      const token = jwt.sign(
-        { 
+      const tokenPayload = { 
             userId: user.id, 
-            organizationId: activeProfile.organizationId,
-            role: activeProfile.systemRole 
-        },
+            organizationId: activeProfile?.organizationId || null,
+            role: activeProfile?.systemRole || 2,
+            isSuperAdmin: user.isSuperAdmin
+      };
+
+      const token = jwt.sign(
+        tokenPayload,
         JWT_SECRET,
         { expiresIn: '7d' }
       );
