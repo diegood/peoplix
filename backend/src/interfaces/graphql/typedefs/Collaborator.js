@@ -71,11 +71,11 @@ type CollaboratorSkill {
 
   extend type Query {
     collaborator(id: ID!): Collaborator
-    collaborators(search: String): [Collaborator!]!
+    collaborators(search: String, organizationId: ID): [Collaborator!]!
   }
 
   extend type Mutation {
-    createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID, password: String, systemRole: Int, workingSchedule: JSON, useCustomSchedule: Boolean): Collaborator!
+    createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID, password: String, systemRole: Int, workingSchedule: JSON, useCustomSchedule: Boolean, organizationId: ID): Collaborator!
     updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean, workCenterId: ID, password: String, systemRole: Int, workingSchedule: JSON, useCustomSchedule: Boolean): Collaborator!
     deleteCollaborator(id: ID!): Boolean!
     

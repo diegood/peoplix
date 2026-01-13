@@ -8,6 +8,7 @@ model Collaborator {
   joinDate        DateTime @default(now())
   isActive        Boolean  @default(true)
 
+  // 0: Super Admin, 1: Org Admin, 2: User
   systemRole Int @default(2)
 
   userId String @unique

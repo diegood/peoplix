@@ -9,7 +9,8 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
 
   const isAuthenticated = computed(() => !!token.value)
-  const isAdmin = computed(() => user.value?.systemRole === 1)
+  const isAdmin = computed(() => user.value?.systemRole <= 1)
+  const isSuperAdmin = computed(() => user.value?.systemRole === 0)
 
   const { mutate: loginMutation } = useMutation(LOGIN_MUTATION)
   
@@ -51,6 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isAuthenticated,
     isAdmin,
+    isSuperAdmin,
     login,
     logout,
     updateUser: (newUser) => {

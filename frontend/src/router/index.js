@@ -96,6 +96,12 @@ const router = createRouter({
       path: '/profile',
       name: 'profile',
       component: () => import('@/views/ProfileView.vue')
+    },
+    {
+      path: '/superadmin/organizations',
+      name: 'superadmin-organizations',
+      component: () => import('@/modules/SuperAdmin/views/OrganizationsView.vue'),
+      meta: { requiresSuperAdmin: true }
     }
   ],
 })
@@ -115,6 +121,10 @@ router.beforeEach(async (to, from, next) => {
   }
   
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
+      return next({ name: 'dashboard' })
+  }
+
+  if (to.meta.requiresSuperAdmin && !authStore.isSuperAdmin) {
       return next({ name: 'dashboard' })
   }
 

@@ -6,13 +6,19 @@ export const OrganizationSchema = gql`
     name: String!
     tag: String
     workingSchedule: JSON
+    isActive: Boolean
+    admins: [Collaborator]
   }
 
   extend type Query {
     organization: Organization
+    allOrganizations: [Organization!]!
+    organizationAdmins(organizationId: ID!): [Collaborator]
   }
 
   extend type Mutation {
-    updateOrganization(name: String, tag: String, workingSchedule: JSON): Organization!
+    createOrganization(name: String!, tag: String, adminEmail: String!, adminPassword: String!, adminFirstName: String!, adminLastName: String!): Organization!
+    updateOrganization(id: ID, name: String, tag: String, workingSchedule: JSON): Organization!
+    toggleOrganizationStatus(id: ID!, isActive: Boolean!): Organization!
   }
 `;

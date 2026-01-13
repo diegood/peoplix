@@ -41,6 +41,10 @@ export const authResolvers = {
       }
 
       const activeProfile = collaborators[0];
+      
+      if (activeProfile.organization && !activeProfile.organization.isActive) {
+          throw new Error('Organization is blocked. Contact support.');
+      }
 
       const token = jwt.sign(
         { 
