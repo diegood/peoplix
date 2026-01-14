@@ -8,11 +8,13 @@ export const OrganizationSchema = gql`
     workingSchedule: JSON
     isActive: Boolean
     admins: [Collaborator]
+    activeCollaboratorsCount: Int
   }
 
   extend type Query {
     organization: Organization
     allOrganizations: [Organization!]!
+    totalActiveUsers: Int!
     organizationAdmins(organizationId: ID!): [Collaborator]
   }
 

@@ -15,6 +15,7 @@ export const ALL_ORGANIZATIONS_QUERY = gql`
       tag
       workingSchedule
       isActive
+      activeCollaboratorsCount
       admins {
         id
         firstName
@@ -22,6 +23,7 @@ export const ALL_ORGANIZATIONS_QUERY = gql`
         email
       }
     }
+    totalActiveUsers
   }
 `
 

@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { ALL_ORGANIZATIONS_QUERY } from '../graphql/organization.queries'
-import { Plus, Building2, Shield, Edit2 } from 'lucide-vue-next'
+import { Plus, Building2, Shield, Edit2, Users } from 'lucide-vue-next'
 import CreateOrganizationModal from '../components/CreateOrganizationModal.vue'
 import EditOrganizationModal from '../components/EditOrganizationModal.vue'
 import ManageOrganizationModal from '../components/ManageOrganizationModal.vue'
@@ -45,7 +45,11 @@ const handleSuccess = () => {
             <Building2 class="w-8 h-8 text-blue-600" />
             Organizaciones
         </h1>
-        <p class="text-gray-500 mt-1">Administra todas las organizaciones ({{ result?.allOrganizations?.length || 0 }})</p>
+        <div class="flex gap-4 text-sm mt-1">
+            <span class="text-gray-500">Organizaciones: <strong>{{ result?.allOrganizations?.length || 0 }}</strong></span>
+            <span class="text-gray-300">|</span>
+            <span class="text-gray-500">Usuarios Totales: <strong>{{ result?.totalActiveUsers || 0 }}</strong></span>
+        </div>
       </div>
       <button @click="showCreateModal = true" class="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition font-medium">
         <Plus size="20" />
@@ -75,7 +79,13 @@ const handleSuccess = () => {
                 </span>
             </div>
             <h3 class="text-lg font-bold text-gray-900 mb-1">{{ org.name }}</h3>
-            <p class="text-gray-400 text-xs font-mono mb-4">{{ org.id }}</p>
+            <div class="flex items-center gap-2 mb-4">
+                <p class="text-gray-400 text-xs font-mono">{{ org.id }}</p>
+                <div class="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium" title="Usuarios Activos">
+                    <Users size="12" />
+                    {{ org.activeCollaboratorsCount || 0 }}
+                </div>
+            </div>
             
             <div class="border-t border-gray-100 pt-4 mt-4 flex justify-between items-center">
                  <div class="flex -space-x-2">

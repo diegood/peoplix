@@ -30,6 +30,11 @@ export const organizationResolvers = {
             },
             include: { user: true }
         })
+    },
+    totalActiveUsers: async (_, __, context) => {
+        const user = context.user
+        if (!user || !user.isSuperAdmin) throw new Error('Unauthorized')
+        return prisma.user.count()
     }
   },
   Mutation: {
@@ -131,6 +136,14 @@ export const organizationResolvers = {
                   systemRole: ORG_ADMIN 
               },
               include: { user: true }
+          })
+      },
+      activeCollaboratorsCount: (parent) => {
+          return prisma.collaborator.count({
+              where: {
+                  organizationId: parent.id,
+                  isActive: true
+              }
           })
       }
   }
