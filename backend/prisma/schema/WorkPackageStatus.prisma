@@ -5,7 +5,7 @@ model WorkPackageStatus {
   order          Int          @default(0)
   isClosed       Boolean      @default(false)
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

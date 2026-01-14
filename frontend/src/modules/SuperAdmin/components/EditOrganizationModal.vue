@@ -50,9 +50,9 @@ const handleUpdateOrg = async () => {
         })
         emit('update:modelValue', false)
         emit('success')
-        notification.addToast('Organización actualizada exitosamente', 'success')
+        notification.showToast('Organización actualizada exitosamente', 'success')
     } catch (e) {
-        notification.addToast('Error actualizando organización: ' + e.message, 'error')
+        notification.showToast('Error actualizando organización: ' + e.message, 'error')
     }
 }
 

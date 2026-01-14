@@ -6,10 +6,13 @@ import { Plus, Building2, Shield, Edit2 } from 'lucide-vue-next'
 import CreateOrganizationModal from '../components/CreateOrganizationModal.vue'
 import EditOrganizationModal from '../components/EditOrganizationModal.vue'
 import ManageOrganizationModal from '../components/ManageOrganizationModal.vue'
+import DeleteOrganizationModal from '../components/DeleteOrganizationModal.vue'
+import { Trash2 } from 'lucide-vue-next'
 
 const showCreateModal = ref(false)
 const showManageModal = ref(false)
 const showEditModal = ref(false)
+const showDeleteModal = ref(false)
 const selectedOrg = ref(null)
 
 const { result, loading, error, refetch } = useQuery(ALL_ORGANIZATIONS_QUERY)
@@ -22,6 +25,11 @@ const openManageModal = (org) => {
 const openEditModal = (org) => {
     selectedOrg.value = org
     showEditModal.value = true
+}
+
+const openDeleteModal = (org) => {
+    selectedOrg.value = org
+    showDeleteModal.value = true
 }
 
 const handleSuccess = () => {
@@ -45,17 +53,14 @@ const handleSuccess = () => {
       </button>
     </div>
 
-    <!-- Error State -->
     <div v-if="error" class="bg-red-50 text-red-600 p-4 rounded-lg mb-6 border border-red-100">
         Error cargando organizaciones: {{ error.message }}
     </div>
 
-    <!-- List -->
     <div v-if="loading" class="text-center py-12 text-gray-500">Cargando...</div>
     
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div v-for="org in result?.allOrganizations" :key="org.id" class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition relative overflow-hidden">
-             <!-- Status Ribbon -->
              <div v-if="!org.isActive" class="absolute top-0 right-0 bg-red-500 text-white text-xs px-8 py-1 transform rotate-45 translate-x-3 translate-y-3 font-bold shadow-sm">
                 BLOQUEADA
              </div>
@@ -86,6 +91,9 @@ const handleSuccess = () => {
                     <button @click="openEditModal(org)" class="text-gray-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition" title="Editar">
                         <Edit2 size="16" />
                     </button>
+                    <button @click="openDeleteModal(org)" class="text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition" title="Eliminar">
+                        <Trash2 size="16" />
+                    </button>
                 </div>
             </div>
         </div>
@@ -106,6 +114,13 @@ const handleSuccess = () => {
     <EditOrganizationModal 
         v-if="selectedOrg"
         v-model="showEditModal"
+        :organization="selectedOrg"
+        @success="handleSuccess"
+    />
+
+    <DeleteOrganizationModal 
+        v-if="selectedOrg"
+        v-model="showDeleteModal"
         :organization="selectedOrg"
         @success="handleSuccess"
     />

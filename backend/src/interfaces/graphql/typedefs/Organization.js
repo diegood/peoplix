@@ -20,5 +20,6 @@ export const OrganizationSchema = gql`
     createOrganization(name: String!, tag: String, adminEmail: String!, adminPassword: String!, adminFirstName: String!, adminLastName: String!): Organization!
     updateOrganization(id: ID, name: String, tag: String, workingSchedule: JSON): Organization!
     toggleOrganizationStatus(id: ID!, isActive: Boolean!): Organization!
+    deleteOrganization(id: ID!): Boolean!
   }
 `;

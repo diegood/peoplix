@@ -3,7 +3,7 @@ model HierarchyType {
   name String
 
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   color          String       @default("bg-gray-100 text-gray-700 border-gray-200") // TODO [refactor] usar algun objecto o alguna otra cosa para no tener acoplado Tailwind
   rank           Int          @default(0)
 

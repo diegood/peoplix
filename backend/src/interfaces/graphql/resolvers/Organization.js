@@ -114,6 +114,13 @@ export const organizationResolvers = {
             where: { id },
             data: { isActive }
         })
+    },
+
+    deleteOrganization: async (_, { id }, context) => {
+        const user = context.user
+        if (!user || (!user.isSuperAdmin)) throw new Error('Unauthorized: Only Super Admin can delete organizations')
+        await prisma.organization.delete({ where: { id } })
+        return true
     }
   },
   Organization: {

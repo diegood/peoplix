@@ -1,6 +1,12 @@
 
 import gql from 'graphql-tag'
 
+export const DELETE_ORGANIZATION_MUTATION = gql`
+  mutation DeleteOrganization($id: ID!) {
+    deleteOrganization(id: $id)
+  }
+`
+
 export const ALL_ORGANIZATIONS_QUERY = gql`
   query AllOrganizations {
     allOrganizations {
