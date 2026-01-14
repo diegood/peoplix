@@ -22,9 +22,10 @@ const router = createRouter({
       meta: { requiresAdmin: true }
     },
     {
-      path: '/profile',
+      path: '/:orgTag/profile',
       name: 'profile',
-      component: () => import('@/views/ProfileView.vue')
+      component: () => import('@/views/ProfileView.vue'),
+      beforeEnter: checkOrgAccess
     },
     {
       path: '/superadmin/organizations',

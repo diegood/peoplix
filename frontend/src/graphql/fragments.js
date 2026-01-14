@@ -56,6 +56,11 @@ export const COLLABORATOR_FRAGMENT = gql`
          }
       }
     }
+    organization {
+        id
+        name
+        tag
+    }
     absences {
       id
       startDate

@@ -71,7 +71,7 @@ const orgTag = computed(() => authStore.user?.organization?.tag)
 
       <div class="p-4 border-t border-gray-100">
         <div class="flex items-center justify-between group">
-           <RouterLink to="/profile" class="flex items-center gap-3 flex-1 hover:bg-gray-50 p-2 rounded-lg transition">
+           <RouterLink :to="`/${orgTag}/profile`" class="flex items-center gap-3 flex-1 hover:bg-gray-50 p-2 rounded-lg transition">
                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs"> 
                   {{ user?.firstName?.[0] || 'U' }}{{ user?.lastName?.[0] || 'U' }} 
                </div>
