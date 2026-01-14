@@ -3,46 +3,45 @@ import { RouterLink, RouterView } from 'vue-router'
 import { LayoutDashboard, Users, FolderKanban, BarChart3, Settings, Calendar, UserCog, LogOut } from 'lucide-vue-next'
 import ToastNotification from './components/ToastNotification.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
+import OrgSelector from './components/OrgSelector.vue'
 import { useAuthStore } from '@/modules/Auth/stores/auth.store'
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-
 const authStore = useAuthStore()
-const route = useRoute()
 const user = computed(() => authStore.user)
 const isAdmin = computed(() => authStore.isAdmin)
-const projectId = computed(() => route.params.id)
+const orgTag = computed(() => authStore.user?.organization?.tag)
 </script>
 
 <template>
   <div class="flex h-screen bg-gray-50 text-gray-900 font-sans">
     <aside v-if="authStore.isAuthenticated" class="w-64 bg-white border-r border-gray-200 flex flex-col">
-      <div class="p-6 border-b border-gray-100 flex items-center gap-2">
-        <img src="@/assets/logo.png" alt="PEOPLIX" class="h-8">
+      <div class="p-6 border-b border-gray-100 flex flex-col gap-4">
+        <img src="@/assets/logo.png" alt="PEOPLIX" class="h-8 self-start">
+        <OrgSelector />
       </div>
 
       <nav class="flex-1 p-4 space-y-1">
-          <RouterLink to="/" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
+          <RouterLink :to="`/${orgTag}/`" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
             <LayoutDashboard size="20" />
             <span>Panel</span>
           </RouterLink>
 
-          <RouterLink to="/projects" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
+          <RouterLink :to="`/${orgTag}/projects`" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
             <FolderKanban size="20" />
             <span>Proyectos</span>
           </RouterLink>
 
-          <RouterLink to="/kanban" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
+          <RouterLink :to="`/${orgTag}/kanban`" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
              <LayoutDashboard size="20" />
              <span>Tablero Kanban</span>
           </RouterLink>
 
-          <RouterLink to="/planning" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
+          <RouterLink :to="`/${orgTag}/planning`" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
             <Calendar size="20" />
             <span>Planificación</span>
           </RouterLink>
 
-          <RouterLink to="/collaborators" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
+          <RouterLink :to="`/${orgTag}/collaborators`" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
             <Users size="20" />
             <span>Colaboradores</span>
           </RouterLink>
@@ -59,12 +58,12 @@ const projectId = computed(() => route.params.id)
               </RouterLink>
            </div>
 
-          <RouterLink v-if="isAdmin" to="/settings" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100/50 hover:text-gray-900 rounded-lg transition-colors mt-auto" exact-active-class="bg-gray-100 text-gray-900 font-medium">
+          <RouterLink v-if="isAdmin" :to="`/${orgTag}/settings`" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100/50 hover:text-gray-900 rounded-lg transition-colors mt-auto" exact-active-class="bg-gray-100 text-gray-900 font-medium">
             <Settings size="20" />
             <span>Configuración</span>
           </RouterLink>
 
-          <RouterLink to="/stats" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
+          <RouterLink :to="`/${orgTag}/stats`" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" exact-active-class="bg-blue-50 text-blue-600 font-medium">
             <BarChart3 size="20" />
             <span>Estadísticas</span>
           </RouterLink>

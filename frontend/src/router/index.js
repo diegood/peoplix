@@ -11,91 +11,9 @@ const router = createRouter({
       meta: { public: true }
     },
     {
-      path: '/projects',
-      name: 'projects',
-      component: () => import('@/modules/Projects/views/ProjectsView.vue')
-    },
-    {
-      path: '/',
-      name: 'root',
-      redirect: () => {
-        const authStore = useAuthStore()
-        if (authStore.isAuthenticated && authStore.user?.organization?.tag) {
-          return { path: `/@${authStore.user.organization.tag}/` }
-        }
-        return { name: 'login' }
-      }
-    },
-    {
       path: '/unauthorized',
       name: 'unauthorized',
       component: () => import('@/views/UnauthorizedView.vue')
-    },
-    {
-      path: '/collaborators',
-      name: 'collaborators',
-      component: () => import('@/modules/Collaborators/views/CollaboratorsView.vue')
-    },
-    {
-      path: '/stats',
-      name: 'stats',
-      component: () => import('@/views/StatsView.vue')
-    },
-    {
-      path: '/settings',
-      name: 'settings',
-      component: () => import('@/modules/Configuration/views/SettingsView.vue'),
-      meta: { requiresAdmin: true }
-    },
-    {
-      path: '/planning',
-      name: 'planning',
-      component: () => import('@/views/MonthlyPlanningView.vue')
-    },
-    {
-      path: '/:orgTag/projects/:projectTag/requirements',
-      name: 'tagged-requirements',
-      component: () => import('@/modules/Requirements/views/RequirementsView.vue')
-    },
-    {
-      path: '/:orgTag/projects/:projectTag/requirements/:requirementNumber',
-      name: 'tagged-requirement-detail',
-      component: () => import('@/modules/Requirements/views/RequirementsView.vue')
-    },
-    {
-      path: '/:orgTag/projects/:projectTag/requirements/:requirementNumber/section/:section',
-      name: 'tagged-requirement-section',
-      component: () => import('@/modules/Requirements/views/RequirementsView.vue')
-    },
-    {
-      path: '/projects/:id/estimation',
-      name: 'project-estimation',
-      component: () => import('@/modules/Allocations/views/ProjectEstimationView.vue')
-    },
-    {
-      path: '/projects/:id/kanban',
-      name: 'project-kanban',
-      component: () => import('@/modules/Kanban/views/KanbanView.vue')
-    },
-    {
-      path: '/:orgTag/kanban/:projectTag',
-      name: 'tagged-kanban-board',
-      component: () => import('@/modules/Kanban/views/KanbanView.vue')
-    },
-    {
-      path: '/:orgTag/kanban/:projectTag/card/:cardId',
-      name: 'tagged-kanban-card',
-      component: () => import('@/modules/Kanban/views/KanbanView.vue')
-    },
-    {
-      path: '/kanban',
-      name: 'global-kanban',
-      component: () => import('@/modules/Kanban/views/KanbanView.vue')
-    },
-    {
-      path: '/kanban/card/:cardId',
-      name: 'global-kanban-card',
-      component: () => import('@/modules/Kanban/views/KanbanView.vue')
     },
     {
       path: '/admin/users',
@@ -114,21 +32,119 @@ const router = createRouter({
       component: () => import('@/modules/SuperAdmin/views/OrganizationsView.vue'),
     },
     {
-      path: '/@:orgTag/',
+      path: '/',
+      name: 'root',
+      redirect: () => {
+        const authStore = useAuthStore()
+        if (authStore.isAuthenticated) {
+            if (authStore.user?.organization?.tag) {
+                return { path: `/${authStore.user.organization.tag}/` }
+            }
+            if (authStore.isSuperAdmin) {
+                return { name: 'superadmin-organizations' }
+            }
+        }
+        return { name: 'login' }
+      }
+    },
+    // Org scoped routes
+    {
+      path: '/:orgTag/',
       name: 'dashboard',
       component: () => import('@/views/DashboardView.vue'),
-      beforeEnter: (to, from, next) => {
-        const authStore = useAuthStore()
-        const userOrgTag = authStore.user?.organization?.tag
-        
-        if (to.params.orgTag !== userOrgTag) {
-          return next({ name: 'unauthorized' })
-        }
-        next()
-      }
+      beforeEnter: checkOrgAccess
+    },
+    {
+      path: '/:orgTag/projects',
+      name: 'projects',
+      component: () => import('@/modules/Projects/views/ProjectsView.vue'),
+      beforeEnter: checkOrgAccess
+    },
+    {
+      path: '/:orgTag/collaborators',
+      name: 'collaborators',
+      component: () => import('@/modules/Collaborators/views/CollaboratorsView.vue'),
+      beforeEnter: checkOrgAccess
+    },
+    {
+      path: '/:orgTag/stats',
+      name: 'stats',
+      component: () => import('@/views/StatsView.vue'),
+      beforeEnter: checkOrgAccess
+    },
+    {
+      path: '/:orgTag/settings',
+      name: 'settings',
+      component: () => import('@/modules/Configuration/views/SettingsView.vue'),
+      meta: { requiresAdmin: true },
+      beforeEnter: checkOrgAccess
+    },
+    {
+      path: '/:orgTag/planning',
+      name: 'planning',
+      component: () => import('@/views/MonthlyPlanningView.vue'),
+      beforeEnter: checkOrgAccess
+    },
+    {
+      path: '/:orgTag/kanban',
+      name: 'global-kanban',
+      component: () => import('@/modules/Kanban/views/KanbanView.vue'),
+      beforeEnter: checkOrgAccess
+    },
+    {
+      path: '/:orgTag/kanban/card/:cardId',
+      name: 'global-kanban-card',
+      component: () => import('@/modules/Kanban/views/KanbanView.vue'),
+      beforeEnter: checkOrgAccess
+    },
+    // Sub-modules within projects/org context
+    {
+      path: '/:orgTag/projects/:projectTag/requirements',
+      name: 'tagged-requirements',
+      component: () => import('@/modules/Requirements/views/RequirementsView.vue')
+    },
+    {
+      path: '/:orgTag/projects/:projectTag/requirements/:requirementNumber',
+      name: 'tagged-requirement-detail',
+      component: () => import('@/modules/Requirements/views/RequirementsView.vue')
+    },
+    {
+      path: '/:orgTag/projects/:projectTag/requirements/:requirementNumber/section/:section',
+      name: 'tagged-requirement-section',
+      component: () => import('@/modules/Requirements/views/RequirementsView.vue')
+    },
+    {
+      path: '/:orgTag/projects/:id/estimation',
+      name: 'project-estimation',
+      component: () => import('@/modules/Allocations/views/ProjectEstimationView.vue')
+    },
+    {
+      path: '/:orgTag/projects/:id/kanban',
+      name: 'project-kanban',
+      component: () => import('@/modules/Kanban/views/KanbanView.vue')
+    },
+    {
+      path: '/:orgTag/kanban/:projectTag',
+      name: 'tagged-kanban-board',
+      component: () => import('@/modules/Kanban/views/KanbanView.vue')
+    },
+    {
+      path: '/:orgTag/kanban/:projectTag/card/:cardId',
+      name: 'tagged-kanban-card',
+      component: () => import('@/modules/Kanban/views/KanbanView.vue')
     }
   ],
 })
+
+function checkOrgAccess(to, from, next) {
+    const authStore = useAuthStore()
+    const userOrgTag = authStore.user?.organization?.tag
+    
+    if (to.params.orgTag !== userOrgTag) {
+      return next({ name: 'unauthorized' })
+    }
+    next()
+}
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
@@ -141,6 +157,9 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (to.name === 'login' && isAuthenticated) {
+    if (authStore.isSuperAdmin && !authStore.user?.organization?.tag) {
+        return next({ name: 'superadmin-organizations' })
+    }
     return next('/')
   }
   

@@ -40,8 +40,26 @@ export const authResolvers = {
          throw new Error('User is not associated with any organization');
       }
 
-      const activeProfile = collaborators[0] || null;
+      const availableOrganizations = collaborators.map(c => c.organization).filter(o => o.isActive);
+
+      let activeProfile = collaborators[0] || null;
       
+      if (!activeProfile && user.isSuperAdmin) {
+         activeProfile = {
+             id: 'super-admin-' + user.id,
+             firstName: 'Super',
+             lastName: 'Admin',
+             userName: user.email,
+             email: user.email,
+             systemRole: 0,
+             organization: null,
+             organizationId: null,
+             roles: [],
+             skills: [],
+             allocations: []
+         };
+      }
+
       if (activeProfile && activeProfile.organization && !activeProfile.organization.isActive) {
           throw new Error('Organization is blocked. Contact support.');
       }
@@ -49,7 +67,7 @@ export const authResolvers = {
       const tokenPayload = { 
             userId: user.id, 
             organizationId: activeProfile?.organizationId || null,
-            role: activeProfile?.systemRole || 2,
+            role: activeProfile?.systemRole ?? 0,
             isSuperAdmin: user.isSuperAdmin
       };
 
@@ -61,8 +79,49 @@ export const authResolvers = {
 
       return {
         token,
-        user: activeProfile
+        user: activeProfile,
+        availableOrganizations
       };
+    },
+    switchOrganization: async (_, { organizationId }, context) => {
+        if (!context.user) throw new Error('Not authenticated');
+
+        const collaborator = await prisma.collaborator.findFirst({
+            where: {
+                userId: context.user.userId,
+                organizationId: organizationId
+            },
+            include: { organization: true }
+        });
+
+        if (!collaborator) {
+             throw new Error('User not part of this organization');
+        }
+        
+        if (!collaborator.organization.isActive) {
+             throw new Error('Organization is blocked');
+        }
+
+        const tokenPayload = { 
+            userId: context.user.userId, 
+            organizationId: organizationId,
+            role: collaborator.systemRole,
+            isSuperAdmin: context.user.isSuperAdmin 
+        };
+        
+        const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
+         
+        const allCollaborators = await prisma.collaborator.findMany({
+            where: { userId: context.user.userId },
+            include: { organization: true }
+        });
+        const availableOrganizations = allCollaborators.map(c => c.organization).filter(o => o.isActive);
+        
+        return {
+            token,
+            user: collaborator,
+            availableOrganizations
+        };
     }
   },
   Query: {
