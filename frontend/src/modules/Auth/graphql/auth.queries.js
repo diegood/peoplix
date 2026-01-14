@@ -11,6 +11,9 @@ export const LOGIN_MUTATION = gql`
         lastName
         systemRole
         organizationId
+        organization {
+          tag
+        }
       }
     }
   }
@@ -25,6 +28,9 @@ export const ME_QUERY = gql`
       lastName
       systemRole
       organizationId
+      organization {
+        tag
+      }
     }
   }
 `

@@ -17,8 +17,19 @@ const router = createRouter({
     },
     {
       path: '/',
-      name: 'dashboard',
-      component: () => import('@/views/DashboardView.vue')
+      name: 'root',
+      redirect: () => {
+        const authStore = useAuthStore()
+        if (authStore.isAuthenticated && authStore.user?.organization?.tag) {
+          return { path: `/@${authStore.user.organization.tag}/` }
+        }
+        return { name: 'login' }
+      }
+    },
+    {
+      path: '/unauthorized',
+      name: 'unauthorized',
+      component: () => import('@/views/UnauthorizedView.vue')
     },
     {
       path: '/collaborators',
@@ -101,7 +112,20 @@ const router = createRouter({
       path: '/superadmin/organizations',
       name: 'superadmin-organizations',
       component: () => import('@/modules/SuperAdmin/views/OrganizationsView.vue'),
-      meta: { requiresSuperAdmin: true }
+    },
+    {
+      path: '/@:orgTag/',
+      name: 'dashboard',
+      component: () => import('@/views/DashboardView.vue'),
+      beforeEnter: (to, from, next) => {
+        const authStore = useAuthStore()
+        const userOrgTag = authStore.user?.organization?.tag
+        
+        if (to.params.orgTag !== userOrgTag) {
+          return next({ name: 'unauthorized' })
+        }
+        next()
+      }
     }
   ],
 })
@@ -117,15 +141,15 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (to.name === 'login' && isAuthenticated) {
-    return next({ name: 'dashboard' })
+    return next('/')
   }
   
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
-      return next({ name: 'dashboard' })
+      return next('/')
   }
 
   if (to.meta.requiresSuperAdmin && !authStore.isSuperAdmin) {
-      return next({ name: 'dashboard' })
+      return next('/')
   }
 
   next()

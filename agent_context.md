@@ -78,6 +78,31 @@ El frontend está migrando hacia una arquitectura modular basada en dominios fun
 5.  **Verificación**:
     *   Ejecutar tests (`pnpm test` en backend).
     *   Verificar linter.
+    *   Verificar que los tests de autorización (`auth.directive.test.js` y específicos de entidad) pasen.
+
+## 6. Seguridad y Autorización
+
+El sistema utiliza un sistema de autorización declarativo basado en directivas de esquema GraphQL.
+
+### Directiva `@auth`
+
+*   **Definición**: `directive @auth(requires: AuthRole = ADMIN, sameUser: String) on OBJECT | FIELD_DEFINITION`
+*   **Roles (`AuthRole`)**:
+    *   `USER`: Usuario autenticado.
+    *   `ADMIN`: Administrador de la organización (SystemRole = 1) o Super Admin.
+    *   `SUPER_ADMIN`: Super Administrador (Flag `isSuperAdmin`).
+*   **Argumentos**:
+    *   `requires`: Rol mínimo requerido.
+    *   `sameUser`: (Opcional) Permite acceso a usuarios con rol menor si el recurso les pertenece.
+        *   Valor: Nombre del argumento de la query/mutation que contiene el ID del usuario.
+        *   Ejemplo: `@auth(requires: ADMIN, sameUser: "collaboratorId")` permite a un usuario normal acceder si `args.collaboratorId` coincide con su ID.
+
+### Patrones de Implementación
+
+1.  **Protección por Defecto**: Aplicar `@auth(requires: USER)` a queries y `@auth(requires: ADMIN)` a mutaciones sensibles.
+2.  **Validación en Schema**: Evitar validaciones manuales de rol (`checkAdmin`) en resolvers; confiar en la directiva.
+3.  **Lógica Compleja**: Para reglas de negocio específicas (ej: desbloquear requerimiento) que dependen del estado del objeto, usar lógica en el Servicio (`Service`) recibiendo el contexto `user`, además de la directiva base.
+
 
 ---
 *Documento generado automáticamente para contexto de IA. Mantener actualizado.*

@@ -44,6 +44,31 @@ Para levantar el proyecto por primera vez, sigue estos pasos:
 *   **Ver Datos (Prisma Studio):** `npx prisma studio` (Abre una interfaz web en localhost:5555)
 *   **Generar Cliente:** `npx prisma generate` (Necesario si cambias el schema pero no lo detecta el código).
 
+## Seguridad y Autorización
+
+El backend implementa autorización declarativa mediante la directiva `@auth` en el esquema GraphQL.
+
+### Uso de `@auth`
+
+*   **Proteger una Query/Mutación**:
+    ```graphql
+    type Mutation {
+      deleteUser(id: ID!): Boolean @auth(requires: ADMIN)
+    }
+    ```
+
+*   **Niveles de Acceso**:
+    *   `USER`: Cualquier usuario logueado.
+    *   `ADMIN`: Admins de organización y Super Admins.
+    *   `SUPER_ADMIN`: Solo Super Admins.
+
+*   **Excepción para el mismo usuario**:
+    Permite a un usuario acceder a un recurso protegido por ADMIN si es "su propio" recurso.
+    ```graphql
+    # Requiere ADMIN, PERO si args.id coincide con el ID del usuario, permite acceso.
+    updateUser(id: ID!, input: UserInput): User @auth(requires: ADMIN, sameUser: "id")
+    ```
+
 ## Logging y Monitoreo
 
 El backend utiliza **Pino** como logger (integrado en Fastify) con **pino-pretty** para un formato legible en desarrollo.
