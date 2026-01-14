@@ -22,6 +22,13 @@ import FunctionalRequirementSchema from './typedefs/FunctionalRequirement.js';
 import { ResponsibilitySchema } from './typedefs/Responsibility.js';
 
 const baseSchema = `
+  directive @auth(requires: AuthRole = ADMIN, sameUser: String) on OBJECT | FIELD_DEFINITION
+
+  enum AuthRole {
+    ADMIN
+    USER
+  }
+
   scalar JSON
 
   type Query {

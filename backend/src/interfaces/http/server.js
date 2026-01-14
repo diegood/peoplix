@@ -5,7 +5,8 @@ import { resolvers } from '../graphql/resolvers/index.js'
 import { schema } from '../graphql/schema.js'
 import { prisma } from '../../infrastructure/database/client.js'
 
-
+import { makeExecutableSchema } from '@graphql-tools/schema'
+import { authDirectiveTransformer } from '../graphql/directives/auth.directive.js'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const LOG_LEVEL = process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info')
 const PORT = process.env.PORT || 3000
@@ -48,8 +49,13 @@ import jwt from 'jsonwebtoken'
 const JWT_SECRET = process.env.JWT_SECRET
 
 app.register(mercurius, {
-  schema,
-  resolvers,
+  schema: authDirectiveTransformer(
+    makeExecutableSchema({
+      typeDefs: schema,
+      resolvers
+    }),
+    'auth'
+  ),
   graphiql: process.env.NODE_ENV !== 'production',
   subscription: true,
   context: async (request) => {

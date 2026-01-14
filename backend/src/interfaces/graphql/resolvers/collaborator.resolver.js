@@ -4,26 +4,9 @@ import { CollaboratorService } from '../../../application/services/CollaboratorS
 const service = new CollaboratorService()
 const ADMIN_ROLE = 1
 
-const checkAdmin = (context) => {
-    if (!context.user) throw new Error('Unauthorized');
-    if (context.user.isSuperAdmin) return; // Super Admin bypass
-    if (context.user.role > ADMIN_ROLE) { 
-        throw new Error('Unauthorized: Admin access required')
-    }
-}   
-
-const checkOwnerOrAdmin = (context, resourceId) => {
-    if (!context.user) throw new Error('Unauthorized');
-    if (context.user.role <= ADMIN_ROLE) return;
-    if (context.user.userId === resourceId) return;
-    throw new Error('Unauthorized: You can only edit your own profile');
-}
-
 export const collaboratorResolver = {
   Query: {
     collaborators: (_, { search, organizationId }, context) => {
-        if (!context.user) throw new Error('Unauthorized');
-        
         let targetOrgId = context.user.organizationId;
         
         if (context.user.isSuperAdmin && organizationId) {
@@ -33,14 +16,12 @@ export const collaboratorResolver = {
         return service.getAll(targetOrgId, search) 
     },
     collaborator: (_, { id }, context) => {
-        if (!context.user) throw new Error('Unauthorized');
         return service.getById(id)
     }
   },
   Mutation: {
     createCollaborator: (_, args, context) => {
         const { organizationId, ...rest } = args;
-        checkAdmin(context);
         
         let targetOrgId = context.user.organizationId;
 
@@ -59,72 +40,56 @@ export const collaboratorResolver = {
                  if (data.systemRole === 0) throw new Error('Unauthorized: Org Admins cannot promote to Super Admin');
              }
         }
-        checkOwnerOrAdmin(context, id);
         return service.update(id, data);
     },
     deleteCollaborator: async (_, { id }, context) => {
-        checkAdmin(context);
         await service.delete(id)
         return true
     },
     addCollaboratorSkill: (_, { collaboratorId, skillId, level }, context) => {
-        checkOwnerOrAdmin(context, collaboratorId);
         return service.addSkill(collaboratorId, skillId, level);
     },
     removeCollaboratorSkill: (_, { collaboratorId, skillId }, context) => {
-         checkOwnerOrAdmin(context, collaboratorId);
          return service.removeSkill(collaboratorId, skillId);
     },
     
     addHardware: (_, args, context) => {
-        checkOwnerOrAdmin(context, args.collaboratorId);
         return service.addHardware(args);
     },
     removeHardware: (_, { id }, context) => {
-        checkAdmin(context); 
         return service.removeHardware(id);
     },
     updateHolidayCalendar: (_, args, context) => {
-        checkAdmin(context); 
         return service.updateHolidayCalendar(args);
     },
 
     addCollaboratorCareerObjective: (_, { collaboratorId, year, quarter, description, skillId, targetLevel }, context) => {
-        checkOwnerOrAdmin(context, collaboratorId);
         return service.addCareerObjective(collaboratorId, year, quarter, description, skillId, targetLevel)
     },
     updateCollaboratorCareerObjective: (_, { id, status }, context) => {
-        checkAdmin(context);
         return service.updateCareerObjective(id, status);
     },
     deleteCollaboratorCareerObjective: (_, { id }, context) => {
-        checkAdmin(context);
         return service.deleteCareerObjective(id);
     },
     
     addCollaboratorMeeting: (_, { collaboratorId, date, notes }, context) => {
-        checkAdmin(context);
         return service.addMeeting(collaboratorId, date, notes);
     },
     updateCollaboratorMeeting: (_, { id, ...data }, context) => {
-        checkAdmin(context);
         return service.updateMeeting(id, data);
     },
     deleteCollaboratorMeeting: (_, { id }, context) => {
-        checkAdmin(context);
         return service.deleteMeeting(id);
     },
 
     addMeetingActionItem: (_, { meetingId, description }, context) => {
-        checkAdmin(context);
         return service.addMeetingActionItem(meetingId, description);
     },
     updateMeetingActionItem: (_, { id, ...data }, context) => {
-        checkAdmin(context);
         return service.updateMeetingActionItem(id, data);
     },
     deleteMeetingActionItem: (_, { id }, context) => {
-        checkAdmin(context);
         return service.deleteMeetingActionItem(id)
     }
   },

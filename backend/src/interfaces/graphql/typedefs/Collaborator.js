@@ -70,32 +70,32 @@ type CollaboratorSkill {
 }
 
   extend type Query {
-    collaborator(id: ID!): Collaborator
-    collaborators(search: String, organizationId: ID): [Collaborator!]!
+    collaborator(id: ID!): Collaborator @auth(requires: ADMIN, sameUser: "id")
+    collaborators(search: String, organizationId: ID): [Collaborator!]! @auth(requires: USER)
   }
 
   extend type Mutation {
-    createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID, password: String, systemRole: Int, workingSchedule: JSON, useCustomSchedule: Boolean, organizationId: ID): Collaborator!
-    updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean, workCenterId: ID, password: String, systemRole: Int, workingSchedule: JSON, useCustomSchedule: Boolean): Collaborator!
-    deleteCollaborator(id: ID!): Boolean!
+    createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID, password: String, systemRole: Int, workingSchedule: JSON, useCustomSchedule: Boolean, organizationId: ID): Collaborator! @auth(requires: ADMIN)
+    updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean, workCenterId: ID, password: String, systemRole: Int, workingSchedule: JSON, useCustomSchedule: Boolean): Collaborator! @auth(requires: ADMIN, sameUser: "id")
+    deleteCollaborator(id: ID!): Boolean! @auth(requires: ADMIN)
     
-    addCollaboratorSkill(collaboratorId: ID!, skillId: ID!, level: Int!): Collaborator!
-    removeCollaboratorSkill(collaboratorId: ID!, skillId: ID!): Collaborator!
+    addCollaboratorSkill(collaboratorId: ID!, skillId: ID!, level: Int!): Collaborator! @auth(requires: ADMIN, sameUser: "collaboratorId")
+    removeCollaboratorSkill(collaboratorId: ID!, skillId: ID!): Collaborator! @auth(requires: ADMIN, sameUser: "collaboratorId")
     
-    addCollaboratorRole(collaboratorId: ID!, roleId: ID!): Collaborator!
-    removeCollaboratorRole(collaboratorId: ID!, roleId: ID!): Collaborator!
+    addCollaboratorRole(collaboratorId: ID!, roleId: ID!): Collaborator! @auth(requires: ADMIN)
+    removeCollaboratorRole(collaboratorId: ID!, roleId: ID!): Collaborator! @auth(requires: ADMIN)
     
-    addCollaboratorCareerObjective(collaboratorId: ID!, year: Int!, quarter: Int!, description: String!, skillId: ID, targetLevel: Int): CollaboratorCareerObjective!
-    updateCollaboratorCareerObjective(id: ID!, status: String!): CollaboratorCareerObjective!
-    deleteCollaboratorCareerObjective(id: ID!): Boolean!
+    addCollaboratorCareerObjective(collaboratorId: ID!, year: Int!, quarter: Int!, description: String!, skillId: ID, targetLevel: Int): CollaboratorCareerObjective! @auth(requires: ADMIN, sameUser: "collaboratorId")
+    updateCollaboratorCareerObjective(id: ID!, status: String!): CollaboratorCareerObjective! @auth(requires: ADMIN)
+    deleteCollaboratorCareerObjective(id: ID!): Boolean! @auth(requires: ADMIN)
     
-    addCollaboratorMeeting(collaboratorId: ID!, date: String!, notes: String): CollaboratorMeeting!
-    updateCollaboratorMeeting(id: ID!, date: String, notes: String): CollaboratorMeeting!
-    deleteCollaboratorMeeting(id: ID!): Boolean!
+    addCollaboratorMeeting(collaboratorId: ID!, date: String!, notes: String): CollaboratorMeeting! @auth(requires: ADMIN)
+    updateCollaboratorMeeting(id: ID!, date: String, notes: String): CollaboratorMeeting! @auth(requires: ADMIN)
+    deleteCollaboratorMeeting(id: ID!): Boolean! @auth(requires: ADMIN)
     
-    addMeetingActionItem(meetingId: ID!, description: String!): MeetingActionItem!
-    updateMeetingActionItem(id: ID!, status: String, description: String): MeetingActionItem!
-    deleteMeetingActionItem(id: ID!): Boolean!
+    addMeetingActionItem(meetingId: ID!, description: String!): MeetingActionItem! @auth(requires: ADMIN)
+    updateMeetingActionItem(id: ID!, status: String, description: String): MeetingActionItem! @auth(requires: ADMIN)
+    deleteMeetingActionItem(id: ID!): Boolean! @auth(requires: ADMIN)
   }
 
 `;

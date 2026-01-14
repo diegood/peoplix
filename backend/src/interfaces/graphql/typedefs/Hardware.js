@@ -13,9 +13,9 @@ type Hardware {
   extend type Mutation {
 
   
-  addHardware(collaboratorId: ID!, name: String!, type: String!, serialNumber: String): Hardware!
+  addHardware(collaboratorId: ID!, name: String!, type: String!, serialNumber: String): Hardware! @auth(requires: ADMIN, sameUser: "collaboratorId")
 
-  removeHardware(id: ID!): Boolean!
+  removeHardware(id: ID!): Boolean! @auth(requires: ADMIN)
   }
 
 `;

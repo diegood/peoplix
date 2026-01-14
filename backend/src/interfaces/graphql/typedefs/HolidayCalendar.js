@@ -12,7 +12,7 @@ type HolidayCalendar {
   extend type Mutation {
 
   
-  updateHolidayCalendar(collaboratorId: ID!, year: Int!, holidays: [String!]!): HolidayCalendar!
+  updateHolidayCalendar(collaboratorId: ID!, year: Int!, holidays: [String!]!): HolidayCalendar! @auth(requires: ADMIN)
   }
 
 `;
