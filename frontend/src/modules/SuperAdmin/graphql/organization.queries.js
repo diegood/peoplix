@@ -55,7 +55,7 @@ export const CREATE_ORGANIZATION_MUTATION = gql`
 `
 
 export const GET_ORG_COLLABORATORS = gql`
-  query GetOrgCollaborators($organizationId: ID!, $search: String) {
+  query GetOrgCollaborators($organizationId: ID, $search: String) {
     collaborators(organizationId: $organizationId, search: $search) {
       id
       firstName

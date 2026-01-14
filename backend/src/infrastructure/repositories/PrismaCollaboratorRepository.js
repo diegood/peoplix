@@ -1,10 +1,24 @@
 import { prisma } from '../database/client.js'
 
 export class PrismaCollaboratorRepository {
-    async findAll(organizationId) {
-        if (!organizationId) throw new Error("Organization Context Required");
-        return prisma.collaborator.findMany({
-            where: { organizationId },
+    async findAll(organizationId, search) {
+        const where = {}
+        
+        if (organizationId) {
+            where.organizationId = organizationId
+        }
+
+        if (search) {
+            where.OR = [
+                { firstName: { contains: search, mode: 'insensitive' } },
+                { lastName: { contains: search, mode: 'insensitive' } },
+                { userName: { contains: search, mode: 'insensitive' } },
+                { user: { email: { contains: search, mode: 'insensitive' } } }
+            ]
+        }
+
+        const queryOptions = {
+            where,
             include: {
                 skills: { include: { skill: true } },
                 allocations: { include: { project: true } },
@@ -12,9 +26,16 @@ export class PrismaCollaboratorRepository {
                 hardware: true,
                 holidayCalendar: true,
                 customFieldValues: { include: { fieldDefinition: true } },
-                workCenter: true
+                workCenter: true,
+                user: true
             }
-        })
+        }
+
+        if (!organizationId) {
+            queryOptions.distinct = ['userId']
+        }
+
+        return prisma.collaborator.findMany(queryOptions)
     }
 
     async findById(id) {

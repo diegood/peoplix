@@ -3,7 +3,7 @@ model User {
   email    String @unique
   password String
 
-  collaborator Collaborator?
+  collaborators Collaborator[]
 
   isSuperAdmin Boolean @default(false)
 

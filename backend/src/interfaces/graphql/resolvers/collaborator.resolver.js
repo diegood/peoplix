@@ -9,8 +9,12 @@ export const collaboratorResolver = {
     collaborators: (_, { search, organizationId }, context) => {
         let targetOrgId = context.user.organizationId;
         
-        if (context.user.isSuperAdmin && organizationId) {
-            targetOrgId = organizationId;
+        if (context.user.isSuperAdmin) {
+            if (organizationId === null) {
+                targetOrgId = null;
+            } else if (organizationId) {
+                targetOrgId = organizationId;
+            }
         }
         
         return service.getAll(targetOrgId, search) 
