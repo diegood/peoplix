@@ -13,11 +13,13 @@ describe('Auth Directive', () => {
         enum AuthRole {
             ADMIN
             USER
+            SUPER_ADMIN
         }
 
         type Query {
             adminOnly: String @auth(requires: ADMIN)
             userOnly: String @auth(requires: USER)
+            superAdminOnly: String @auth(requires: SUPER_ADMIN)
             selfOnly(id: ID!): String @auth(requires: ADMIN, sameUser: "id")
             collaboratorOnly(collaboratorId: ID!): String @auth(requires: ADMIN, sameUser: "collaboratorId")
             public: String
@@ -28,6 +30,7 @@ describe('Auth Directive', () => {
         Query: {
             adminOnly: () => 'admin data',
             userOnly: () => 'user data',
+            superAdminOnly: () => 'super admin data',
             selfOnly: () => 'self data',
             collaboratorOnly: () => 'collaborator data',
             public: () => 'public data'
@@ -167,5 +170,35 @@ describe('Auth Directive', () => {
         const result = JSON.parse(response.payload)
         expect(result.errors).toBeUndefined()
         expect(result.data.collaboratorOnly).toBe('collaborator data')
+    })
+
+    it('should block ADMIN from accessing SUPER_ADMIN fields', async () => {
+        const app = await createTestApp({ user: { id: 'a1', role: 1 } })
+        const query = '{ superAdminOnly }'
+        
+        const response = await app.inject({
+            method: 'POST',
+            url: '/graphql',
+            payload: { query }
+        })
+
+        const result = JSON.parse(response.payload)
+        expect(result.errors).toBeDefined()
+        expect(result.errors[0].message).toContain('Super Admin access required')
+    })
+
+    it('should allow SuperAdmin to access SUPER_ADMIN fields', async () => {
+        const app = await createTestApp({ user: { id: 'sa', isSuperAdmin: true } })
+        const query = '{ superAdminOnly }'
+        
+        const response = await app.inject({
+            method: 'POST',
+            url: '/graphql',
+            payload: { query }
+        })
+
+        const result = JSON.parse(response.payload)
+        expect(result.errors).toBeUndefined()
+        expect(result.data.superAdminOnly).toBe('super admin data')
     })
 })

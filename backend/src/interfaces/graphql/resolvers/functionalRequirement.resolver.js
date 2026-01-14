@@ -16,8 +16,7 @@ export default {
       return FunctionalRequirementService.create(args, userId);
     },
     updateFunctionalRequirement: async (_, { id, ...data }, { user }) => {
-      const userId = user?.userId || null;
-      return FunctionalRequirementService.update(id, data, userId);
+      return FunctionalRequirementService.update(id, data, user);
     },
     deleteFunctionalRequirement: async (_, { id }) => {
       return FunctionalRequirementService.delete(id);
@@ -27,12 +26,8 @@ export default {
       return FunctionalRequirementService.createEvolution(originalRequirementId, {}, userId);
     },
     unlockRequirement: async (_, { id, status }, context) => {
-      const ADMIN_ROLE = 1;
-      if (!context.user || context.user.role !== ADMIN_ROLE) {
-        throw new Error('Unauthorized: Admin access required');
-      }
-      // Cambiar estado desde BLOCKED a otro permitido
-      return FunctionalRequirementService.update(id, { status }, context.user.userId);
+      const userId = user?.userId || null; 
+      return FunctionalRequirementService.update(id, { status }, user);
     },
     addFunctionalRequirementRelation: async (_, { fromId, toId, type = 'related' }) => {
       return prisma.functionalRequirementRelation.create({

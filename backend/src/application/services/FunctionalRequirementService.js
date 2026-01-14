@@ -97,20 +97,21 @@ class FunctionalRequirementService {
       }
     });
   }
-  async update(id, data, userId) {
+  async update(id, data, user) {
     const existing = await this.getById(id);
     if (!existing) throw new Error('Requirement not found');
 
-    // Extraer versionBump del objeto data antes de procesarlo
     const versionBump = data.versionBump;
     const updateData = { ...data };
     delete updateData.versionBump;
 
-    // Validar que si está BLOCKED, solo admins pueden modificar
     if (existing.status === 'BLOCKED' && updateData.status !== 'BLOCKED') {
-      // TODO: Implementar validación de rol admin cuando esté disponible
-      // Por ahora permitimos la modificación
-      // throw new Error('Cannot modify a BLOCKED requirement. Only admins can unlock it.');
+        const ADMIN_ROLE = 1;
+        const isAdmin = user && (user.isSuperAdmin || user.role <= ADMIN_ROLE);
+        
+        if (!isAdmin) {
+             throw new Error('Cannot modify a BLOCKED requirement. Only admins can unlock it.');
+        }
     }
 
     const significantFields = [
@@ -149,7 +150,9 @@ class FunctionalRequirementService {
          updateData.versionPatch = patch + 1;
        }
 
-       if (userId) { updateData.analystId = userId }
+       const actingUserId = user?.id || user?.userId || user;
+
+       if (actingUserId) { updateData.analystId = actingUserId }
        
        await prisma.functionalRequirementHistory.create({
          data: {
@@ -158,7 +161,7 @@ class FunctionalRequirementService {
            versionMinor: minor,
            versionPatch: patch,
            diff: JSON.stringify(diff),
-           changedById: userId
+           changedById: actingUserId
          }
        });
     }

@@ -33,29 +33,28 @@ type ProjectRequirementSkill {
 
   extend type Query {
 
-  projects(search: String): [Project!]!
+  projects(search: String): [Project!]! @auth(requires: USER)
 
-  project(id: ID!): Project
+  project(id: ID!): Project @auth(requires: USER)
   }
 
   extend type Mutation {
 
-  createProject(name: String!, contractedHours: Int!, startDate: String): Project!
+  createProject(name: String!, contractedHours: Int!, startDate: String): Project! @auth(requires: ADMIN)
 
-  updateProject(id: ID!, name: String, tag: String, contractedHours: Int, startDate: String): Project!
+  updateProject(id: ID!, name: String, tag: String, contractedHours: Int, startDate: String): Project! @auth(requires: ADMIN)
 
-  deleteProject(id: ID!): Boolean
+  deleteProject(id: ID!): Boolean @auth(requires: ADMIN)
 
-  addProjectRequirement(projectId: ID!, roleId: ID!, resourceCount: Int, monthlyHours: Int): ProjectRequirement!
+  addProjectRequirement(projectId: ID!, roleId: ID!, resourceCount: Int, monthlyHours: Int): ProjectRequirement! @auth(requires: ADMIN)
 
-  updateProjectRequirement(requirementId: ID!, resourceCount: Int, monthlyHours: Int): ProjectRequirement!
+  updateProjectRequirement(requirementId: ID!, resourceCount: Int, monthlyHours: Int): ProjectRequirement! @auth(requires: ADMIN)
 
+  removeProjectRequirement(projectId: ID!, requirementId: ID!): Boolean @auth(requires: ADMIN)
 
-  removeProjectRequirement(projectId: ID!, requirementId: ID!): Boolean
+  addRequirementSkill(projectId: ID!, requirementId: ID!, skillName: String!, level: Int!): ProjectRequirementSkill! @auth(requires: ADMIN)
 
-  addRequirementSkill(projectId: ID!, requirementId: ID!, skillName: String!, level: Int!): ProjectRequirementSkill!
-
-  removeRequirementSkill(projectId: ID!, requirementId: ID!, skillId: ID!): Boolean
+  removeRequirementSkill(projectId: ID!, requirementId: ID!, skillId: ID!): Boolean @auth(requires: ADMIN)
   }
 
 `;

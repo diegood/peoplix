@@ -64,8 +64,8 @@ export default gql`
   }
 
   extend type Query {
-    functionalRequirements(projectId: String!, status: RequirementStatus): [FunctionalRequirement!]
-    functionalRequirement(id: String!): FunctionalRequirement
+    functionalRequirements(projectId: String!, status: RequirementStatus): [FunctionalRequirement!] @auth(requires: USER)
+    functionalRequirement(id: String!): FunctionalRequirement @auth(requires: USER)
   }
 
   extend type Mutation {
@@ -83,7 +83,7 @@ export default gql`
         systemMessages: String,
         mockupUrl: String,
         notes: String
-    ): FunctionalRequirement
+    ): FunctionalRequirement @auth(requires: USER)
 
     updateFunctionalRequirement(
         id: String!,
@@ -101,28 +101,27 @@ export default gql`
         notes: String,
         status: RequirementStatus,
         versionBump: String
-    ): FunctionalRequirement
+    ): FunctionalRequirement @auth(requires: USER)
 
-    deleteFunctionalRequirement(id: String!): FunctionalRequirement
+    deleteFunctionalRequirement(id: String!): FunctionalRequirement @auth(requires: ADMIN)
 
     addFunctionalRequirementRelation(
-      fromId: String!,
       toId: String!,
       type: String
-    ): FunctionalRequirementRelation
+    ): FunctionalRequirementRelation @auth(requires: USER)
 
     removeFunctionalRequirementRelation(
       fromId: String!,
       toId: String!
-    ): Boolean
+    ): Boolean @auth(requires: USER)
 
     createEvolution(
       originalRequirementId: String!
-    ): FunctionalRequirement
+    ): FunctionalRequirement @auth(requires: USER)
 
     unlockRequirement(
       id: String!
       status: RequirementStatus!
-    ): FunctionalRequirement
+    ): FunctionalRequirement @auth(requires: ADMIN)
   }
 `;

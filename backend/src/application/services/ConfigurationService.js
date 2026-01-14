@@ -63,6 +63,7 @@ export class ConfigurationService {
     async updateWorkPackageStatus(id, data) { return this.workPackageStatuses.update(id, data) }
     async deleteWorkPackageStatus(id) { return this.workPackageStatuses.delete(id) }
 
+    //TODO [refactor][mid] esto creo que lo tendria que llevad a DB y por organizacion
     async provisionDefaultConfiguration(organizationId) {
         const statuses = [
             { name: 'a estimar', color: '#fbbf24', order: 1, organizationId, isClosed: false },

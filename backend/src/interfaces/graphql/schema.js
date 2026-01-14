@@ -27,6 +27,7 @@ const baseSchema = `
   enum AuthRole {
     ADMIN
     USER
+    SUPER_ADMIN
   }
 
   scalar JSON

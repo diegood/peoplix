@@ -22,26 +22,18 @@ export function authDirectiveTransformer(schema, directiveName) {
                  let isSameUser = false;
                  if (sameUser) {
                      const targetId = args[sameUser];
-                     if (targetId && targetId === context.user.id) {
-                         isSameUser = true;
-                     }
-                     if (sameUser === 'id' && args.id === context.user.id) {
-                         isSameUser = true;
-                     }
-                     if (sameUser === 'collaboratorId' && args.collaboratorId === context.user.id) {
-                         isSameUser = true;
-                     }
+                     if (targetId && targetId === context.user.id) { isSameUser = true }
+                     if (sameUser === 'id' && args.id === context.user.id) { isSameUser = true }
+                     if (sameUser === 'collaboratorId' && args.collaboratorId === context.user.id) { isSameUser = true }
                  }
-                 
-                 if (!isSameUser) {
-                     throw new Error('Unauthorized: Admin access required');
-                 }
+                 if (!isSameUser) { throw new Error('Unauthorized: Admin access required') }
              }
           }
-           
-           if (requires === 'USER') {
-           }
 
+          if (requires === 'SUPER_ADMIN') {
+               if (!context.user.isSuperAdmin) { throw new Error('Unauthorized: Super Admin access required') }
+          }
+          if (requires === 'USER') { }
           return resolve(source, args, context, info);
         };
         return fieldConfig;

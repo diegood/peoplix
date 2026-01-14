@@ -14,14 +14,11 @@ export const organizationResolvers = {
       })
     },
     allOrganizations: async (_, __, context) => {
-        const user = context.user
-        if (!user || !user.isSuperAdmin) throw new Error('Unauthorized: Only Super Admin can list all organizations')
-        
+
         return prisma.organization.findMany({ orderBy: { createdAt: 'desc' }})
     },
     organizationAdmins: async (_, { organizationId }, context) => {
-        const user = context.user
-        if (!user || !user.isSuperAdmin) throw new Error('Unauthorized: Only Super Admin can view org admins')
+
         
         return prisma.collaborator.findMany({
             where: { 
@@ -32,15 +29,13 @@ export const organizationResolvers = {
         })
     },
     totalActiveUsers: async (_, __, context) => {
-        const user = context.user
-        if (!user || !user.isSuperAdmin) throw new Error('Unauthorized')
+
         return prisma.user.count()
     }
   },
   Mutation: {
     createOrganization: async (_, { name, tag, adminEmail, adminPassword, adminFirstName, adminLastName }, context) => {
-      const user = context.user
-      if (!user || !user.isSuperAdmin) throw new Error('Unauthorized: Only Super Admin can create organizations')
+
 
       const existingUser = await prisma.user.findUnique({ where: { email: adminEmail } })
       if (existingUser) throw new Error('User with this email already exists')
@@ -83,7 +78,6 @@ export const organizationResolvers = {
 
     updateOrganization: async (_, { id, name, tag, workingSchedule }, context) => {
       const user = context.user
-      if (!user) throw new Error('Unauthorized')
       
       let targetOrgId = user.organizationId
       
@@ -92,7 +86,7 @@ export const organizationResolvers = {
       } else if (id && id !== user.organizationId) {
            throw new Error('Forbidden: You can only update your own organization')
       }
-      if (!user.isSuperAdmin && user.role > ORG_ADMIN) throw new Error('Forbidden: Only Admins can update Organization settings')
+
 
       const data = {}
       if (name) data.name = name
@@ -112,8 +106,6 @@ export const organizationResolvers = {
     },
 
     toggleOrganizationStatus: async (_, { id, isActive }, context) => {
-        const user = context.user
-        if (!user || !user.isSuperAdmin) throw new Error('Unauthorized: Only Super Admin can change organization status')
 
         return prisma.organization.update({
             where: { id },
@@ -122,8 +114,7 @@ export const organizationResolvers = {
     },
 
     deleteOrganization: async (_, { id }, context) => {
-        const user = context.user
-        if (!user || (!user.isSuperAdmin)) throw new Error('Unauthorized: Only Super Admin can delete organizations')
+
         await prisma.organization.delete({ where: { id } })
         return true
     }
