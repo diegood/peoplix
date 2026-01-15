@@ -17,7 +17,7 @@ export class CollaboratorService {
     //TODO [Refactor][Medium] sacar de aca el tema de la pasw default no lo hago por que hay flows que dejan todo cagado si no viene la pasw 
     async create(data) {
         let userId = data.userId;
-        const email = data.userName || data.email;
+        const email = data.email || data.userName;
 
         if (!userId) {
              if (!email) throw new Error("UserId or Email (userName) is required");

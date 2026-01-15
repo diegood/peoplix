@@ -40,10 +40,8 @@ const handleCreate = async (linkExistingUser = false) => {
         notification.showToast('Organización creada exitosamente', 'success')
     } catch (e) {
         console.error(e)
-        // Check for specific error message
         if (e.message.includes('User with this email already exists')) {
              if (confirm('Un usuario con este email ya existe. ¿Quieres asignarlo como Administrador de esta nueva organización?')) {
-                 // Retry with flag
                  handleCreate(true)
                  return
              }

@@ -106,12 +106,10 @@ export const authResolvers = {
 
         if (!collaborator) {
              if (isSuperAdmin) {
-                 // Synthetic Collaborator for Super Admin viewing other orgs
                  const targetOrg = await prisma.organization.findUnique({ where: { id: organizationId } });
                  if (!targetOrg) throw new Error('Organization not found');
                  if (!targetOrg.isActive) throw new Error('Organization is blocked');
 
-                  // Fetch the User record to get details
                   const userRecord = await prisma.user.findUnique({ where: { id: context.user.userId } });
 
                  collaborator = {

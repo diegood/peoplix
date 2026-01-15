@@ -72,10 +72,11 @@ type CollaboratorSkill {
   extend type Query {
     collaborator(id: ID!): Collaborator @auth(requires: ADMIN, sameUser: "id")
     collaborators(search: String, organizationId: ID): [Collaborator!]! @auth(requires: USER)
+    searchGlobalUsers(search: String!): [Collaborator!]! @auth(requires: ADMIN)
   }
 
   extend type Mutation {
-    createCollaborator(userName: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID, password: String, systemRole: Int, workingSchedule: JSON, useCustomSchedule: Boolean, organizationId: ID): Collaborator! @auth(requires: ADMIN)
+    createCollaborator(userName: String, email: String, firstName: String!, lastName: String!, contractedHours: Int!, joinDate: String!, workCenterId: ID, password: String, systemRole: Int, workingSchedule: JSON, useCustomSchedule: Boolean, organizationId: ID): Collaborator! @auth(requires: ADMIN)
     updateCollaborator(id: ID!, userName: String, firstName: String, lastName: String, contractedHours: Int, joinDate: String, isActive: Boolean, workCenterId: ID, password: String, systemRole: Int, workingSchedule: JSON, useCustomSchedule: Boolean): Collaborator! @auth(requires: ADMIN, sameUser: "id")
     deleteCollaborator(id: ID!): Boolean! @auth(requires: ADMIN)
     

@@ -21,6 +21,32 @@ export const collaboratorResolver = {
     },
     collaborator: (_, { id }, context) => {
         return service.getById(id)
+    },
+    searchGlobalUsers: async (_, { search }, context) => {
+        if (!search || search.length < 3) return [];
+        
+        const results = await prisma.collaborator.findMany({
+            where: {
+                OR: [
+                    { firstName: { contains: search, mode: 'insensitive' } },
+                    { lastName: { contains: search, mode: 'insensitive' } },
+                    { user: { email: { contains: search, mode: 'insensitive' } } }
+                ]
+            },
+            include: { user: true },
+            take: 20
+        });
+
+        const unique = [];
+        const emails = new Set();
+        for (const r of results) {
+            const email = r.user?.email;
+            if (email && !emails.has(email)) {
+                emails.add(email);
+                unique.push(r);
+            }
+        }
+        return unique;
     }
   },
   Mutation: {

@@ -35,6 +35,7 @@ const activeTab = ref('general')
 const localCollaborator = ref(null)
 const form = ref({
   userName: '',
+  email: '',
   firstName: '',
   lastName: '',
   contractedHours: 40,
@@ -63,6 +64,7 @@ watch(() => props.show, (newVal) => {
       localCollaborator.value = JSON.parse(JSON.stringify(props.collaborator))
       form.value = {
         userName: props.collaborator.userName || '',
+        email: props.collaborator.email || '',
         firstName: props.collaborator.firstName,
         lastName: props.collaborator.lastName,
         contractedHours: props.collaborator.contractedHours,
@@ -90,6 +92,7 @@ const resetForms = () => {
   localCollaborator.value = null
   form.value = {
     userName: '',
+    email: '',
     firstName: '',
     lastName: '',
     contractedHours: 40,
@@ -143,6 +146,7 @@ const handleSaveGeneral = async () => {
     } else {
       const res = await createCollaborator({ 
         userName: form.value.userName || null,
+        email: form.value.email || null,
         firstName: form.value.firstName,
         lastName: form.value.lastName,
         contractedHours: Number(form.value.contractedHours),

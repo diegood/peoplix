@@ -1,14 +1,8 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterView } from 'vue-router'
 import ToastNotification from './components/ToastNotification.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import SideNavigation from './components/SideNavigation.vue'
-import { useAuthStore } from '@/modules/Auth/stores/auth.store'
-import { computed } from 'vue'
-const authStore = useAuthStore()
-const user = computed(() => authStore.user)
-const isAdmin = computed(() => authStore.isAdmin)
-const orgTag = computed(() => authStore.user?.organization?.tag)
 </script>
 
 <template>
@@ -16,7 +10,7 @@ const orgTag = computed(() => authStore.user?.organization?.tag)
     <SideNavigation />
 
     <main class="flex-1 overflow-auto">
-      <RouterView />
+      <RouterView :key="$route.fullPath" />
     </main>
 
     <ToastNotification />

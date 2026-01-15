@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useMutation } from '@vue/apollo-composable'
 
 import { LOGIN_MUTATION, SWITCH_ORGANIZATION_MUTATION } from '@/modules/Auth/graphql/auth.queries'
+import { apolloClient } from '@/apollo'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || null)
@@ -16,13 +17,19 @@ export const useAuthStore = defineStore('auth', () => {
   const { mutate: loginMutation } = useMutation(LOGIN_MUTATION)
   const { mutate: switchOrgMutation } = useMutation(SWITCH_ORGANIZATION_MUTATION)
   
-  function saveSession(newToken, newUser, organizations = []) {
+  async function saveSession(newToken, newUser, organizations = []) {
     token.value = newToken
     user.value = newUser
     availableOrganizations.value = organizations
     localStorage.setItem('token', newToken)
     localStorage.setItem('user', JSON.stringify(newUser))
     localStorage.setItem('availableOrganizations', JSON.stringify(organizations))
+    
+    try {
+        await apolloClient.resetStore()
+    } catch (e) {
+        console.error('Error resetting apollo store', e)
+    }
   }
 
   function clearSession() {
@@ -38,7 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const result = await loginMutation({ username, password })
       if (result?.data?.login) {
-        saveSession(result.data.login.token, result.data.login.user, result.data.login.availableOrganizations)
+        await saveSession(result.data.login.token, result.data.login.user, result.data.login.availableOrganizations)
         return true
       }
     } catch (e) {
@@ -52,7 +59,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
         const result = await switchOrgMutation({ organizationId })
         if (result?.data?.switchOrganization) {
-            saveSession(
+            await saveSession(
                 result.data.switchOrganization.token, 
                 result.data.switchOrganization.user,
                 result.data.switchOrganization.availableOrganizations

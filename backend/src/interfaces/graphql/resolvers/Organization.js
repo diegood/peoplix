@@ -62,16 +62,14 @@ export const organizationResolvers = {
               const newUser = await tx.user.create({
                   data: {
                       email: adminEmail,
-                      username: adminEmail, // Default username
+                      username: adminEmail, 
                       password: adminPassword, 
-                      isSuperAdmin: false // Default
+                      isSuperAdmin: false 
                   }
               })
               userId = newUser.id;
           }
 
-          // Check if already a collaborator (shouldn't happen for new org, but good practice)
-          // For a new org, we don't need to check collision because org is new.
 
           await tx.collaborator.create({
               data: {

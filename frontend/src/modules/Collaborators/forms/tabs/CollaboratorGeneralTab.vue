@@ -13,24 +13,19 @@ const props = defineProps({
 
 const emit = defineEmits(['save', 'update:form', 'update:customFieldForm'])
 
-// Check if we need to fetch Work Centers here or pass them as props.
-// Fetching here keeps the Tab self-contained.
 import { GET_WORK_CENTERS } from '@/graphql/queries'
 
 const { result: wcResult } = useQuery(GET_WORK_CENTERS)
 const workCenters = computed(() => wcResult.value?.workCenters || [])
 
-// Local state to avoid mutating props directly
 const localForm = ref({ ...props.form })
 const localCustomFieldForm = ref({ ...props.customFieldForm })
 if (localForm.value.workCenterId === undefined) localForm.value.workCenterId = null;
 
-// Sync from parent to local (if parent updates from outside)
 watch(() => props.form, (newVal) => {
     if (JSON.stringify(newVal) !== JSON.stringify(localForm.value)) {
         localForm.value = { ...newVal }
     }
-     // Ensure workCenterId is reactive even if missing in prop initially
     if (localForm.value.workCenterId === undefined) localForm.value.workCenterId = null;
 }, { deep: true })
 
@@ -40,7 +35,6 @@ watch(() => props.customFieldForm, (newVal) => {
     }
 }, { deep: true })
 
-// Sync from local to parent (when user types)
 watch(localForm, (newVal) => {
     emit('update:form', newVal)
 }, { deep: true })
@@ -52,6 +46,59 @@ watch(localCustomFieldForm, (newVal) => {
 const handleSubmit = () => {
     emit('save')
 }
+
+import { gql } from 'graphql-tag'
+import { Search } from 'lucide-vue-next'
+
+const SEARCH_GLOBAL_USERS = gql`
+  query SearchGlobalUsers($search: String!) {
+    searchGlobalUsers(search: $search) {
+      id
+      firstName
+      lastName
+      email
+    }
+  }
+`
+
+const showResults = ref(false)
+const searchEnabled = ref(false)
+const searchQuery = ref('')
+let debounceTimer = null
+
+const { result: searchResult, loading: loadingSearch } = useQuery(SEARCH_GLOBAL_USERS, 
+    () => ({ search: searchQuery.value }), 
+    { 
+        enabled: searchEnabled,
+        fetchPolicy: 'network-only'
+    } 
+)
+
+const searchResults = computed(() => searchResult.value?.searchGlobalUsers || [])
+
+const handleEmailInput = () => {
+    if (debounceTimer) clearTimeout(debounceTimer)
+    
+    if (localForm.value.email && localForm.value.email.length > 2) {
+        debounceTimer = setTimeout(() => {
+            searchQuery.value = localForm.value.email
+            searchEnabled.value = true
+            showResults.value = true
+        }, 300)
+    } else {
+        searchEnabled.value = false
+        showResults.value = false
+    }
+}
+
+const selectUser = (user) => {
+    localForm.value.email = user.email
+    localForm.value.firstName = user.firstName
+    localForm.value.lastName = user.lastName
+    showResults.value = false
+    searchEnabled.value = false
+}
+
 
 const getFieldOptions = (field) => {
     if (!field.fieldConfig) return []
@@ -77,6 +124,47 @@ const getFieldOptions = (field) => {
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
                             <input v-model="localForm.userName" type="text" placeholder="@usuario" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
+                        </div>
+                        <div class="sm:col-span-2 relative">
+                            <label class="block text-sm font-medium text-gray-700">Email (para vincular usuario existente)</label>
+                            <div class="relative mt-1">
+                                <Search class="absolute left-3 top-0.5 text-gray-400 w-4 h-4" />
+                                <input 
+                                    v-model="localForm.email"
+                                    @input="handleEmailInput"
+                                    type="email" 
+                                    placeholder="Buscar por email o nombre..." 
+                                    class="pl-9 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                    autocomplete="off"
+                                />
+                                <div v-if="loadingSearch" class="absolute right-3 top-2.5">
+                                    <div class="animate-spin h-4 w-4 border-2 border-indigo-500 rounded-full border-t-transparent"></div>
+                                </div>
+                            </div>
+                            
+                            <div v-if="showResults" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                                <div v-if="searchResults.length === 0" class="px-4 py-2 text-gray-500 text-sm">
+                                    No se encontraron usuarios. Se creará uno nuevo.
+                                </div>
+                                <button 
+                                    v-for="user in searchResults" 
+                                    :key="user.id"
+                                    @click="selectUser(user)"
+                                    type="button"
+                                    class="w-full text-left px-4 py-2 hover:bg-indigo-50 flex items-center justify-between group"
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs shrink-0">
+                                            {{ user.firstName[0] }}{{ user.lastName[0] }}
+                                        </div>
+                                        <div>
+                                            <div class="font-medium text-gray-900">{{ user.firstName }} {{ user.lastName }}</div>
+                                            <div class="text-xs text-gray-500">{{ user.email }}</div>
+                                        </div>
+                                    </div>
+                                    <span class="text-indigo-600 opacity-0 group-hover:opacity-100 text-xs font-medium">Usar</span>
+                                </button>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Nombre *</label>

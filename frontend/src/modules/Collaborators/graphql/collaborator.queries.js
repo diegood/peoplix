@@ -5,6 +5,7 @@ export const GET_COLLABORATORS = gql`
     collaborators {
       id
       userName
+      email
       firstName
       lastName
       contractedHours
@@ -63,8 +64,8 @@ export const GET_COLLABORATORS = gql`
 `
 
 export const CREATE_COLLABORATOR = gql`
-  mutation CreateCollaborator($userName: String, $firstName: String!, $lastName: String!, $contractedHours: Int!, $joinDate: String!, $workCenterId: ID, $useCustomSchedule: Boolean, $workingSchedule: JSON) {
-    createCollaborator(userName: $userName, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, workCenterId: $workCenterId, useCustomSchedule: $useCustomSchedule, workingSchedule: $workingSchedule) {
+  mutation CreateCollaborator($userName: String, $email: String, $firstName: String!, $lastName: String!, $contractedHours: Int!, $joinDate: String!, $workCenterId: ID, $useCustomSchedule: Boolean, $workingSchedule: JSON) {
+    createCollaborator(userName: $userName, email: $email, firstName: $firstName, lastName: $lastName, contractedHours: $contractedHours, joinDate: $joinDate, workCenterId: $workCenterId, useCustomSchedule: $useCustomSchedule, workingSchedule: $workingSchedule) {
       id
       userName
       firstName
