@@ -1,8 +1,12 @@
 -- CreateEnum
-CREATE TYPE "RasciRole" AS ENUM ('RESPONSIBLE', 'ACCOUNTABLE', 'SUPPORT', 'CONSULTED', 'INFORMED');
+DO $$ BEGIN
+    CREATE TYPE "RasciRole" AS ENUM ('RESPONSIBLE', 'ACCOUNTABLE', 'SUPPORT', 'CONSULTED', 'INFORMED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateTable
-CREATE TABLE "Responsibility" (
+CREATE TABLE IF NOT EXISTS "Responsibility" (
     "id" TEXT NOT NULL,
     "role" "RasciRole" NOT NULL,
     "allocationId" TEXT NOT NULL,

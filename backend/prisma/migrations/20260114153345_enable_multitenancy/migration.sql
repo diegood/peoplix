@@ -5,7 +5,7 @@
 
 */
 -- DropIndex
-DROP INDEX "Collaborator_userId_key";
+DROP INDEX IF EXISTS "Collaborator_userId_key";
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Collaborator_userId_organizationId_key" ON "Collaborator"("userId", "organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Collaborator_userId_organizationId_key" ON "Collaborator"("userId", "organizationId");
