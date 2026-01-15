@@ -9,6 +9,7 @@ async function main() {
       create: {
         email: 'sadmin',
         password: 'sadmin',
+        isSuperAdmin: true
       }
     });
     const user = await prisma.user.upsert({
@@ -37,17 +38,18 @@ async function main() {
     await prisma.skill.createMany({ data: skills, skipDuplicates: true });
 
     const workCenter = await prisma.workCenter.upsert({
-        where: { name: 'Madrid HQ' }, 
+        where: { name: 'Madrid' }, 
         update: {},
         create: {
-            name: 'Madrid HQ',
+            name: 'Madrid',
             countryCode: 'ES',
+            regionCode: 'MD',
             organizationId: org.id
         }
     });
 
     await prisma.collaborator.upsert({
-        where: { userId: sadmin.id }, 
+        where: { userId_organizationId: { userId: sadmin.id, organizationId: org.id } }, 
         update: { systemRole: 0 },
         create: {
             userId: sadmin.id,
@@ -64,7 +66,7 @@ async function main() {
     });
 
     const adminCollaborator = await prisma.collaborator.upsert({
-      where: { userId: user.id },
+      where: { userId_organizationId: { userId: user.id, organizationId: org.id } },
       update: {},
       create: {
         userId: user.id,
@@ -103,7 +105,7 @@ async function main() {
       });
 
       const collaborator = await prisma.collaborator.upsert({
-        where: { userId: collabUser.id },
+        where: { userId_organizationId: { userId: collabUser.id, organizationId: org.id } },
         update: {},
         create: {
           userName: collabData.userName,
