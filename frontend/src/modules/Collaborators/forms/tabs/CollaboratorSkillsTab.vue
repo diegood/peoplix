@@ -4,7 +4,7 @@ import { useMutation } from '@vue/apollo-composable'
 import { 
   ADD_COLLABORATOR_SKILL, 
   REMOVE_COLLABORATOR_SKILL
-} from '@/modules/Collaborators/graphql/collaborator.queries'
+} from '@/modules/Collaborators/graphql/collaborator.mutations'
 import { Plus, Trash2 } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 import SkillSelector from '@/components/SkillSelector.vue'

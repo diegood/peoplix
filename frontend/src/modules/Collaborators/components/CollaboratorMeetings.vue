@@ -7,7 +7,7 @@ import {
     ADD_MEETING_ACTION_ITEM,
     UPDATE_MEETING_ACTION_ITEM,
     DELETE_MEETING_ACTION_ITEM 
-} from '../graphql/collaborator.queries'
+} from '../graphql/collaborator.mutations'
 import { Plus, Trash2, CheckCircle, Circle, ChevronDown, ChevronUp, Download, ExternalLink, Calendar } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 

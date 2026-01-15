@@ -5,7 +5,7 @@ import {
   CREATE_COLLABORATOR, 
   UPDATE_COLLABORATOR,
   SET_CUSTOM_FIELD_VALUE 
-} from '@/modules/Collaborators/graphql/collaborator.queries'
+} from '@/modules/Collaborators/graphql/collaborator.mutations'
 import { 
   X, User, Calendar, Laptop, Star 
 } from 'lucide-vue-next'

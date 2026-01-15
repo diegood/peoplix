@@ -47,19 +47,8 @@ const handleSubmit = () => {
     emit('save')
 }
 
-import { gql } from 'graphql-tag'
+import { SEARCH_GLOBAL_USERS } from '@/modules/Collaborators/graphql/collaborator.queries'
 import { Search } from 'lucide-vue-next'
-
-const SEARCH_GLOBAL_USERS = gql`
-  query SearchGlobalUsers($search: String!) {
-    searchGlobalUsers(search: $search) {
-      id
-      firstName
-      lastName
-      email
-    }
-  }
-`
 
 const showResults = ref(false)
 const searchEnabled = ref(false)

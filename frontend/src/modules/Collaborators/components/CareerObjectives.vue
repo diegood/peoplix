@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useMutation } from '@vue/apollo-composable'
-import { ADD_COLLABORATOR_CAREER_OBJECTIVE, UPDATE_COLLABORATOR_CAREER_OBJECTIVE, DELETE_COLLABORATOR_CAREER_OBJECTIVE } from '../graphql/collaborator.queries'
+import { ADD_COLLABORATOR_CAREER_OBJECTIVE, UPDATE_COLLABORATOR_CAREER_OBJECTIVE, DELETE_COLLABORATOR_CAREER_OBJECTIVE } from '../graphql/collaborator.mutations'
 import { Plus, Trash2, CheckCircle, Clock, PlayCircle, Target } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 

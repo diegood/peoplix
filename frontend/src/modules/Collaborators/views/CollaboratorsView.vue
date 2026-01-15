@@ -2,10 +2,12 @@
 import { ref, computed } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { 
-  GET_COLLABORATORS, 
+  GET_COLLABORATORS 
+} from '@/modules/Collaborators/graphql/collaborator.queries'
+import {
   UPDATE_COLLABORATOR,
   DELETE_COLLABORATOR,
-} from '@/modules/Collaborators/graphql/collaborator.queries'
+} from '@/modules/Collaborators/graphql/collaborator.mutations'
 import { GET_CUSTOM_FIELD_DEFINITIONS } from '@/graphql/queries'
 import { useNotificationStore } from '@/stores/notificationStore'
 
