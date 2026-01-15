@@ -45,8 +45,8 @@ export const CREATE_ADMIN_MUTATION = gql`
 `
 
 export const CREATE_ORGANIZATION_MUTATION = gql`
-  mutation CreateOrganization($name: String!, $tag: String, $adminEmail: String!, $adminPassword: String!, $adminFirstName: String!, $adminLastName: String!) {
-    createOrganization(name: $name, tag: $tag, adminEmail: $adminEmail, adminPassword: $adminPassword, adminFirstName: $adminFirstName, adminLastName: $adminLastName) {
+  mutation CreateOrganization($name: String!, $tag: String, $adminEmail: String!, $adminPassword: String!, $adminFirstName: String!, $adminLastName: String!, $linkExistingUser: Boolean) {
+    createOrganization(name: $name, tag: $tag, adminEmail: $adminEmail, adminPassword: $adminPassword, adminFirstName: $adminFirstName, adminLastName: $adminLastName, linkExistingUser: $linkExistingUser) {
       id
       name
       tag

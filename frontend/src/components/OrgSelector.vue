@@ -1,5 +1,5 @@
 <template>
-  <div v-if="hasMultipleOrgs" class="relative">
+  <div v-if="showSelector" class="relative">
     <button 
       @click="isOpen = !isOpen"
       class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -46,10 +46,12 @@ const searchQuery = ref('')
 
 const availableOrgs = computed(() => authStore.availableOrganizations || [])
 const currentOrgId = computed(() => authStore.user?.organizationId)
-const currentOrgName = computed(() => authStore.user?.organization?.name || 'Select Organization')
+const currentOrgName = computed(() => authStore.user?.organization?.name || 'Cambiar Organización')
 
+const isSuperAdmin = computed(() => authStore.isSuperAdmin)
 const hasMultipleOrgs = computed(() => availableOrgs.value.length > 1)
-const showSearch = computed(() => availableOrgs.value.length > 3)
+const showSelector = computed(() => hasMultipleOrgs.value || (isSuperAdmin.value && availableOrgs.value.length > 0))
+const showSearch = computed(() => availableOrgs.value.length > 3 || isSuperAdmin.value)
 
 const filteredOrgs = computed(() => {
     if (!searchQuery.value) return availableOrgs.value

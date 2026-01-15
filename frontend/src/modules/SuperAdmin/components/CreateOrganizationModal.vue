@@ -31,17 +31,26 @@ watch(() => form.value.name, (newVal) => {
     }
 })
 
-const handleCreate = async () => {
+const handleCreate = async (linkExistingUser = false) => {
     try {
-        await createOrganization(form.value)
+        await createOrganization({ ...form.value, linkExistingUser })
         emit('update:modelValue', false)
         form.value = { name: '', tag: '', adminEmail: '', adminPassword: '', adminFirstName: '', adminLastName: '' }
         emit('success')
-        notification.addToast('Organización creada exitosamente', 'success')
+        notification.showToast('Organización creada exitosamente', 'success')
     } catch (e) {
         console.error(e)
+        // Check for specific error message
+        if (e.message.includes('User with this email already exists')) {
+             if (confirm('Un usuario con este email ya existe. ¿Quieres asignarlo como Administrador de esta nueva organización?')) {
+                 // Retry with flag
+                 handleCreate(true)
+                 return
+             }
+        }
+
         const message = e.message || 'Error al crear organización'
-        notification.addToast(message, 'error')
+        notification.showToast(message, 'error')
     }
 }
 

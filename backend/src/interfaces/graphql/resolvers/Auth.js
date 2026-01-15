@@ -36,11 +36,19 @@ export const authResolvers = {
         include: { organization: true }
       });
 
-      if (!collaborators.length && !user.isSuperAdmin) {
-         throw new Error('User is not associated with any organization');
+      let availableOrganizations = [];
+      
+      if (user.isSuperAdmin) {
+          availableOrganizations = await prisma.organization.findMany({
+              where: { isActive: true },
+              orderBy: { name: 'asc' }
+          });
+      } else {
+          if (!collaborators.length) {
+             throw new Error('User is not associated with any organization');
+          }
+          availableOrganizations = collaborators.map(c => c.organization).filter(o => o.isActive);
       }
-
-      const availableOrganizations = collaborators.map(c => c.organization).filter(o => o.isActive);
 
       let activeProfile = collaborators[0] || null;
       
@@ -86,7 +94,7 @@ export const authResolvers = {
     switchOrganization: async (_, { organizationId }, context) => {
         if (!context.user) throw new Error('Not authenticated');
 
-        const collaborator = await prisma.collaborator.findFirst({
+        let collaborator = await prisma.collaborator.findFirst({
             where: {
                 userId: context.user.userId,
                 organizationId: organizationId
@@ -94,8 +102,35 @@ export const authResolvers = {
             include: { organization: true }
         });
 
+        const isSuperAdmin = context.user.isSuperAdmin;
+
         if (!collaborator) {
-             throw new Error('User not part of this organization');
+             if (isSuperAdmin) {
+                 // Synthetic Collaborator for Super Admin viewing other orgs
+                 const targetOrg = await prisma.organization.findUnique({ where: { id: organizationId } });
+                 if (!targetOrg) throw new Error('Organization not found');
+                 if (!targetOrg.isActive) throw new Error('Organization is blocked');
+
+                  // Fetch the User record to get details
+                  const userRecord = await prisma.user.findUnique({ where: { id: context.user.userId } });
+
+                 collaborator = {
+                     id: 'super-admin-' + context.user.userId,
+                     firstName: 'Super',
+                     lastName: 'Admin',
+                     userName: userRecord?.email || 'admin',
+                     email: userRecord?.email || 'admin',
+                     systemRole: 0,
+                     organization: targetOrg,
+                     organizationId: targetOrg.id,
+                     userId: context.user.userId, 
+                     roles: [],
+                     skills: [],
+                     allocations: []
+                 };
+             } else {
+                 throw new Error('User not part of this organization');
+             }
         }
         
         if (!collaborator.organization.isActive) {
@@ -106,16 +141,24 @@ export const authResolvers = {
             userId: context.user.userId, 
             organizationId: organizationId,
             role: collaborator.systemRole,
-            isSuperAdmin: context.user.isSuperAdmin 
+            isSuperAdmin: isSuperAdmin 
         };
         
         const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
          
-        const allCollaborators = await prisma.collaborator.findMany({
-            where: { userId: context.user.userId },
-            include: { organization: true }
-        });
-        const availableOrganizations = allCollaborators.map(c => c.organization).filter(o => o.isActive);
+        let availableOrganizations = [];
+        if (isSuperAdmin) {
+             availableOrganizations = await prisma.organization.findMany({
+                where: { isActive: true },
+                orderBy: { name: 'asc' }
+            });
+        } else {
+            const allCollaborators = await prisma.collaborator.findMany({
+                where: { userId: context.user.userId },
+                include: { organization: true }
+            });
+            availableOrganizations = allCollaborators.map(c => c.organization).filter(o => o.isActive);
+        }
         
         return {
             token,

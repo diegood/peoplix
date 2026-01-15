@@ -32,8 +32,11 @@ const openDeleteModal = (org) => {
     showDeleteModal.value = true
 }
 
-const handleSuccess = () => {
-    refetch()
+const handleSuccess = async () => {
+    const { data } = await refetch()
+    if (selectedOrg.value && data?.allOrganizations) {
+        selectedOrg.value = data.allOrganizations.find(o => o.id === selectedOrg.value.id)
+    }
 }
 </script>
 

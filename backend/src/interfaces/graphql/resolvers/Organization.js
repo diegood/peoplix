@@ -34,11 +34,14 @@ export const organizationResolvers = {
     }
   },
   Mutation: {
-    createOrganization: async (_, { name, tag, adminEmail, adminPassword, adminFirstName, adminLastName }, context) => {
+    createOrganization: async (_, { name, tag, adminEmail, adminPassword, adminFirstName, adminLastName, linkExistingUser }, context) => {
 
 
       const existingUser = await prisma.user.findUnique({ where: { email: adminEmail } })
-      if (existingUser) throw new Error('User with this email already exists')
+      
+      if (existingUser && !linkExistingUser) {
+          throw new Error('User with this email already exists')
+      }
 
       if (tag) {
           const existingOrg = await prisma.organization.findUnique({ where: { tag } })
@@ -53,16 +56,26 @@ export const organizationResolvers = {
               }
           })
 
-          const newUser = await tx.user.create({
-              data: {
-                  email: adminEmail,
-                  password: adminPassword, 
-              }
-          })
+          let userId = existingUser?.id;
+
+          if (!existingUser) {
+              const newUser = await tx.user.create({
+                  data: {
+                      email: adminEmail,
+                      username: adminEmail, // Default username
+                      password: adminPassword, 
+                      isSuperAdmin: false // Default
+                  }
+              })
+              userId = newUser.id;
+          }
+
+          // Check if already a collaborator (shouldn't happen for new org, but good practice)
+          // For a new org, we don't need to check collision because org is new.
 
           await tx.collaborator.create({
               data: {
-                  userId: newUser.id,
+                  userId: userId,
                   organizationId: org.id,
                   firstName: adminFirstName,
                   lastName: adminLastName,

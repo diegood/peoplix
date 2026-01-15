@@ -19,7 +19,7 @@ export const OrganizationSchema = gql`
   }
 
   extend type Mutation {
-    createOrganization(name: String!, tag: String, adminEmail: String!, adminPassword: String!, adminFirstName: String!, adminLastName: String!): Organization! @auth(requires: SUPER_ADMIN)
+    createOrganization(name: String!, tag: String, adminEmail: String!, adminPassword: String!, adminFirstName: String!, adminLastName: String!, linkExistingUser: Boolean): Organization! @auth(requires: SUPER_ADMIN)
     updateOrganization(id: ID, name: String, tag: String, workingSchedule: JSON): Organization! @auth(requires: ADMIN)
     toggleOrganizationStatus(id: ID!, isActive: Boolean!): Organization! @auth(requires: SUPER_ADMIN)
     deleteOrganization(id: ID!): Boolean! @auth(requires: SUPER_ADMIN)
