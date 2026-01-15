@@ -14,24 +14,31 @@ export class CollaboratorService {
         return this.repository.findById(id)
     }
     
+    //TODO [Refactor][Medium] sacar de aca el tema de la pasw default no lo hago por que hay flows que dejan todo cagado si no viene la pasw 
     async create(data) {
-        const email = data.userName;
-        if (!email) throw new Error("Email (userName) is required");
-        
-        let userId;
+        let userId = data.userId;
+        const email = data.userName || data.email;
 
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-        
-        if (existingUser) {
-            userId = existingUser.id;
-        } else {
-            const newUser = await prisma.user.create({
-                data: {
-                    email,
-                    password: data.password || '123456'
-                }
-            });
-            userId = newUser.id;
+        if (!userId) {
+             if (!email) throw new Error("UserId or Email (userName) is required");
+             
+             const existingUser = await prisma.user.findUnique({ 
+                 where: { email },
+                 select: { id: true }
+             });
+
+             if (existingUser) {
+                 userId = existingUser.id;
+             } else {
+                 const newUser = await prisma.user.create({
+                     data: {
+                         email,
+                         username: email,
+                         password: data.password || '123456'
+                     }
+                 });
+                 userId = newUser.id;
+             }
         }
 
         const existingMember = await prisma.collaborator.findFirst({
@@ -42,18 +49,19 @@ export class CollaboratorService {
         });
 
         if (existingMember) {
-            throw new Error(`User ${email} is already a member of this organization.`);
+            throw new Error(`User is already a member of this organization.`);
         }
 
         if (data.joinDate) {
              data.joinDate = new Date(data.joinDate).toISOString()
         }
         
-        const { password, ...collaboratorData } = data;
+        const { password, userName, ...collaboratorData } = data;
 
         return this.repository.create({
             ...collaboratorData,
-            userId
+            userId,
+            userName: email
         })
     }
     
