@@ -16,8 +16,17 @@ import {
 } from './fragments'
 
 export const CREATE_ROLE = gql`
-  mutation CreateRole($name: String!) {
-    createRole(name: $name) {
+  mutation CreateRole($name: String!, $isAdministrative: Boolean) {
+    createRole(name: $name, isAdministrative: $isAdministrative) {
+      ...RoleFields
+    }
+  }
+  ${ROLE_FRAGMENT}
+`
+
+export const UPDATE_ROLE = gql`
+  mutation UpdateRole($id: ID!, $name: String, $isAdministrative: Boolean) {
+    updateRole(id: $id, name: $name, isAdministrative: $isAdministrative) {
       ...RoleFields
     }
   }

@@ -1,0 +1,20 @@
+model CollaboratorHierarchy {
+  id String @id @default(uuid())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  supervisorId String
+  supervisor   Collaborator @relation("SupervisorHierarchy", fields: [supervisorId], references: [id], onDelete: Cascade)
+
+  subordinateId String
+  subordinate   Collaborator @relation("SubordinateHierarchy", fields: [subordinateId], references: [id], onDelete: Cascade)
+
+  hierarchyTypeId String
+  hierarchyType   HierarchyType @relation(fields: [hierarchyTypeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([supervisorId, subordinateId, hierarchyTypeId])
+}

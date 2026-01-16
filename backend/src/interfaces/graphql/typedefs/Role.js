@@ -4,6 +4,7 @@ export const RoleSchema = gql`
 type Role {
   id: ID!
   name: String!
+  isAdministrative: Boolean
 }
 
   extend type Query {
@@ -14,7 +15,8 @@ type Role {
   extend type Mutation {
 
 
-  createRole(name: String!): Role!
+  createRole(name: String!, isAdministrative: Boolean): Role!
+  updateRole(id: ID!, name: String, isAdministrative: Boolean): Role!
 
   deleteRole(id: ID!): Boolean!
   }

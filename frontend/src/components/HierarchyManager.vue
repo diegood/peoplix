@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import { ADD_ALLOCATION_HIERARCHY, REMOVE_ALLOCATION_HIERARCHY } from '@/graphql/mutations'
+import { CREATE_ALLOCATION } from '../modules/Allocations/graphql/allocation.queries'
 import { Shield, Network, Trash2, Plus, X, List, GitGraph, Settings } from 'lucide-vue-next'
 import HierarchyTreeNode from './HierarchyTreeNode.vue'
 import HierarchyTypeManager from './HierarchyTypeManager.vue'
@@ -9,6 +10,8 @@ import RasciMatrix from '../modules/Rasci/components/RasciMatrix.vue'
 import SimpleTabs from './SimpleTabs.vue'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { GET_HIERARCHY_TYPES } from '../modules/Rasci/graphql/allocation'
+import { GET_ORG_HIERARCHY, GET_PROJECT_DETAILS } from '../modules/Configuration/graphql/hierarchy.queries'
+import { dayjs } from '@/config'
 
 const notificationStore = useNotificationStore()
 
@@ -37,25 +40,116 @@ const tabs = [
 const { result: typesResult } = useQuery(GET_HIERARCHY_TYPES)
 const hierarchyTypes = computed(() => typesResult.value?.hierarchyTypes || [])
 
+const { result: projectDetailsResult } = useQuery(GET_PROJECT_DETAILS, () => ({
+    id: props.project.id
+}), { 
+    enabled: computed(() => !!props.project.id && props.isOpen),
+    fetchPolicy: 'cache-and-network' 
+})
+
+const localProject = computed(() => {
+    const proj = projectDetailsResult.value?.project || props.project
+    console.log("HierarchyManager localProject:", JSON.stringify({ 
+        source: projectDetailsResult.value ? 'query' : 'props', 
+        id: proj?.id, 
+        allocCount: proj?.allocations?.length,
+        allocations: proj?.allocations
+    }))
+    return proj
+})
+
+const { result: orgHierarchyResult } = useQuery(GET_ORG_HIERARCHY, () => ({
+    organizationId: localProject.value?.organization?.id || props.project.organizationId
+}), { 
+    enabled: computed(() => !!(localProject.value?.organization?.id || props.project.organizationId)),
+    fetchPolicy: 'cache-and-network'
+})
+
+const orgHierarchy = computed(() => orgHierarchyResult.value?.orgHierarchy || [])
+
 const { mutate: addHierarchy } = useMutation(ADD_ALLOCATION_HIERARCHY, { 
-    refetchQueries: ['GetProjects'] 
+    refetchQueries: ['GetProjects', 'GetProjectDetails'] 
 })
 const { mutate: removeHierarchy } = useMutation(REMOVE_ALLOCATION_HIERARCHY, { 
-    refetchQueries: ['GetProjects'] 
+    refetchQueries: ['GetProjects', 'GetProjectDetails'] 
+})
+const { mutate: createAllocation } = useMutation(CREATE_ALLOCATION, { 
+    refetchQueries: ['GetProjects', 'GetProjectDetails'] 
 })
 
-const allocations = computed(() => props.project?.allocations || [])
+const allocations = computed(() => {
+    const list = localProject.value?.allocations || []
+    console.log("HierarchyManager computed allocations:", list.map(a => ({ 
+        id: a.id, 
+        hasCollaborator: !!a.collaborator, 
+        name: a.collaborator?.firstName 
+    })))
+    return list
+})
 
 const availableSupervisors = computed(() => {
-    return allocations.value.filter(a => a.id !== editingAllocationId.value)
+    return allNodes.value.filter(a => a.id !== editingAllocationId.value)
 })
 
-const activeSupervisors = (allocation) => {
-    return allocation.supervisors || []
+const allNodes = computed(() => {
+    const map = new Map()
+    allocations.value.forEach(a => map.set(a.collaborator.id, { ...a, isVirtual: false }))
+
+    const addParents = (collaboratorId) => {
+        const relations = orgHierarchy.value.filter(h => h.subordinate.id === collaboratorId)
+        
+        relations.forEach(rel => {
+            const supervisorId = rel.supervisor.id
+            if (!map.has(supervisorId)) {
+                map.set(supervisorId, {
+                    id: `virtual-${supervisorId}`,
+                    collaborator: rel.supervisor,
+                    roles: rel.supervisor.roles || [],
+                    supervisors: [],
+                    subordinates: [],
+                    isVirtual: true
+                })
+                addParents(supervisorId)
+            }
+        })
+    }
+    allocations.value.forEach(a => addParents(a.collaborator.id))
+    
+    return Array.from(map.values())
+})
+
+const getOrgSupervisors = (node) => {
+    if (!node.collaborator) return []
+    const orgRelations = orgHierarchy.value.filter(h => h.subordinate.id === node.collaborator.id)
+    
+    return orgRelations.map(h => {
+        const supervisorNode = allNodes.value.find(n => n.collaborator.id === h.supervisor.id)
+        if (!supervisorNode) return null
+        return {
+            id: 'org-' + h.id,
+            isOrgLevel: true,
+            hierarchyType: h.hierarchyType,
+            supervisor: supervisorNode
+        }
+    }).filter(Boolean)
+}
+
+const activeSupervisors = (node) => {
+    const projectSupervisors = node.supervisors || []
+    const orgSupervisors = getOrgSupervisors(node)
+    const uniqueOrg = orgSupervisors.filter(orgR => 
+        !projectSupervisors.some(projR => projR.supervisor.id === orgR.supervisor.id) 
+        && !projectSupervisors.some(projR => projR.supervisor.collaborator.id === orgR.supervisor.collaborator.id) 
+    )
+    
+    return [...projectSupervisors, ...uniqueOrg]
 }
 
 const treeRoots = computed(() => {
-    const roots = allocations.value.filter(a => !a.supervisors || a.supervisors.length === 0)
+    const roots = allNodes.value.filter(n => {
+        const sups = activeSupervisors(n)
+        return sups.length === 0
+    })
     return roots.sort((a,b) => {
         const nameA = getDisplayName(a.collaborator)
         const nameB = getDisplayName(b.collaborator)
@@ -63,55 +157,127 @@ const treeRoots = computed(() => {
     })
 })
 
-const buildTreeFrom = (rootAlloc, visitedIds = new Set()) => {
-    if (visitedIds.has(rootAlloc.id)) return null
+const buildTreeFrom = (rootNode, visitedIds = new Set()) => {
+    if (visitedIds.has(rootNode.collaborator.id)) return null
     
     const newVisited = new Set(visitedIds)
-    newVisited.add(rootAlloc.id)
+    newVisited.add(rootNode.collaborator.id)
     
-    const children = (rootAlloc.subordinates || []).map(rel => {
-        const fullSub = allocations.value.find(a => a.id === rel.subordinate.id) || rel.subordinate
-        
-        const subNode = buildTreeFrom(fullSub, newVisited)
+    const projectSubordinates = (rootNode.subordinates || []).map(rel => {
+        const fullNode = allNodes.value.find(n => n.collaborator.id === rel.subordinate.collaborator?.id)
+        if (!fullNode) return null
+
+        return {
+            ...rel,
+            subordinate: fullNode,
+            isOrgLevel: false
+        }
+    }).filter(Boolean)
+    
+    const orgSubRelations = orgHierarchy.value.filter(h => h.supervisor.id === rootNode.collaborator.id)
+    
+    const orgSubordinates = orgSubRelations.map(h => {
+        const subNode = allNodes.value.find(n => n.collaborator.id === h.subordinate.id)
         if (!subNode) return null
+        return {
+            id: 'org-' + h.id,
+            isOrgLevel: true,
+            hierarchyType: h.hierarchyType,
+            subordinate: subNode
+        }
+    }).filter(Boolean)
+
+    const allRelations = [...projectSubordinates]
+    orgSubordinates.forEach(orgRel => {
+        const isDuplicate = allRelations.some(r => r.subordinate.collaborator.id === orgRel.subordinate.collaborator.id)
+        if (!isDuplicate) {
+            allRelations.push(orgRel)
+        }
+    })
+
+    const children = allRelations.map(rel => {
+        const subNodeTree = buildTreeFrom(rel.subordinate, newVisited)
+        if (!subNodeTree) return null
         
         return {
-            ...subNode,
+            ...subNodeTree,
             relationName: rel.hierarchyType?.name || '?',
             relationColor: rel.hierarchyType?.color || 'bg-gray-100',
-            uniqueKey: `${rootAlloc.id}-${rel.subordinate.id}-${rel.hierarchyType?.id}`
+            uniqueKey: `${rootNode.id}-${rel.subordinate.id}-${rel.hierarchyType?.id}-${rel.isOrgLevel ? 'org' : 'proj'}`,
+            isOrgLevel: rel.isOrgLevel
         }
     }).filter(Boolean)
 
     return {
-        details: rootAlloc,
+        details: rootNode,
         children: children,
-        uniqueKey: rootAlloc.id
+        uniqueKey: rootNode.id
     }
 }
 
 const treeData = computed(() => {
-    return treeRoots.value.map(root => buildTreeFrom(root))
+    return treeRoots.value.map(root => buildTreeFrom(root)).filter(Boolean)
 })
 
-const startEdit = (allocation) => {
-    editingAllocationId.value = allocation.id
+const startEdit = (node) => {
+    if (node.isVirtual) {
+        notificationStore.showToast("No se puede editar una asignación virtual (sólo lectura desde Organización)", "info")
+        return
+    }
+    editingAllocationId.value = node.id
     selectedSupervisorId.value = ''
     selectedTypeId.value = ''
     showAddForm.value = false
 }
 
-const selectFromTree = (allocation) => {
-    startEdit(allocation)
+const selectFromTree = (nodeDetails) => {
+    startEdit(nodeDetails)
 }
 
 const handleAdd = async () => {
     if (!selectedSupervisorId.value || !selectedTypeId.value) return
     
+    let supervisorAllocId = selectedSupervisorId.value
+    const supervisorNode = allNodes.value.find(n => n.id === selectedSupervisorId.value)
+    
     try {
+        if (supervisorNode?.isVirtual) {
+            let role = supervisorNode.collaborator.roles?.find(r => r.isAdministrative)
+            
+            if (!role) role = supervisorNode.collaborator.roles?.[0]
+            
+            let roleId = role?.id
+
+            if (!roleId && props.project.requiredRoles?.length > 0) {
+                 roleId = props.project.requiredRoles[0].role?.id
+            }
+
+            if (!roleId) {
+                notificationStore.showToast("El supervisor no tiene roles directos ni hay roles requeridos en el proyecto para asignarle.", "error")
+                return
+            }
+
+            notificationStore.showToast("Asignando supervisor al proyecto...", "info")
+            const currentWeek = dayjs().format('YYYY-[W]WW')
+            
+            const res = await createAllocation({
+                projectId: props.project.id,
+                collaboratorId: supervisorNode.collaborator.id,
+                roleId: roleId,
+                percentage: 0,
+                startWeek: currentWeek
+            })
+            
+            if (res?.data?.createAllocation?.id) {
+                supervisorAllocId = res.data.createAllocation.id
+            } else {
+                throw new Error("Falló la auto-asignación")
+            }
+        }
+
         await addHierarchy({
             subordinateAllocId: editingAllocationId.value,
-            supervisorAllocId: selectedSupervisorId.value,
+            supervisorAllocId: supervisorAllocId,
             typeId: selectedTypeId.value
         })
         showAddForm.value = false
@@ -123,6 +289,11 @@ const handleAdd = async () => {
 }
 
 const handleRemove = async (hierarchyId) => {
+    if (String(hierarchyId).startsWith('org-')) {
+         notificationStore.showToast("No se puede eliminar una relación de Organización desde el Proyecto", "warning")
+         return
+    }
+
     if (!await notificationStore.showDialog("¿Eliminar esta relación?")) return
     try {
         await removeHierarchy({ hierarchyId })
@@ -140,8 +311,8 @@ const getDisplayName = (collab) => {
 }
 
 const getName = (allocId) => {
-    const alloc = allocations.value.find(a => a.id === allocId)
-    return getDisplayName(alloc?.collaborator)
+    const node = allNodes.value.find(a => a.id === allocId)
+    return getDisplayName(node?.collaborator)
 }
 
 </script>
@@ -197,8 +368,9 @@ const getName = (allocId) => {
                         <div class="flex-1">
                             <div class="font-bold text-gray-800">{{ getDisplayName(alloc.collaborator) }}</div>
                             <div class="flex gap-2 mt-1 flex-wrap">
-                                <span v-for="role in alloc.roles" :key="role.id" class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md border border-gray-200">
-                                    {{ role.name }}
+                                <span v-for="role in alloc.roles" :key="role.id" 
+                                    :class="['text-xs px-2 py-0.5 rounded-md border', role.isAdministrative ? 'bg-purple-100 text-purple-700 border-purple-200 font-bold' : 'bg-gray-100 text-gray-600 border-gray-200']">
+                                    {{ role.name }} <span v-if="role.isAdministrative" class="ml-1 text-[10px] uppercase">Admin</span>
                                 </span>
                             </div>
                         </div>

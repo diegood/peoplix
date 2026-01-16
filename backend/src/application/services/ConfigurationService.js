@@ -23,7 +23,8 @@ export class ConfigurationService {
     }
     
     async getRoles(orgId) { return this.roles.findAll(orgId) }
-    async createRole(name, orgId) { return this.roles.create({ name, organizationId: orgId }) }
+    async createRole(name, orgId, isAdministrative = false) { return this.roles.create({ name, organizationId: orgId, isAdministrative }) }
+    async updateRole(id, data) { return this.roles.update(id, data) }
     async deleteRole(id) { return this.roles.delete(id) }
 
     async getSkills(orgId) { return this.skills.findAll(orgId) }

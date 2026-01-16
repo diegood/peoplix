@@ -4,6 +4,7 @@ export const ROLE_FRAGMENT = gql`
   fragment RoleFields on Role {
     id
     name
+    isAdministrative
   }
 `
 

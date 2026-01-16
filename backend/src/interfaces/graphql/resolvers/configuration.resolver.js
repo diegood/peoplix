@@ -12,7 +12,8 @@ export const configurationResolver = {
     customFieldDefinitions: (_, __, { user }) => service.getCustomFieldDefinitions(user.organizationId)
   },
   Mutation: {
-    createRole: (_, { name }, { user }) => service.createRole(name, user.organizationId),
+    createRole: (_, { name, isAdministrative }, { user }) => service.createRole(name, user.organizationId, isAdministrative),
+    updateRole: (_, { id, name, isAdministrative }) => service.updateRole(id, { name, isAdministrative }),
     deleteRole: (_, { id }) => service.deleteRole(id),
     createSkill: (_, { name }, { user }) => service.createSkill(name, user.organizationId),
     deleteSkill: (_, { id }) => service.deleteSkill(id),

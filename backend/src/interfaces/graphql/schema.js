@@ -20,6 +20,7 @@ import { OrganizationSchema } from './typedefs/Organization.js';
 import { KanbanSchema } from './typedefs/Kanban.js';
 import FunctionalRequirementSchema from './typedefs/FunctionalRequirement.js';
 import { ResponsibilitySchema } from './typedefs/Responsibility.js';
+import { CollaboratorHierarchySchema } from './typedefs/CollaboratorHierarchy.js';
 
 const baseSchema = `
   directive @auth(requires: AuthRole = ADMIN, sameUser: String) on OBJECT | FIELD_DEFINITION
@@ -66,5 +67,6 @@ export const schema = [
   print(OrganizationSchema),
   print(KanbanSchema),
   print(FunctionalRequirementSchema),
-  print(ResponsibilitySchema)
+  print(ResponsibilitySchema),
+  print(CollaboratorHierarchySchema)
 ].join('\n');

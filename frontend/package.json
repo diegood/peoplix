@@ -1,6 +1,6 @@
 {
   "name": "workload",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "private": true,
   "type": "module",
   "author": "Diego G. Arias",
@@ -27,6 +27,7 @@
     "@tiptap/pm": "^3.15.3",
     "@tiptap/starter-kit": "^3.15.3",
     "@tiptap/vue-3": "^3.15.3",
+    "d3": "^7.9.0",
     "dayjs": "^1.11.19",
     "graphql-ws": "^6.0.6",
     "hy-vue-gantt": "^4.2.1",

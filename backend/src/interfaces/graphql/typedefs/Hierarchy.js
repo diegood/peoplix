@@ -6,6 +6,7 @@ type HierarchyType {
   name: String!
   color: String!
   rank: Int!
+  organizationId: ID!
 }
 
 type AllocationHierarchy {

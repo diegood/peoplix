@@ -29,10 +29,6 @@ export const GET_SKILLS = gql`
   ${SKILL_FRAGMENT}
 `
 
-
-
-
-
 export const GET_COLLABORATORS = gql`
   query GetCollaborators($search: String) {
     collaborators(search: $search) {
@@ -115,9 +111,17 @@ export const GET_WORK_CENTERS = gql`
   }
 `
 
-
-
-
+export const GET_HIERARCHY_TYPES = gql`
+  query GetHierarchyTypes {
+    hierarchyTypes {
+      id
+      name
+      color
+      rank
+      organizationId
+    }
+  }
+`
 
 export const GET_ME = gql`
   query MeProfile {

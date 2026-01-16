@@ -38,6 +38,24 @@ export class PrismaCollaboratorRepository {
         return prisma.collaborator.findMany(queryOptions)
     }
 
+    async findByRoleProperty(organizationId, roleFilter) {
+        return prisma.collaborator.findMany({
+            where: {
+                organizationId,
+                roles: {
+                    some: {
+                        role: roleFilter
+                    }
+                }
+            },
+            include: {
+                roles: {
+                    include: { role: true }
+                }
+            }
+        })
+    }
+
     async findById(id) {
         return prisma.collaborator.findUnique({
             where: { id },

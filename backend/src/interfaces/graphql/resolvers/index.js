@@ -10,6 +10,7 @@ import { organizationResolvers } from './Organization.js'
 import FunctionalRequirementResolver from './functionalRequirement.resolver.js'
 import KanbanResolver from './kanban.resolver.js'
 import { responsibilityResolver } from './responsibility.resolver.js'
+import { collaboratorHierarchyResolver } from './collaboratorHierarchy.resolver.js'
 import GraphQLJSON from 'graphql-type-json';
 
 const mergeResolvers = (resolvers) => {
@@ -39,5 +40,7 @@ export const resolvers = mergeResolvers([
     organizationResolvers,
     FunctionalRequirementResolver,
     KanbanResolver,
-    responsibilityResolver
+    KanbanResolver,
+    responsibilityResolver,
+    collaboratorHierarchyResolver
 ])

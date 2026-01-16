@@ -7,7 +7,7 @@ import {
     UPDATE_ABSENCE_TYPE, 
     DELETE_ABSENCE_TYPE 
 } from '@/modules/Absences/graphql/absence.queries.js'
-import { Plus } from 'lucide-vue-next'
+import { Plus, CalendarOff, Pencil as Edit, Trash2 as Trash, Check } from 'lucide-vue-next'
 import { useNotificationStore } from '@/stores/notificationStore'
 
 const notificationStore = useNotificationStore()

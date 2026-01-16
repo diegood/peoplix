@@ -11,6 +11,9 @@ Este documento describe la arquitectura, patrones y convenciones del proyecto `w
     *   **Frontend**: Vue 3 (Composition API), TailwindCSS.
     *   **Testing**: Vitest.
     *   **Lenguaje**: Javascript (ES Modules).
+*   **Lineamientos de codificación**:
+    *   Maximos 280 lineas por archivo.
+    *   Maximos 8 lineas por funcion.
 
 ## 2. Arquitectura del Backend (`/backend`)
 

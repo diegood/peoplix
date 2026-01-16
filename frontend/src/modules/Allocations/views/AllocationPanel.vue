@@ -89,7 +89,7 @@ const assignmentContext = ref({
     collaborator: null
 })
 
-const { result: projectResult, loading: projectsLoading } = useQuery(GET_PROJECTS)
+const { result: projectResult, loading: projectsLoading } = useQuery(GET_PROJECTS, null, { fetchPolicy: 'cache-and-network' })
 const { result: collabResult, loading: collabsLoading } = useQuery(GET_COLLABORATORS)
 
 const { result: absencesResult } = useQuery(GET_ABSENCES, () => ({

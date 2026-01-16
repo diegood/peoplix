@@ -11,7 +11,8 @@ import { parseDateSafe } from '@/helper/Date'
 import EstimationHeader from '@/modules/Allocations/components/Estimation/EstimationHeader.vue'
 import EstimationWorkPackage from '@/modules/Allocations/components/Estimation/EstimationWorkPackage.vue'
 import EstimationGantt from '@/modules/Allocations/components/Estimation/EstimationGantt.vue'
-import { LayoutDashboard } from 'lucide-vue-next'
+import HierarchyManager from '@/components/HierarchyManager.vue'
+import { LayoutDashboard, Network } from 'lucide-vue-next'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -43,9 +44,13 @@ const handleCreateWP = async () => {
     }
 }
 
+const showHierarchy = ref(false)
+
 const roleColumns = computed(() => {
     if (!project.value) return []
-    return project.value.requiredRoles.map(rr => rr.role)
+    return project.value.requiredRoles
+        .map(rr => rr.role)
+        .filter(r => !r.isAdministrative)
 })
 
 const projectAllocations = computed(() => {
@@ -127,10 +132,16 @@ const handleUpdateTaskDate = async ({ taskId, roleId, hours, startDate, endDate 
           <router-link to="/projects" class="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1">
              &larr; Volver a Proyectos
           </router-link>
-          <router-link :to="`/projects/${projectId}/kanban`" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-colors">
-             <LayoutDashboard class="w-4 h-4" />
-             Tablero Kanban
-          </router-link>
+          <div class="flex gap-2">
+            <button @click="showHierarchy = true" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                 <Network class="w-4 h-4" />
+                 Jerarquía
+            </button>
+            <router-link :to="`/projects/${projectId}/kanban`" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-colors">
+                 <LayoutDashboard class="w-4 h-4" />
+                 Tablero Kanban
+            </router-link>
+          </div>
       </div>
 
       <EstimationHeader 
@@ -168,6 +179,13 @@ const handleUpdateTaskDate = async ({ taskId, roleId, hours, startDate, endDate 
         :chartStart="chartStart"
         :chartEnd="chartEnd"
         @update-task-date="handleUpdateTaskDate"
+      />
+
+      <HierarchyManager 
+        v-if="showHierarchy"
+        :project="project"
+        :isOpen="showHierarchy"
+        @close="showHierarchy = false"
       />
 
   </div>

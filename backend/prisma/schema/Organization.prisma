@@ -4,17 +4,18 @@ model Organization {
   tag      String  @unique @default("ORG")
   isActive Boolean @default(true)
 
-  projects               Project[]
-  collaborators          Collaborator[]
-  roles                  Role[]
-  skills                 Skill[]
-  milestoneTypes         MilestoneType[]
-  technologies           Technology[]
-  workCenters            WorkCenter[]
-  customFieldDefinitions CustomFieldDefinition[]
-  hierarchyTypes         HierarchyType[]
-  workPackageStatuses    WorkPackageStatus[]
-  workingSchedule        Json? // { "monday": { "active": true, "start": "09:00", "end": "18:00" }, ... }
+  projects                Project[]
+  collaborators           Collaborator[]
+  roles                   Role[]
+  skills                  Skill[]
+  milestoneTypes          MilestoneType[]
+  technologies            Technology[]
+  workCenters             WorkCenter[]
+  customFieldDefinitions  CustomFieldDefinition[]
+  hierarchyTypes          HierarchyType[]
+  workPackageStatuses     WorkPackageStatus[]
+  collaboratorHierarchies CollaboratorHierarchy[]
+  workingSchedule         Json? // { "monday": { "active": true, "start": "09:00", "end": "18:00" }, ... }
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -4,6 +4,9 @@ export const GET_PROJECTS = gql`
   query GetProjects {
     projects {
       id
+      organization {
+        id
+      }
       name
       contractedHours
       requiredRoles {
@@ -177,6 +180,11 @@ export const CREATE_ALLOCATION = gql`
       roles {
         id
         name
+      }
+      collaborator {
+        id
+        firstName
+        lastName
       }
     }
   }

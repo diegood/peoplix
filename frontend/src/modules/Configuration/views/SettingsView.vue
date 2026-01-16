@@ -11,6 +11,10 @@ import WorkPackageStatusManager from '../components/WorkPackageStatusManager.vue
 import WorkScheduleManager from '../components/WorkScheduleManager.vue'
 import { Hexagon } from 'lucide-vue-next'
 
+import OrgHierarchyManager from '../components/OrgHierarchyManager.vue'
+import { useAuthStore } from '@/modules/Auth/stores/auth.store'
+
+const authStore = useAuthStore()
 const showMilestones = ref(false)
 </script>
 
@@ -26,28 +30,25 @@ const showMilestones = ref(false)
             <div class="lg:col-span-2">
                  <OrganizationDetails />
             </div>
-
+            <div class="lg:col-span-2">
+                <OrgHierarchyManager :organizationId="authStore.user.organizationId" />
+            </div>
             <div class="bg-orange-50/50 p-4 rounded-xl border border-orange-100 mb-6 hidden">
                 <h3 class="font-bold text-orange-800">Tecnologías</h3>
                 <TechnologyCRUD />
             </div>
-
             <div class="mb-8">
                 <WorkCenterManager />
             </div>
-
             <div class="mb-8">
                 <WorkScheduleManager />
             </div>
-
             <div class="mb-8">
                 <WorkPackageStatusManager />
             </div>
-
             <div class="bg-white rounded-lg shadow p-6">
                 <RoleCRUD />
             </div>
-            
             <div class="bg-white rounded-lg shadow p-6 flex flex-col items-center justify-center text-center space-y-4">
                 <div class="p-3 bg-indigo-50 text-indigo-600 rounded-full">
                     <Hexagon size="24" />

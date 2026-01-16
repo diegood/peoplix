@@ -4,6 +4,7 @@ export class PrismaRoleRepository {
     async findAll(organizationId) { return prisma.role.findMany({ where: { organizationId } }) }
     async findById(id) { return prisma.role.findUnique({ where: { id } }) }
     async create(data) { return prisma.role.create({ data }) }
+    async update(id, data) { return prisma.role.update({ where: { id }, data }) }
     async delete(id) { await prisma.role.delete({ where: { id } }); return true }
 }
 

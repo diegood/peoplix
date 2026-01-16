@@ -38,6 +38,9 @@ model Collaborator {
 
   kanbanCards KanbanCard[] @relation("CardAssignees")
 
+  supervisedHierarchies  CollaboratorHierarchy[] @relation("SupervisorHierarchy")
+  subordinateHierarchies CollaboratorHierarchy[] @relation("SubordinateHierarchy")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
