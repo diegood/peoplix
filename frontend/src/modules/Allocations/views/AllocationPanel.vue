@@ -1,18 +1,15 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { useQuery, useMutation } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable'
 import { 
     GET_PROJECTS, 
-    GET_COLLABORATORS, 
-    CREATE_ALLOCATION, 
-    UPDATE_ALLOCATION, 
-    DELETE_ALLOCATION, 
-    ADD_ALLOCATION_ROLE, 
-    REMOVE_ALLOCATION_ROLE 
+    GET_COLLABORATORS 
 } from '@/modules/Allocations/graphql/allocation.queries'
 import { GET_ABSENCES } from '@/modules/Absences/graphql/absence.queries'
 import { dayjs } from '@/config'
 import { useNotificationStore } from '@/stores/notificationStore'
+import { useWeekNavigation } from '../composables/useWeekNavigation'
+import { useAllocationActions } from '../composables/useAllocationActions'
 
 import AllocationHeader from '../components/AllocationHeader.vue'
 import GlobalMilestonesSummary from '../components/GlobalMilestonesSummary.vue'
@@ -34,54 +31,22 @@ const dragging = ref(false)
 const localProjects = ref([])
 const viewMode = ref('weekly')
 const zoomLevel = ref('month')
-const monthlyRange = ref({
-    start: dayjs().format('YYYY-MM'),
-    end: dayjs().add(2, 'month').format('YYYY-MM')
-})
 
-const getISOWeek = (d = new Date()) => {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
-    return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`
-}
-const selectedWeek = ref(getISOWeek())
+const {
+    selectedWeek,
+    monthlyRange,
+    isAllocationActiveInWeek,
+    gotToWeek,
+    getPrevWeek
+} = useWeekNavigation()
 
-const parseWeekToDate = (weekStr) => {
-    if (!weekStr) return null
-    const [year, week] = weekStr.split('-W').map(Number)
-    if (!year || !week) return null
-    const anchor = dayjs(`${year}-01-04`).startOf('isoWeek') // ISO week 1 anchor
-    return anchor.add(week - 1, 'week')
-}
-
-const getPrevWeek = (weekStr) => {
-    const [y, w] = weekStr.split('-W').map(Number)
-    if (!y || !w) return null
-    if (w > 1) return `${y}-W${(w - 1).toString().padStart(2, '0')}`
-    return `${y - 1}-W52`
-}
-
-const isAllocationActiveInWeek = (allocation, weekStr) => {
-    // Primary: date-based ISO comparison
-    const target = parseWeekToDate(weekStr)
-    const start = parseWeekToDate(allocation?.startWeek)
-    const endDate = allocation?.endWeek ? parseWeekToDate(allocation.endWeek)?.endOf('isoWeek') : null
-    if (target && start) {
-        const targetMs = target.valueOf()
-        const startMs = start.valueOf()
-        if (!endDate) return startMs <= targetMs
-        return startMs <= targetMs && endDate.valueOf() >= targetMs
-    }
-    // Fallback: string compare in case of malformed dates
-    if (allocation?.startWeek && weekStr) {
-        const openEnded = !allocation.endWeek && allocation.startWeek <= weekStr
-        const bounded = allocation.endWeek && allocation.startWeek <= weekStr && allocation.endWeek >= weekStr
-        return openEnded || bounded
-    }
-    return false
-}
+const {
+    confirmAssignment: performAssignment,
+    deleteAlloc,
+    updateAllocationPercentage: performUpdatePercentage,
+    addRole,
+    removeRole
+} = useAllocationActions()
 
 const assignmentModalOpen = ref(false)
 const assignmentContext = ref({
@@ -97,13 +62,6 @@ const { result: absencesResult } = useQuery(GET_ABSENCES, () => ({
     endDate: dayjs().add(1, 'year').format('YYYY-MM-DD')
 }))
 const absences = computed(() => absencesResult.value?.absences || [])
-
-const { mutate: createAllocation } = useMutation(CREATE_ALLOCATION, { refetchQueries: ['GetProjects', 'GetCollaborators'] })
-const { mutate: updateAllocation } = useMutation(UPDATE_ALLOCATION, { refetchQueries: ['GetProjects'] })
-const { mutate: deleteAllocation } = useMutation(DELETE_ALLOCATION, { refetchQueries: ['GetProjects'] })
-const { mutate: addAllocationRole } = useMutation(ADD_ALLOCATION_ROLE, { refetchQueries: ['GetProjects'] })
-const { mutate: removeAllocationRole } = useMutation(REMOVE_ALLOCATION_ROLE, { refetchQueries: ['GetProjects'] })
-
 
 watch(projectResult, (newVal) => {
   if (newVal?.projects) {
@@ -192,13 +150,6 @@ const getGlobalOccupation = (collaboratorId) => {
     }, 0)
 }
 
-const gotToWeek = (direction) => {
-    const operation = direction === 'prev' ? 'subtract' : 'add'
-    const [y, w] = selectedWeek.value.split('-W').map(Number)
-    const d = dayjs(`${y}-01-04`).startOf('isoWeek').add(w - 1, 'week')[operation](1, 'week')
-    selectedWeek.value = `${d.isoWeekYear()}-W${d.isoWeek().toString().padStart(2, '0')}`
-}
-
 const openHierarchy = (project) => {
     selectedHierarchyProjectId.value = project.id
     hierarchyModalOpen.value = true
@@ -227,79 +178,20 @@ const handleDrop = (evt, projectId) => {
 }
 
 const handleConfirmAssignment = async (data) => {
-    await createAllocation({
-        projectId: data.projectId,
-        collaboratorId: data.collaboratorId,
-        roleId: data.roleId,
-        percentage: Number(data.percentage),
-        startWeek: selectedWeek.value
-    })
+    await performAssignment(data, selectedWeek.value)
     assignmentModalOpen.value = false
 }
 
 const handleDeleteAllocation = async (allocation) => {
-    if (!allocation) return
-    const confirmed = await notificationStore.showDialog("¿Eliminar asignación? Si comenzó antes, se cerrará hasta la semana previa.")
-    if (!confirmed) return
-
-    const isStartWeek = allocation.startWeek === selectedWeek.value
-    if (isStartWeek) {
-        await deleteAllocation({ id: allocation.id })
-    } else {
-        const prevWeek = getPrevWeek(selectedWeek.value)
-        await updateAllocation({ allocationId: allocation.id, percentage: allocation.dedicationPercentage || 0, endWeek: prevWeek })
-    }
+    await deleteAlloc(allocation, selectedWeek.value, getPrevWeek)
 }
 
 const handleUpdateAllocationPercentage = async (allocation, newPercentage) => {
-    const newPerc = Number(newPercentage)
-    if (allocation.dedicationPercentage === newPerc) return
-
-    if (allocation.startWeek === selectedWeek.value) {
-        await updateAllocation({ allocationId: allocation.id, percentage: newPerc })
-    } else {
-        if (await notificationStore.showDialog("Cambiar dedicación implica crear un nuevo registro desde esta semana. ¿Continuar?")) {
-            let w = parseInt(selectedWeek.value.split('-W')[1])
-            let y = parseInt(selectedWeek.value.split('-W')[0])
-            let prevWeek = ''
-            if (w > 1) {
-                prevWeek = `${y}-W${(w-1).toString().padStart(2,'0')}`
-            } else {
-                prevWeek = `${y-1}-W52`
-            }
-            
-            await updateAllocation({ allocationId: allocation.id, percentage: Number(allocation.dedicationPercentage) || 0, endWeek: prevWeek })
-            
-            const primaryRole = allocation.roles[0]
-            if (primaryRole) {
-                const projectId = allocation.project?.id || localProjects.value.find(p=>p.allocations.find(a=>a.id===allocation.id)).id
-                const res = await createAllocation({
-                    projectId,
-                    collaboratorId: allocation.collaborator.id,
-                    roleId: primaryRole.id,
-                    percentage: newPerc,
-                    startWeek: selectedWeek.value
-                })
-                
-                const newId = res.data.createAllocation.id
-                for (let i = 1; i < allocation.roles.length; i++) {
-                    await addAllocationRole({ allocationId: newId, roleId: allocation.roles[i].id })
-                }
-            }
-        }
-    }
+    await performUpdatePercentage(allocation, newPercentage, selectedWeek.value, localProjects.value)
 }
 
-const handleAddRole = async (allocation, roleId) => {
-    if (!roleId) return
-    await addAllocationRole({ allocationId: allocation.id, roleId })
-}
-
-const handleRemoveRole = async (allocation, roleId) => {
-     if (await notificationStore.showDialog("¿Desasignar este rol?")) {
-         await removeAllocationRole({ allocationId: allocation.id, roleId })
-     }
-}
+const handleAddRole = (allocation, roleId) => addRole(allocation, roleId)
+const handleRemoveRole = (allocation, roleId) => removeRole(allocation, roleId)
 
 </script>
 
@@ -360,12 +252,12 @@ const handleRemoveRole = async (allocation, roleId) => {
             :getSkillMatch="getSkillMatch"
             :getGlobalOccupation="getGlobalOccupation"
             :absences="absences"
-            @drop="handleDrop"
+            @drop="handleDrop($event, project.id)"
             @delete-allocation="handleDeleteAllocation"
             @update-allocation-percentage="handleUpdateAllocationPercentage"
             @add-role="handleAddRole"
             @remove-role="handleRemoveRole"
-            @open-hierarchy="openHierarchy"
+            @open-hierarchy="openHierarchy(project)"
         />
         
       </div>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { GET_ORG_HIERARCHY, ADD_ORG_HIERARCHY, REMOVE_ORG_HIERARCHY, GET_COLLABORATORS_WITH_ROLES } from '../graphql/hierarchy.queries'
 import { GET_HIERARCHY_TYPES } from '@/graphql/queries'
@@ -7,7 +7,7 @@ import { useNotificationStore } from '@/stores/notificationStore'
 import { Trash2, Network, Plus } from 'lucide-vue-next'
 import VueMultiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
-import * as d3 from 'd3'
+import OrgHierarchyTree from './OrgHierarchyTree.vue'
 
 const props = defineProps({
     organizationId: {
@@ -17,7 +17,6 @@ const props = defineProps({
 })
 
 const notificationStore = useNotificationStore()
-const svgRef = ref(null)
 
 const { result: hierarchyResult, refetch: refetchHierarchy } = useQuery(GET_ORG_HIERARCHY, () => ({
     organizationId: props.organizationId
@@ -33,135 +32,9 @@ const hierarchy = computed(() => hierarchyResult.value?.orgHierarchy || [])
 const collaborators = computed(() => collabResult.value?.collaborators || [])
 const hierarchyTypes = computed(() => typesResult.value?.hierarchyTypes || [])
 
-const adminCollaborators = computed(() => {
-    return collaborators.value.filter(c => c.roles.some(r => r.isAdministrative))
-})
-
 const supervisorOption = ref(null)
 const subordinateOption = ref(null)
 const newType = ref('')
-
-const buildTreeData = () => {
-    if (hierarchy.value.length === 0) return null
-
-    // 1. Identify all participants and relationships
-    const childrenMap = new Map()
-    const allParticipants = new Set()
-    const isSubordinate = new Set()
-
-    hierarchy.value.forEach(h => {
-        allParticipants.add(h.supervisor.id)
-        allParticipants.add(h.subordinate.id)
-        isSubordinate.add(h.subordinate.id)
-
-        if (!childrenMap.has(h.supervisor.id)) {
-            childrenMap.set(h.supervisor.id, [])
-        }
-        childrenMap.get(h.supervisor.id).push(h)
-    })
-
-    // 2. Identify Roots (Participants who are not subordinates)
-    const rootIds = Array.from(allParticipants).filter(id => !isSubordinate.has(id))
-    
-    // 3. Resolve full objects
-    const roots = rootIds.map(id => collaborators.value.find(c => c.id === id) || { id, firstName: 'Unknown', lastName: '', roles: [] })
-
-    const buildNode = (collab) => {
-        const relations = childrenMap.get(collab.id) || []
-        const children = relations.map(r => ({
-            ...buildNode(r.subordinate),
-            hierarchyId: r.id,
-            type: r.hierarchyType
-        }))
-        
-        const roleNames = collab.roles?.filter(r => r.isAdministrative).map(r => r.name).join(', ') || ''
-
-        return {
-            name: `${collab.firstName} ${collab.lastName}`,
-            id: collab.id,
-            children: children.length ? children : null,
-            adminRoles: roleNames
-        }
-    }
-
-    if (roots.length > 1) {
-         return {
-            name: "Organización",
-            children: roots.map(buildNode),
-            isVirtual: true
-        }
-    } else if (roots.length === 1) {
-        return buildNode(roots[0])
-    }
-    return null
-}
-
-const renderTree = () => {
-    if (!svgRef.value) return
-    const data = buildTreeData()
-    if (!data) {
-        d3.select(svgRef.value).selectAll('*').remove()
-        return
-    }
-
-    const width = 800
-    const height = 600
-    const margin = { top: 20, right: 90, bottom: 30, left: 90 }
-
-    const svg = d3.select(svgRef.value)
-    svg.selectAll('*').remove()
-    
-    const g = svg.attr('width', width)
-       .attr('height', height)
-       .append('g')
-       .attr('transform', `translate(${margin.left},${margin.top})`)
-
-    const tree = d3.tree().size([height - margin.top - margin.bottom, width - margin.left - margin.right])
-    const root = d3.hierarchy(data)
-    
-    tree(root)
-
-    g.selectAll('.link')
-        .data(root.links())
-        .enter().append('path')
-        .attr('class', 'link')
-        .attr('fill', 'none')
-        .attr('stroke', '#ccc')
-        .attr('stroke-width', 2)
-        .attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x))
-
-    const nodes = g.selectAll('.node')
-        .data(root.descendants())
-        .enter().append('g')
-        .attr('class', 'node')
-        .attr('transform', d => `translate(${d.y},${d.x})`)
-
-    nodes.append('circle')
-        .attr('r', 6)
-        .attr('fill', d => d.data.isVirtual ? '#ccc' : '#fff')
-        .attr('stroke', 'steelblue')
-        .attr('stroke-width', 3)
-
-    nodes.append('text')
-        .attr('dy', 3)
-        .attr('x', d => d.children ? -8 : 8)
-        .style('text-anchor', d => d.children ? 'end' : 'start')
-        .text(d => d.data.name)
-        .style('font-size', '12px')
-        
-    nodes.append('text')
-        .attr('dy', 18)
-        .attr('x', d => d.children ? -8 : 8)
-        .style('text-anchor', d => d.children ? 'end' : 'start')
-        .text(d => d.data.adminRoles)
-        .style('font-size', '10px')
-        .style('fill', '#666')
-}
-
-watch([hierarchy, collaborators], () => {
-    setTimeout(renderTree, 100)
-    if(!svgRef.value) { setTimeout(renderTree, 500) }
-})
 
 const handleAdd = async () => {
     if (!supervisorOption.value || !subordinateOption.value || !newType.value) return
@@ -271,9 +144,8 @@ const customLabel = (collab) => {
                 </div>
             </div>
 
-            <div class="lg:col-span-2 overflow-auto bg-gray-50 rounded border min-h-[400px] flex items-center justify-center relative">
-                 <h4 class="absolute top-2 left-2 text-xs font-bold text-gray-400 uppercase">Visualización Arbol</h4>
-                 <svg ref="svgRef"></svg>
+            <div class="lg:col-span-2">
+                 <OrgHierarchyTree :hierarchy="hierarchy" :collaborators="collaborators" />
             </div>
         </div>
     </div>
