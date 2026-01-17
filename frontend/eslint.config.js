@@ -20,6 +20,9 @@ export default defineConfig([
         ...globals.browser,
       },
     },
+    rules: {
+      'complexity': ['error', 10],
+    },
   },
 
   js.configs.recommended,

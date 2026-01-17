@@ -63,7 +63,7 @@ const onDelete = (evt) => {
         >
             {{ label }}
             
-            <button v-if="data?.hierarchyId" class="bg-white/20 hover:bg-white/40 text-inherit rounded p-0.5 transition-colors" title="Eliminar relación" @click="onDelete">
+            <button v-if="data?.hierarchyId && !data?.isInherited" class="bg-white/20 hover:bg-white/40 text-inherit rounded p-0.5 transition-colors" title="Eliminar relación" @click="onDelete">
                 <Trash2 :size="10" />
             </button>
         </div>

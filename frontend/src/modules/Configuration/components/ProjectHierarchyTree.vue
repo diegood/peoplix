@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { VueFlow, useVueFlow } from '@vue-flow/core'
+import { VueFlow, useVueFlow, Handle, Position } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import * as d3 from 'd3'
@@ -22,12 +22,16 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['delete-relation'])
+const emit = defineEmits(['delete-relation', 'create-relation'])
 
 const nodes = ref([])
 const edges = ref([])
 
-const { fitView } = useVueFlow()
+const { fitView, onConnect } = useVueFlow()
+
+onConnect((params) => {
+    emit('create-relation', params)
+})
 
 const getCollaborator = (id) => props.collaborators.find(c => c.id === id)
 
@@ -36,32 +40,43 @@ const onEdgeDelete = (hierarchyId) => {
 }
 
 const layoutGraph = () => {
-    if (!props.hierarchy.length) {
+    if (!props.collaborators.length) {
         nodes.value = []
         edges.value = []
         return
     }
 
     const childrenMap = new Map()
-    const allParticipants = new Set()
-    const isSubordinate = new Set()
+
+    const layoutChildrenMap = new Map()
+    const layoutIsSubordinate = new Set()
+
+    const collaboratorIds = new Set(props.collaborators.map(c => c.id))
+
+    const shouldIncludeInLayout = (h) => {
+        if (!collaboratorIds.has(h.supervisor.id) || layoutIsSubordinate.has(h.supervisor.id)) return false
+        return true
+    }
+
+    const addToLayoutConfig = (h) => {
+        layoutIsSubordinate.add(h.subordinate.id)
+        if (!layoutChildrenMap.has(h.supervisor.id))  layoutChildrenMap.set(h.supervisor.id, [])
+        layoutChildrenMap.get(h.supervisor.id).push(h)
+    }
 
     props.hierarchy.forEach(h => {
-        allParticipants.add(h.supervisor.id)
-        allParticipants.add(h.subordinate.id)
-        isSubordinate.add(h.subordinate.id)
-
-        if (!childrenMap.has(h.supervisor.id)) {
-            childrenMap.set(h.supervisor.id, [])
-        }
+        if (!childrenMap.has(h.supervisor.id)) childrenMap.set(h.supervisor.id, [])
         childrenMap.get(h.supervisor.id).push(h)
+        if (shouldIncludeInLayout(h)) addToLayoutConfig(h)
     })
 
-    const rootIds = Array.from(allParticipants).filter(id => !isSubordinate.has(id))
+    const rootIds = props.collaborators
+        .filter(c => !layoutIsSubordinate.has(c.id))
+        .map(c => c.id)
     
     const buildD3Node = (collabId) => {
         const collab = getCollaborator(collabId) || { id: collabId, firstName: 'Unknown', lastName: '', roles: [] }
-        const relations = childrenMap.get(collabId) || []
+        const relations = layoutChildrenMap.get(collabId) || []
         
         const children = relations.map(r => buildD3Node(r.subordinate.id))
 
@@ -71,7 +86,7 @@ const layoutGraph = () => {
             name: `${collab.firstName} ${collab.lastName}`,
             id: collab.id,
             adminRoles: staticRoles,
-            isVirtual: !getCollaborator(collabId),
+            isVirtual: !!collab.isVirtual,
             children: children.length ? children : null
         }
     }
@@ -79,7 +94,7 @@ const layoutGraph = () => {
     let hierarchyData = null
     if (rootIds.length > 1) {
         hierarchyData = {
-            name: "Organización",
+            name: "Project Team",
             id: 'root-virtual',
             isVirtual: true,
             children: rootIds.map(buildD3Node)
@@ -93,41 +108,48 @@ const layoutGraph = () => {
     
     const nodeWidth = 300
     const nodeHeight = 180
-    const treeLayout = d3.tree().nodeSize([nodeWidth, nodeHeight])
     
+    const treeLayout = d3.tree().nodeSize([nodeWidth, nodeHeight])
     treeLayout(root)
 
     const newNodes = []
     const newEdges = []
 
-    const findRelation = (sourceId, targetId) => {
-        return props.hierarchy.find(h => h.supervisor.id === sourceId && h.subordinate.id === targetId)
-    }
-
     root.descendants().forEach((d) => {
-        newNodes.push({
-            id: d.data.id,
-            type: 'custom',
-            position: { x: d.x, y: d.y }, 
-            data: { 
-                label: d.data.name,
-                role: d.data.adminRoles,
-                isVirtual: d.data.isVirtual
-            },
-        })
+        if (!newNodes.find(n => n.id === d.data.id)) {
+             newNodes.push({
+                id: d.data.id,
+                type: 'custom',
+                position: { x: d.x, y: d.y }, 
+                data: { 
+                    label: d.data.name,
+                    role: d.data.adminRoles,
+                    isVirtual: d.data.isVirtual
+                },
+                connectable: !d.data.isVirtual
+            })
+        }
+    })
 
-        if (d.parent) {
-            const relation = findRelation(d.parent.data.id, d.data.id)
-            const roleLabel = relation?.hierarchyType?.name || ''
+    const processedEdges = new Set()
+    props.hierarchy.forEach(h => {
+        if (processedEdges.has(h.id)) return
+        processedEdges.add(h.id)
+
+        const sourceNode = newNodes.find(n => n.id === h.supervisor.id)
+        const targetNode = newNodes.find(n => n.id === h.subordinate.id)
+
+        if (sourceNode && targetNode) {
+            const roleLabel = h.hierarchyType?.name || ''
             const roleColor = roleLabel ? stringToColor(roleLabel) : '#94a3b8'
 
             newEdges.push({
-                id: `e-${d.parent.data.id}-${d.data.id}`,
-                source: d.parent.data.id,
-                target: d.data.id,
+                id: `e-${h.supervisor.id}-${h.subordinate.id}-${h.id}`,
+                source: h.supervisor.id,
+                target: h.subordinate.id,
                 type: 'hierarchy-edge',
                 label: roleLabel, 
-                data: { hierarchyId: relation?.id },
+                data: { hierarchyId: h.id, isInherited: h.isInherited },
                 labelStyle: { fill: 'white', fontWeight: 'bold', fontSize: '11px' },
                 labelBgStyle: { fill: roleColor, rx: 4, ry: 4 },
                 labelBgPadding: [6, 4],
@@ -153,7 +175,7 @@ const onPaneReady = (instance) => {
 </script>
 
 <template>
-    <div class="h-[600px] w-full bg-gray-50 border rounded-lg overflow-hidden shadow-inner relative">
+    <div class="h-full w-full bg-gray-50 border rounded-lg overflow-hidden shadow-inner relative">
         <VueFlow
             v-model:nodes="nodes" 
             v-model:edges="edges"
@@ -171,23 +193,20 @@ const onPaneReady = (instance) => {
 
             <template #node-custom="{ data }">
                 <div 
-                    class="px-4 py-3 rounded-xl border transition-all duration-300 min-w-[200px] max-w-[250px] flex flex-col justify-center relative cursor-default group hover:-translate-y-1 hover:shadow-lg"
+                    class="px-4 py-3 rounded-xl border transition-all duration-300 min-w-[200px] max-w-[250px] flex flex-col justify-center relative cursor-default group hover:-translate-y-[1px] hover:shadow-lg"
                     :class="[
                         data.isVirtual 
                             ? 'bg-gray-50 border-dashed border-gray-300 opacity-70' 
                             : 'bg-white border-gray-200 shadow-sm border-l-4 border-l-blue-500'
                     ]"
                 >
+                    <Handle type="target"  :position="Position.Top" class="!w-4 !h-4 !border-2 !bg-teal-100 !border-teal-500 rounded-full !-top-1" />
+                    
                     <div class="text-sm font-bold text-gray-800 truncate pr-2">
                         {{ data.label }}
                     </div>
                     
-                    <div v-if="data.role" class="text-xs text-blue-600 font-bold mt-1 truncate">
-                        {{ data.role }}
-                    </div>
-                    <div v-if="!data.role && !data.isVirtual" class="text-xs text-gray-400 mt-1 italic">
-                        Sin roles asignados
-                    </div>
+                    <Handle type="source" :position="Position.Bottom" class="!w-4 !h-4 !border-2 !bg-orange-100 !border-orange-500 rounded-full !-bottom-1" />
                 </div>
             </template>
         </VueFlow>

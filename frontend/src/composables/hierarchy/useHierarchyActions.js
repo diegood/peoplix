@@ -6,7 +6,7 @@ import { CREATE_ALLOCATION } from '@/modules/Allocations/graphql/allocation.quer
 import { useNotificationStore } from '@/stores/notificationStore'
 import { dayjs } from '@/config'
 
-export function useHierarchyActions(props, allNodes, getDisplayName) {
+export function useHierarchyActions(props, allNodes) {
     
     const notificationStore = useNotificationStore()
     
@@ -37,46 +37,51 @@ export function useHierarchyActions(props, allNodes, getDisplayName) {
         showAddForm.value = false
     }
 
+    const getSupervisorRoleId = (supervisorNode) => {
+        let role = supervisorNode.collaborator.roles?.find(r => r.isAdministrative)
+        
+        if (!role) role = supervisorNode.collaborator.roles?.[0]
+        
+        let roleId = role?.id
+        if (!roleId && props.project.requiredRoles?.length > 0) {
+             roleId = props.project.requiredRoles[0].role?.id
+        }
+        return roleId
+    }
+
+    const ensureSupervisorAllocation = async (supervisorNode) => {
+        if (!supervisorNode?.isVirtual) return supervisorNode.id
+
+        const roleId = getSupervisorRoleId(supervisorNode)
+
+        if (!roleId) {
+            throw new Error("El supervisor no tiene roles directos ni hay roles requeridos en el proyecto para asignarle.")
+        }
+
+        notificationStore.showToast("Asignando supervisor al proyecto...", "info")
+        const currentWeek = dayjs().format('YYYY-[W]WW')
+        
+        const res = await createAllocation({
+            projectId: props.project.id,
+            collaboratorId: supervisorNode.collaborator.id,
+            roleId: roleId,
+            percentage: 0,
+            startWeek: currentWeek
+        })
+        
+        if (res?.data?.createAllocation?.id) {
+            return res.data.createAllocation.id
+        }
+        throw new Error("Falló la auto-asignación")
+    }
+
     const handleAdd = async () => {
         if (!selectedSupervisorId.value || !selectedTypeId.value) return
         
-        let supervisorAllocId = selectedSupervisorId.value
         const supervisorNode = allNodes.value.find(n => n.id === selectedSupervisorId.value)
         
         try {
-            if (supervisorNode?.isVirtual) {
-                let role = supervisorNode.collaborator.roles?.find(r => r.isAdministrative)
-                
-                if (!role) role = supervisorNode.collaborator.roles?.[0]
-                
-                let roleId = role?.id
-
-                if (!roleId && props.project.requiredRoles?.length > 0) {
-                     roleId = props.project.requiredRoles[0].role?.id
-                }
-
-                if (!roleId) {
-                    notificationStore.showToast("El supervisor no tiene roles directos ni hay roles requeridos en el proyecto para asignarle.", "error")
-                    return
-                }
-
-                notificationStore.showToast("Asignando supervisor al proyecto...", "info")
-                const currentWeek = dayjs().format('YYYY-[W]WW')
-                
-                const res = await createAllocation({
-                    projectId: props.project.id,
-                    collaboratorId: supervisorNode.collaborator.id,
-                    roleId: roleId,
-                    percentage: 0,
-                    startWeek: currentWeek
-                })
-                
-                if (res?.data?.createAllocation?.id) {
-                    supervisorAllocId = res.data.createAllocation.id
-                } else {
-                    throw new Error("Falló la auto-asignación")
-                }
-            }
+            const supervisorAllocId = await ensureSupervisorAllocation(supervisorNode)
 
             await addHierarchy({
                 subordinateAllocId: editingAllocationId.value,

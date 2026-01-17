@@ -1,12 +1,11 @@
-```
 <script setup>
-import { ref, toRef } from 'vue'
+import { ref, computed, toRef } from 'vue'
 import { Network, List, GitGraph, Settings, X } from 'lucide-vue-next'
-import HierarchyTreeNode from './HierarchyTreeNode.vue'
 import HierarchyTypeManager from './HierarchyTypeManager.vue'
 import HierarchyEditPanel from './HierarchyEditPanel.vue'
 import RasciMatrix from '../modules/Rasci/components/RasciMatrix.vue'
 import SimpleTabs from './SimpleTabs.vue'
+import ProjectHierarchyTree from '../modules/Configuration/components/ProjectHierarchyTree.vue'
 
 import { useHierarchyData } from '@/composables/hierarchy/useHierarchyData'
 import { useHierarchyActions } from '@/composables/hierarchy/useHierarchyActions'
@@ -25,21 +24,23 @@ const viewMode = ref('tree') // 'list' | 'tree'
 const showTypeManager = ref(false)
 const activeTab = ref('hierarchy')
 
+const showConnectionModal = ref(false)
+
 const tabs = [
     { id: 'hierarchy', label: 'Arbol de relaciones' },
     { id: 'rasci', label: 'Matriz RASCI' }
 ]
 
-// Composables
+const isOpenRef = toRef(props, 'isOpen')
 const { 
     hierarchyTypes, 
     allocations, 
     allNodes, 
     activeSupervisors, 
-    treeData, 
     getDisplayName,
-    getName
-} = useHierarchyData(props, toRef(props, 'isOpen'))
+    getName,
+    orgHierarchy
+} = useHierarchyData(props, isOpenRef)
 
 const {
     editingAllocationId,
@@ -49,10 +50,64 @@ const {
     startEdit,
     handleAdd,
     handleRemove
-} = useHierarchyActions(props, allNodes, getDisplayName)
+} = useHierarchyActions(props, allNodes)
 
-const selectFromTree = (nodeDetails) => {
-    startEdit(nodeDetails)
+const treeHierarchy = computed(() => {
+    const relations = []
+    allocations.value.forEach(alloc => {
+        alloc.supervisors?.forEach(sup => {
+             relations.push({
+                 id: sup.id,
+                 supervisor: sup.supervisor.collaborator,
+                 subordinate: alloc.collaborator,
+                 hierarchyType: sup.hierarchyType
+             })
+        })
+    })
+
+    return [...relations, ...orgHierarchy.value.filter(h => 
+        allNodes.value.some(n => n.collaborator.id === h.subordinate.id) && 
+        allNodes.value.some(n => n.collaborator.id === h.supervisor.id)
+    ).map(h => ({ ...h, isInherited: true }))]
+})
+
+const treeCollaborators = computed(() => {
+    return allNodes.value.map(n => ({
+        ...n.collaborator,
+        isVirtual: n.isVirtual
+    }))
+})
+
+const handleDeleteRelation = (relationId) => {
+     handleRemove(relationId) 
+}
+
+const handleCreateRelation = (params) => {
+    const { source, target } = params
+    
+    const subNode = allNodes.value.find(n => n.collaborator.id === target)
+    const supNode = allNodes.value.find(n => n.collaborator.id === source)
+    
+    if (subNode && supNode) {
+        editingAllocationId.value = subNode.id
+        selectedSupervisorId.value = supNode.id
+        selectedTypeId.value = '' 
+        
+        showConnectionModal.value = true
+    }
+}
+
+const confirmConnection = async () => {
+   if (!selectedTypeId.value) return 
+   await handleAdd()
+   showConnectionModal.value = false
+}
+
+const cancelConnection = () => {
+    showConnectionModal.value = false
+    selectedTypeId.value = ''
+    selectedSupervisorId.value = ''
+    editingAllocationId.value = null
 }
 
 </script>
@@ -123,18 +178,13 @@ const selectFromTree = (nodeDetails) => {
                     </div>
                 </div>
 
-                <div v-else class="min-h-full min-w-full flex justify-center p-8">
-                     <div v-if="treeData.length === 0" class="text-gray-400 italic">No hay datos para mostrar el árbol.</div>
-                     
-                     <div class="flex gap-16 overflow-visible">
-                         <div v-for="rootNode in treeData" :key="rootNode.uniqueKey" class="flex flex-col items-center">
-                             <HierarchyTreeNode 
-                                :node="rootNode" 
-                                :depth="0"
-                                @select="selectFromTree"
-                             />
-                         </div>
-                     </div>
+                <div v-else class="h-full w-full flex justify-center p-4">
+                     <ProjectHierarchyTree 
+                        :hierarchy="treeHierarchy" 
+                        :collaborators="treeCollaborators" 
+                        @delete-relation="handleDeleteRelation" 
+                        @create-relation="handleCreateRelation"
+                     />
                 </div>
 
             </div>
@@ -160,6 +210,27 @@ const selectFromTree = (nodeDetails) => {
         </div>
         
         <HierarchyTypeManager v-if="showTypeManager" @close="showTypeManager = false" />
+        
+        <div v-if="showConnectionModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/20 backdrop-blur-sm">
+            <div class="bg-white p-6 rounded-lg shadow-xl w-96">
+                <h3 class="font-bold text-gray-800 mb-4">Seleccionar Tipo de Relación</h3>
+                <div class="mb-4">
+                    <label class="block text-sm text-gray-600 mb-1">Tipo</label>
+                    <select v-model="selectedTypeId" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                         <option value="" disabled>Seleccione un tipo...</option>
+                         <option v-for="t in hierarchyTypes" :key="t.id" :value="t.id">{{ t.name }}</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button @click="cancelConnection" class="text-gray-500 hover:bg-gray-100 px-3 py-1.5 rounded text-sm transition font-medium">Cancelar</button>
+                    <button @click="confirmConnection" 
+                        :disabled="!selectedTypeId"
+                        class="bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 text-sm transition font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
   </div>
 </template>
