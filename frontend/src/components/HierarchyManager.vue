@@ -47,16 +47,7 @@ const { result: projectDetailsResult } = useQuery(GET_PROJECT_DETAILS, () => ({
     fetchPolicy: 'cache-and-network' 
 })
 
-const localProject = computed(() => {
-    const proj = projectDetailsResult.value?.project || props.project
-    console.log("HierarchyManager localProject:", JSON.stringify({ 
-        source: projectDetailsResult.value ? 'query' : 'props', 
-        id: proj?.id, 
-        allocCount: proj?.allocations?.length,
-        allocations: proj?.allocations
-    }))
-    return proj
-})
+const localProject = computed(() => projectDetailsResult.value?.project || props.project )
 
 const { result: orgHierarchyResult } = useQuery(GET_ORG_HIERARCHY, () => ({
     organizationId: localProject.value?.organization?.id || props.project.organizationId
@@ -77,15 +68,7 @@ const { mutate: createAllocation } = useMutation(CREATE_ALLOCATION, {
     refetchQueries: ['GetProjects', 'GetProjectDetails'] 
 })
 
-const allocations = computed(() => {
-    const list = localProject.value?.allocations || []
-    console.log("HierarchyManager computed allocations:", list.map(a => ({ 
-        id: a.id, 
-        hasCollaborator: !!a.collaborator, 
-        name: a.collaborator?.firstName 
-    })))
-    return list
-})
+const allocations = computed(() => localProject.value?.allocations || [])
 
 const availableSupervisors = computed(() => {
     return allNodes.value.filter(a => a.id !== editingAllocationId.value)

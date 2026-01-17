@@ -32,7 +32,8 @@ export class PrismaProjectRepository {
                 organization: true,
                 allocations: {
                     include: {
-                        roles: { include: { role: true } }
+                        roles: { include: { role: true } },
+                        collaborator: { include: { skills: { include: { skill: true } } } }
                     }
                 },
                 milestones: { include: { milestoneType: true } },

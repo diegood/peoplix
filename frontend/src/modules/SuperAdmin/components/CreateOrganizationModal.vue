@@ -31,7 +31,8 @@ watch(() => form.value.name, (newVal) => {
     }
 })
 
-const handleCreate = async (linkExistingUser = false) => {
+const handleCreate = async (linkExistingUserArg = false) => {
+    const linkExistingUser = typeof linkExistingUserArg === 'boolean' ? linkExistingUserArg : false;
     try {
         await createOrganization({ ...form.value, linkExistingUser })
         emit('update:modelValue', false)

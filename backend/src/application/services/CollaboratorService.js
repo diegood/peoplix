@@ -56,7 +56,7 @@ export class CollaboratorService {
              data.joinDate = new Date(data.joinDate).toISOString()
         }
         
-        const { password, userName, ...collaboratorData } = data;
+        const { password, userName, email: unusedEmail, ...collaboratorData } = data;
 
         return this.repository.create({
             ...collaboratorData,
