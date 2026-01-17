@@ -6,7 +6,8 @@ export class PrismaCollaboratorHierarchyRepository {
     }
 
     async delete(id) {
-        return prisma.collaboratorHierarchy.delete({ where: { id } })
+        await prisma.collaboratorHierarchy.delete({ where: { id } })
+        return true
     }
 
     async findAll(organizationId) {

@@ -1,6 +1,15 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
+import { VueFlow, useVueFlow } from '@vue-flow/core'
+import { Background } from '@vue-flow/background'
+import { Controls } from '@vue-flow/controls'
 import * as d3 from 'd3'
+import { stringToColor } from '@/helper/Colors'
+import HierarchyEdge from './HierarchyEdge.vue'
+
+import '@vue-flow/core/dist/style.css'
+import '@vue-flow/core/dist/theme-default.css'
+import '@vue-flow/controls/dist/style.css'
 
 const props = defineProps({
     hierarchy: {
@@ -13,10 +22,25 @@ const props = defineProps({
     }
 })
 
-const svgRef = ref(null)
+const emit = defineEmits(['delete-relation'])
 
-const buildTreeData = () => {
-    if (props.hierarchy.length === 0) return null
+const nodes = ref([])
+const edges = ref([])
+
+const { fitView } = useVueFlow()
+
+const getCollaborator = (id) => props.collaborators.find(c => c.id === id)
+
+const onEdgeDelete = (hierarchyId) => {
+    emit('delete-relation', hierarchyId)
+}
+
+const layoutGraph = () => {
+    if (!props.hierarchy.length) {
+        nodes.value = []
+        edges.value = []
+        return
+    }
 
     const childrenMap = new Map()
     const allParticipants = new Set()
@@ -35,114 +59,130 @@ const buildTreeData = () => {
 
     const rootIds = Array.from(allParticipants).filter(id => !isSubordinate.has(id))
     
-    const roots = rootIds.map(id => props.collaborators.find(c => c.id === id) || { id, firstName: 'Unknown', lastName: '', roles: [] })
-
-    const buildNode = (collab) => {
-        const relations = childrenMap.get(collab.id) || []
-        const children = relations.map(r => ({
-            ...buildNode(r.subordinate),
-            hierarchyId: r.id,
-            type: r.hierarchyType
-        }))
+    const buildD3Node = (collabId) => {
+        const collab = getCollaborator(collabId) || { id: collabId, firstName: 'Unknown', lastName: '', roles: [] }
+        const relations = childrenMap.get(collabId) || []
         
-        const roleNames = collab.roles?.filter(r => r.isAdministrative).map(r => r.name).join(', ') || ''
+        const children = relations.map(r => buildD3Node(r.subordinate.id))
 
+        const staticRoles = collab.roles?.filter(r => r.isAdministrative).map(r => r.name).join(', ') || ''
+        
         return {
             name: `${collab.firstName} ${collab.lastName}`,
             id: collab.id,
-            children: children.length ? children : null,
-            adminRoles: roleNames,
-            isVirtual: !props.collaborators.some(c => c.id === collab.id)
+            adminRoles: staticRoles,
+            isVirtual: !getCollaborator(collabId),
+            children: children.length ? children : null
         }
     }
 
-    if (roots.length > 1) {
-         return {
+    let hierarchyData = null
+    if (rootIds.length > 1) {
+        hierarchyData = {
             name: "Organización",
-            children: roots.map(buildNode),
-            isVirtual: true
+            id: 'root-virtual',
+            isVirtual: true,
+            children: rootIds.map(buildD3Node)
         }
-    } else if (roots.length === 1) {
-        return buildNode(roots[0])
-    }
-    return null
-}
-
-const renderTree = () => {
-    if (!svgRef.value) return
-    const data = buildTreeData()
-    if (!data) {
-        d3.select(svgRef.value).selectAll('*').remove()
-        return
+    } else if (rootIds.length === 1) {
+        hierarchyData = buildD3Node(rootIds[0])
     }
 
-    const width = 800
-    const height = 600
-    const margin = { top: 20, right: 90, bottom: 30, left: 90 }
-
-    const svg = d3.select(svgRef.value)
-    svg.selectAll('*').remove()
+    if (!hierarchyData) return
+    const root = d3.hierarchy(hierarchyData)
     
-    const g = svg.attr('width', width)
-       .attr('height', height)
-       .append('g')
-       .attr('transform', `translate(${margin.left},${margin.top})`)
-
-    const tree = d3.tree().size([height - margin.top - margin.bottom, width - margin.left - margin.right])
-    const root = d3.hierarchy(data)
+    const nodeWidth = 300
+    const nodeHeight = 180
+    const treeLayout = d3.tree().nodeSize([nodeWidth, nodeHeight])
     
-    tree(root)
+    treeLayout(root)
 
-    g.selectAll('.link')
-        .data(root.links())
-        .enter().append('path')
-        .attr('class', 'link')
-        .attr('fill', 'none')
-        .attr('stroke', '#ccc')
-        .attr('stroke-width', 2)
-        .attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x))
+    const newNodes = []
+    const newEdges = []
 
-    const nodes = g.selectAll('.node')
-        .data(root.descendants())
-        .enter().append('g')
-        .attr('class', 'node')
-        .attr('transform', d => `translate(${d.y},${d.x})`)
+    const findRelation = (sourceId, targetId) => {
+        return props.hierarchy.find(h => h.supervisor.id === sourceId && h.subordinate.id === targetId)
+    }
 
-    nodes.append('circle')
-        .attr('r', 6)
-        .attr('fill', d => d.data.isVirtual ? '#ccc' : '#fff')
-        .attr('stroke', 'steelblue')
-        .attr('stroke-width', 3)
+    root.descendants().forEach((d) => {
+        newNodes.push({
+            id: d.data.id,
+            type: 'custom',
+            position: { x: d.x, y: d.y }, 
+            data: { 
+                label: d.data.name,
+                role: d.data.adminRoles,
+                isVirtual: d.data.isVirtual
+            },
+        })
 
-    nodes.append('text')
-        .attr('dy', 3)
-        .attr('x', d => d.children ? -8 : 8)
-        .style('text-anchor', d => d.children ? 'end' : 'start')
-        .text(d => d.data.name)
-        .style('font-size', '12px')
-        
-    nodes.append('text')
-        .attr('dy', 18)
-        .attr('x', d => d.children ? -8 : 8)
-        .style('text-anchor', d => d.children ? 'end' : 'start')
-        .text(d => d.data.adminRoles)
-        .style('font-size', '10px')
-        .style('fill', '#666')
+        if (d.parent) {
+            const relation = findRelation(d.parent.data.id, d.data.id)
+            const roleLabel = relation?.hierarchyType?.name || ''
+            const roleColor = roleLabel ? stringToColor(roleLabel) : '#94a3b8'
+
+            newEdges.push({
+                id: `e-${d.parent.data.id}-${d.data.id}`,
+                source: d.parent.data.id,
+                target: d.data.id,
+                type: 'hierarchy-edge',
+                label: roleLabel, 
+                data: { hierarchyId: relation?.id },
+                labelStyle: { fill: 'white', fontWeight: 'bold', fontSize: '11px' },
+                labelBgStyle: { fill: roleColor, rx: 4, ry: 4 },
+                labelBgPadding: [6, 4],
+                labelBgBorderRadius: 8,
+                style: { stroke: roleColor, strokeWidth: 2 },
+            })
+        }
+    })
+
+    nodes.value = newNodes
+    edges.value = newEdges
+
+    setTimeout(() => {
+        fitView({ padding: 0.2, duration: 200 })
+    }, 100)
 }
 
-watch(() => [props.hierarchy, props.collaborators], () => {
-    setTimeout(renderTree, 100)
-    if(!svgRef.value) { setTimeout(renderTree, 500) }
-}, { deep: true })
+watch(() => [props.hierarchy, props.collaborators], layoutGraph, { deep: true, immediate: true })
 
-onMounted(() => {
-    setTimeout(renderTree, 100)
-})
+const onPaneReady = (instance) => {
+    instance.fitView({ padding: 0.2 })
+}
 </script>
 
 <template>
-    <div class="overflow-auto bg-gray-50 rounded border min-h-[400px] flex items-center justify-center relative">
-         <h4 class="absolute top-2 left-2 text-xs font-bold text-gray-400 uppercase">Visualización Arbol</h4>
-         <svg ref="svgRef"></svg>
+    <div class="h-[600px] w-full bg-gray-50 border rounded-lg overflow-hidden shadow-inner relative">
+        <VueFlow
+            v-model:nodes="nodes" 
+            v-model:edges="edges"
+            :default-viewport="{ zoom: 1 }"
+            :min-zoom="0.1"
+            :max-zoom="4"
+            @pane-ready="onPaneReady"
+        >
+            <Background pattern-color="#cbd5e1" :gap="20" />
+            <Controls />
+
+            <template #edge-hierarchy-edge="edgeProps">
+                <HierarchyEdge v-bind="edgeProps" @delete="onEdgeDelete" />
+            </template>
+
+            <template #node-custom="{ data }">
+                <div 
+                    class="px-4 py-3 rounded-xl border transition-all duration-300 min-w-[200px] max-w-[250px] flex flex-col justify-center relative cursor-default group hover:-translate-y-1 hover:shadow-lg"
+                    :class="[
+                        data.isVirtual 
+                            ? 'bg-gray-50 border-dashed border-gray-300 opacity-70' 
+                            : 'bg-white border-gray-200 shadow-sm border-l-4 border-l-blue-500'
+                    ]"
+                >
+                    <div class="text-sm font-bold text-gray-800 truncate pr-2">
+                        {{ data.label }}
+                    </div>
+                </div>
+            </template>
+        </VueFlow>
     </div>
 </template>

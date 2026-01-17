@@ -128,25 +128,12 @@ const customLabel = (collab) => {
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-1 border-r pr-6 space-y-2">
-                <h4 class="text-sm font-bold text-gray-500 uppercase mb-2">Lista de Relaciones</h4>
-                <div v-if="hierarchy.length === 0" class="text-gray-400 text-sm italic">No hay relaciones definidas</div>
-                <div v-for="h in hierarchy" :key="h.id" class="flex items-center justify-between p-2 border rounded bg-white hover:bg-gray-50 text-sm">
-                    <div>
-                        <div class="font-medium text-gray-800">{{ h.supervisor.firstName }} {{ h.supervisor.lastName }}</div>
-                        <div class="text-xs text-gray-500">&darr; {{ h.hierarchyType.name }} &darr;</div>
-                        <div class="font-medium text-gray-800">{{ h.subordinate.firstName }} {{ h.subordinate.lastName }}</div>
-                    </div>
-                    <button @click="handleDelete(h)" class="p-1 text-gray-400 hover:text-red-500">
-                        <Trash2 size="16" />
-                    </button>
-                </div>
-            </div>
-
-            <div class="lg:col-span-2">
-                 <OrgHierarchyTree :hierarchy="hierarchy" :collaborators="collaborators" />
-            </div>
+        <div class="mt-6">
+             <OrgHierarchyTree 
+                :hierarchy="hierarchy" 
+                :collaborators="collaborators" 
+                @delete-relation="(id) => handleDelete({ id })"
+             />
         </div>
     </div>
 </template>

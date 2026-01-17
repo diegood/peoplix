@@ -5,6 +5,7 @@ import hyvuegantt from "hy-vue-gantt"
 
 import './assets/main.css'
 
+
 import App from './App.vue'
 import router from './router'
 import { apolloClient } from './apollo'
