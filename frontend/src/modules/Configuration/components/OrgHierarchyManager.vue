@@ -33,25 +33,31 @@ const collaborators = computed(() => collabResult.value?.collaborators || [])
 const hierarchyTypes = computed(() => typesResult.value?.hierarchyTypes || [])
 
 const supervisorOption = ref(null)
-const subordinateOption = ref(null)
-const newType = ref('')
+const subordinateOption = ref([])
+const newType = ref(null)
 
 const handleAdd = async () => {
-    if (!supervisorOption.value || !subordinateOption.value || !newType.value) return
-    if (supervisorOption.value.id === subordinateOption.value.id) {
+    if (!supervisorOption.value || subordinateOption.value.length === 0 || !newType.value) return
+    
+    if (subordinateOption.value.some(sub => sub.id === supervisorOption.value.id)) {
         notificationStore.showToast("No puede ser su propio supervisor", "error")
         return
     }
     
     try {
-        await addHierarchy({
-            supervisorId: supervisorOption.value.id,
-            subordinateId: subordinateOption.value.id,
-            hierarchyTypeId: newType.value
-        })
-        subordinateOption.value = null
+        const promises = subordinateOption.value.map(sub => 
+            addHierarchy({
+                supervisorId: supervisorOption.value.id,
+                subordinateId: sub.id,
+                hierarchyTypeId: newType.value.id
+            })
+        )
+        
+        await Promise.all(promises)
+        
+        subordinateOption.value = []
         await refetchHierarchy()
-        notificationStore.showToast("Relación agregada", "success")
+        notificationStore.showToast("Relaciones agregadas exitosamente", "success")
     } catch (e) {
         notificationStore.showToast("Error agregando relación: " + e.message, "error")
     }
@@ -91,7 +97,7 @@ const customLabel = (collab) => {
                         v-model="supervisorOption"
                         :options="collaborators"
                         :custom-label="customLabel"
-                        placeholder="Buscar colaborador..."
+                        placeholder="Buscar supervisor..."
                         select-label="Seleccionar"
                         selected-label="Seleccionado"
                         deselect-label="Quitar"
@@ -101,12 +107,15 @@ const customLabel = (collab) => {
                     </VueMultiselect>
                 </div>
                 <div class="flex-1 min-w-[250px]">
-                     <label class="block text-xs font-medium text-gray-500 mb-1">Subordinado</label>
+                     <label class="block text-xs font-medium text-gray-500 mb-1">Subordinado(s)</label>
                      <VueMultiselect
                         v-model="subordinateOption"
                         :options="collaborators"
+                        :multiple="true"
+                        :close-on-select="false"
+                        :clear-on-select="false"
                         :custom-label="customLabel"
-                        placeholder="Buscar colaborador..."
+                        placeholder="Buscar subordinados..."
                         select-label="Seleccionar"
                         selected-label="Seleccionado"
                         deselect-label="Quitar"
@@ -117,12 +126,20 @@ const customLabel = (collab) => {
                 </div>
                 <div class="flex-1 min-w-[150px]">
                     <label class="block text-xs font-medium text-gray-500 mb-1">Tipo de Relación</label>
-                    <select v-model="newType" class="w-full border rounded px-3 py-2 text-sm h-[40px] bg-white">
-                        <option value="">Seleccionar...</option>
-                        <option v-for="t in hierarchyTypes" :key="t.id" :value="t.id">{{ t.name }}</option>
-                    </select>
+                    <VueMultiselect
+                        v-model="newType"
+                        :options="hierarchyTypes"
+                        label="name"
+                        track-by="id"
+                        placeholder="Tipo..."
+                        select-label="Seleccionar"
+                        selected-label="Seleccionado"
+                        deselect-label="Quitar"
+                    >
+                         <template #noResult>No se encontraron resultados</template>
+                    </VueMultiselect>
                 </div>
-                <button @click="handleAdd" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1 text-sm font-medium h-[40px]">
+                <button @click="handleAdd" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1 text-sm font-medium h-[40px] mb-0.5">
                     <Plus size="16"/> Agregar
                 </button>
             </div>
