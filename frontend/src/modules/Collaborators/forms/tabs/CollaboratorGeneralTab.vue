@@ -125,6 +125,7 @@ const getFieldOptions = (field) => {
                                     placeholder="Buscar por email o nombre..." 
                                     class="pl-9 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                     autocomplete="off"
+                                    data-1p-ignore="true"
                                 />
                                 <div v-if="loadingSearch" class="absolute right-3 top-2.5">
                                     <div class="animate-spin h-4 w-4 border-2 border-indigo-500 rounded-full border-t-transparent"></div>
