@@ -12,14 +12,14 @@ class FunctionalRequirementService {
           include: {
             changedBy: {
               include: {
-                collaborator: true
+                collaborators: true
               }
             }
           }
         },
         analyst: {
           include: {
-            collaborator: true
+            collaborators: true
           }
         },
         workPackages: true,
@@ -49,14 +49,14 @@ class FunctionalRequirementService {
           include: {
             changedBy: {
               include: {
-                collaborator: true
+                collaborators: true
               }
             }
           }
         },
         analyst: {
           include: {
-            collaborator: true
+            collaborators: true
           }
         },
         workPackages: true,
@@ -130,7 +130,6 @@ class FunctionalRequirementService {
     }
 
     if (hasChanges) {
-       // Determinar bump de versión
        const bump = versionBump || 'patch';
        const major = existing.versionMajor ?? 1;
        const minor = existing.versionMinor ?? 0;
@@ -179,7 +178,6 @@ class FunctionalRequirementService {
   }
 
   async createEvolution(originalRequirementId, data, userId) {
-    // Obtener el requisito original
     const original = await this.getById(originalRequirementId);
     if (!original) throw new Error('Original requirement not found');
 
@@ -206,7 +204,6 @@ class FunctionalRequirementService {
       analystId: userId
     };
 
-    // Obtener el siguiente número para el proyecto
     const lastRequirement = await prisma.functionalRequirement.findFirst({
       where: { projectId: original.projectId },
       orderBy: { number: 'desc' },
@@ -221,7 +218,7 @@ class FunctionalRequirementService {
         originalRequirement: true,
         analyst: {
           include: {
-            collaborator: true
+            collaborators: true
           }
         }
       }

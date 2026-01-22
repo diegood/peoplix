@@ -165,6 +165,17 @@ export const authResolvers = {
         };
     }
   },
+  User: {
+    collaborator: (parent, args, context) => {
+        if (parent.collaborators && parent.collaborators.length > 0) {
+             if (context.user && context.user.organizationId) {
+                 return parent.collaborators.find(c => c.organizationId === context.user.organizationId) || parent.collaborators[0];
+             }
+             return parent.collaborators[0];
+        }
+        return null;
+    }
+  },
   Query: {
     me: async (_, __, context) => {
       if (!context.user) return null;

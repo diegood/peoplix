@@ -14,17 +14,11 @@ export function useHierarchyActions(props, allNodes) {
     const selectedSupervisorId = ref('')
     const selectedTypeId = ref('')
     const showAddForm = ref(false)
+    const refetchQueries = ['GetProjects', 'GetProjectDetails']
 
-    const { mutate: addHierarchy } = useMutation(ADD_ALLOCATION_HIERARCHY, { 
-        refetchQueries: ['GetProjects', 'GetProjectDetails'] 
-    })
-    const { mutate: removeHierarchy } = useMutation(REMOVE_ALLOCATION_HIERARCHY, { 
-        refetchQueries: ['GetProjects', 'GetProjectDetails'] 
-    })
-    const { mutate: createAllocation } = useMutation(CREATE_ALLOCATION, { 
-        refetchQueries: ['GetProjects', 'GetProjectDetails'] 
-    })
-
+    const { mutate: addHierarchy } = useMutation(ADD_ALLOCATION_HIERARCHY, { refetchQueries })
+    const { mutate: removeHierarchy } = useMutation(REMOVE_ALLOCATION_HIERARCHY, { refetchQueries })
+    const { mutate: createAllocation } = useMutation(CREATE_ALLOCATION, { refetchQueries })
 
     const startEdit = (node) => {
         if (node.isVirtual) {
@@ -69,20 +63,15 @@ export function useHierarchyActions(props, allNodes) {
             startWeek: currentWeek
         })
         
-        if (res?.data?.createAllocation?.id) {
-            return res.data.createAllocation.id
-        }
+        if (res?.data?.createAllocation?.id) { return res.data.createAllocation.id }
         throw new Error("Falló la auto-asignación")
     }
 
     const handleAdd = async () => {
         if (!selectedSupervisorId.value || !selectedTypeId.value) return
-        
         const supervisorNode = allNodes.value.find(n => n.id === selectedSupervisorId.value)
-        
         try {
             const supervisorAllocId = await ensureSupervisorAllocation(supervisorNode)
-
             await addHierarchy({
                 subordinateAllocId: editingAllocationId.value,
                 supervisorAllocId: supervisorAllocId,
@@ -101,13 +90,9 @@ export function useHierarchyActions(props, allNodes) {
              notificationStore.showToast("No se puede eliminar una relación de Organización desde el Proyecto", "warning")
              return
         }
-
         if (!await notificationStore.showDialog("¿Eliminar esta relación?")) return
-        try {
-            await removeHierarchy({ hierarchyId })
-        } catch (e) {
-            notificationStore.showToast(e.message, 'error')
-        }
+        try { await removeHierarchy({ hierarchyId }) } 
+        catch (e) { notificationStore.showToast(e.message, 'error') }
     }
 
     return {
