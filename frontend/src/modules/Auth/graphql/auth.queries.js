@@ -1,8 +1,8 @@
 import gql from 'graphql-tag'
 
 export const LOGIN_MUTATION = gql`
-  mutation Login($username: String!, $password: String!) {
-    login(input: { username: $username, password: $password }) {
+  mutation Login($firebaseToken: String!, $recaptchaToken: String!) {
+    login(input: { firebaseToken: $firebaseToken, recaptchaToken: $recaptchaToken }) {
       token
       user {
         id

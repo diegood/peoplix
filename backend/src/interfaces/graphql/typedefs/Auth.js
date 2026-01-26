@@ -9,8 +9,8 @@ export const AuthSchema = gql`
   }
 
   input LoginInput {
-    username: String!
-    password: String!
+    firebaseToken: String!
+    recaptchaToken: String!
   }
 
   extend type Mutation {

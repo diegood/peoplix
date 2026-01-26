@@ -6,15 +6,41 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 export const authResolvers = {
   Mutation: {
     login: async (_, { input }) => {
-      const { username, password } = input;
+      const { firebaseToken, recaptchaToken } = input;
       
+      // 1. Verify ReCAPTCHA
+      const { RecaptchaClient } = await import('../../../infrastructure/external/RecaptchaClient.js');
+      const recaptcha = new RecaptchaClient();
+      const isRecaptchaValid = await recaptcha.validateToken(recaptchaToken, 'LOGIN');
+      
+      if (!isRecaptchaValid) {
+        throw new Error('Security check failed. Please try again.');
+      }
+
+      // 2. Verify Firebase Token
+      const { firebaseAdmin } = await import('../../../infrastructure/external/firebaseAdmin.js');
+      let decodedToken;
+      try {
+        decodedToken = await firebaseAdmin.auth().verifyIdToken(firebaseToken);
+      } catch (error) {
+        console.error('Firebase Token Verification Failed:', error);
+        throw new Error('Authentication failed');
+      }
+
+      const email = decodedToken.email;
+      if (!email) {
+        throw new Error('No email found in authentication token');
+      }
+      
+      // 3. Find User locally
       let user = await prisma.user.findUnique({
-        where: { email: username }
+        where: { email: email }
       });
 
       if (!user) {
+          // Fallback: Check collaborator email if not in User table (legacy support or migration)
           const collaborator = await prisma.collaborator.findFirst({
-              where: { userName: username },
+              where: { userName: email }, // Assuming userName might match email in some cases or we search by email field if added
               include: { user: true }
           });
           
@@ -24,12 +50,32 @@ export const authResolvers = {
       }
 
       if (!user) {
-        throw new Error('Invalid credentials');
+        // Auto-register the user using Firebase info
+        const nameParts = (decodedToken.name || '').split(' ');
+        const firstName = nameParts[0] || 'Unknown';
+        const lastName = nameParts.slice(1).join(' ') || 'User';
+
+        try {
+            user = await prisma.user.create({
+                data: {
+                    email: email,
+                    username: email, // Default username to email
+                    password: 'firebase-login-no-password', // Dummy password
+                    isSuperAdmin: false, // Default to normal user
+                    // Create a default collaborator profile for the first organization found or a default one
+                    // For now, we just create the User. The collaborator creation might need organization context.
+                    // If we want to assign them to an org, we need to know which one.
+                    // As a fallback, we create the user without collaborators first.
+                }
+            });
+            console.log(`Auto-registered new user: ${email}`);
+        } catch (createError) {
+             console.error('Error auto-registering user:', createError);
+             throw new Error('Failed to register user.');
+        }
       }
 
-      if (user.password !== password) {
-        throw new Error('Invalid credentials');
-      }
+      // Password check removed as we trust Firebase Authentication
 
       const collaborators = await prisma.collaborator.findMany({
         where: { userId: user.id },
@@ -44,24 +90,33 @@ export const authResolvers = {
               orderBy: { name: 'asc' }
           });
       } else {
-          if (!collaborators.length) {
-             throw new Error('User is not associated with any organization');
+          // If no collaborators found, the user is new or has no org.
+          // We return an empty list but do NOT throw an error.
+          // This allows them to login and reach the "Create Organization" page.
+          if (collaborators.length) {
+             availableOrganizations = collaborators.map(c => c.organization).filter(o => o.isActive);
           }
-          availableOrganizations = collaborators.map(c => c.organization).filter(o => o.isActive);
       }
 
       let activeProfile = collaborators[0] || null;
       
-      if (!activeProfile && user.isSuperAdmin) {
-         activeProfile = {
-             id: 'super-admin-' + user.id,
-             firstName: 'Super',
-             lastName: 'Admin',
+      if (!activeProfile) {
+          // Provide a basic profile wrapper for users without an organization
+          // This matches the GraphQL 'Collaborator' type structure loosely so the frontend doesn't crash,
+          // but organization-specific fields will be null.
+           activeProfile = {
+             id: 'no-org-' + user.id,
+             firstName: user.username || 'User', // Fallback
+             lastName: '',
              userName: user.email,
              email: user.email,
-             systemRole: 0,
+             systemRole: 0, // 0 usually means SuperAdmin, but here we might need a "NoRole" or handle it on frontend. 
+                            // Letting it be 0 might be dangerous if logic checks < 1. 2 is User.
+                            // Let's use 2 (User) or a special code. Using 2 for safety.
+             systemRole: user.isSuperAdmin ? 0 : 2,
              organization: null,
              organizationId: null,
+             userId: user.id,
              roles: [],
              skills: [],
              allocations: []

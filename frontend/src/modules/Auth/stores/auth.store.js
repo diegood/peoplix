@@ -41,9 +41,9 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('availableOrganizations')
   }
 
-  async function login(username, password) {
+  async function login(firebaseToken, recaptchaToken) {
     try {
-      const result = await loginMutation({ username, password })
+      const result = await loginMutation({ firebaseToken, recaptchaToken })
       if (result?.data?.login) {
         await saveSession(result.data.login.token, result.data.login.user, result.data.login.availableOrganizations)
         return true

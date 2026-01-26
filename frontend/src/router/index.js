@@ -33,17 +33,27 @@ const router = createRouter({
       component: () => import('@/modules/SuperAdmin/views/OrganizationsView.vue'),
     },
     {
+      path: '/create-org',
+      name: 'create-org',
+      component: () => import('@/modules/Onboarding/views/CreateOrgView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/',
       name: 'root',
       redirect: () => {
         const authStore = useAuthStore()
         if (authStore.isAuthenticated) {
+            // Check if user has an active organization profile
             if (authStore.user?.organization?.tag) {
                 return { path: `/${authStore.user.organization.tag}/` }
             }
+            // If superadmin, go to global view
             if (authStore.isSuperAdmin) {
                 return { name: 'superadmin-organizations' }
             }
+            // If authenticated but no org, go to Create Org
+            return { name: 'create-org' }
         }
         return { name: 'login' }
       }

@@ -1,6 +1,6 @@
 {
   "name": "workload",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "private": true,
   "type": "module",
   "author": "Diego G. Arias",
@@ -32,6 +32,7 @@
     "@vue-flow/core": "^1.48.1",
     "d3": "^7.9.0",
     "dayjs": "^1.11.19",
+    "firebase": "^12.8.0",
     "graphql-ws": "^6.0.6",
     "hy-vue-gantt": "^4.2.1",
     "pinia": "^3.0.4",
