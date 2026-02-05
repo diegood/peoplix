@@ -6,3 +6,4 @@ backend/.env.production-eu
 node_modules/
 frontend/.firebase/hosting.ZGlzdA.cache
 inspiraciones/
+pgdata/

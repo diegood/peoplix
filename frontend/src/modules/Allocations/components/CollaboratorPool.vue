@@ -1,4 +1,5 @@
 <script setup>
+import { ref, computed } from 'vue'
 import draggable from 'vuedraggable'
 import { dayjs } from '@/config'
 
@@ -9,6 +10,14 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['drag-start', 'drag-end'])
+
+const showAvailableOnly = ref(true)
+
+const filteredCollaborators = computed(() => {
+  if (!props.collaborators) return []
+  if (!showAvailableOnly.value) return props.collaborators
+  return props.collaborators.filter(c => getOccupation(c) < 100)
+})
 
 const parseWeekToDate = (weekStr) => {
   if (!weekStr) return null
@@ -29,30 +38,40 @@ const isActiveInWeek = (allocation, weekStr) => {
   return startMs <= targetMs && end.valueOf() >= targetMs
 }
 
-const getOccupation = (collab) => {
-    if (!collab.allocations) return 0
-    return collab.allocations.reduce((acc, alloc) => {
+function getOccupation(collab) {
+  if (!collab?.allocations) return 0
+  return collab.allocations.reduce((acc, alloc) => {
     const isActive = isActiveInWeek(alloc, props.selectedWeek)
-        return isActive ? acc + (alloc.dedicationPercentage || 0) : acc
-    }, 0)
+    return isActive ? acc + (alloc.dedicationPercentage || 0) : acc
+  }, 0)
 }
 </script>
 
 <template>
     <div class="bg-white p-4 border-b border-gray-200 shadow-sm relative z-10">
-      <h3 class="font-bold text-gray-700 mb-2">Colaboradores (Arrastrar para asignar en {{selectedWeek}})</h3>
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-bold text-gray-700">Colaboradores (Arrastrar para asignar en {{selectedWeek}})</h3>
+        <div class="flex items-center gap-2 text-sm">
+          <span>Solo disponibles</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" v-model="showAvailableOnly" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+
+      </div>
       <div v-if="loading">Cargando...</div>
-      <draggable 
+      <draggable
         v-else
-        :list="collaborators" 
-        :group="{ name: 'people', pull: 'clone', put: false }" 
+        :list="filteredCollaborators"
+        :group="{ name: 'people', pull: 'clone', put: false }"
         item-key="id"
-        @start="emit('drag-start')" 
+        @start="emit('drag-start')"
         @end="emit('drag-end')"
         class="flex gap-3 overflow-x-auto pb-2"
       >
         <template #item="{ element }">
-          <div class="flex-shrink-0 w-48 bg-gray-50 p-3 rounded-lg border border-gray-200 cursor-move hover:shadow-md transition-shadow select-none">
+          <div class="shrink-0 w-48 bg-gray-50 p-3 rounded-lg border border-gray-200 cursor-move hover:shadow-md transition-shadow select-none">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">
                  {{ (element.firstName || '?').charAt(0) }}
@@ -61,8 +80,8 @@ const getOccupation = (collab) => {
                 <div class="font-semibold text-sm truncate" :title="`${element.firstName} ${element.lastName}`">{{ element.firstName }} {{ element.lastName }}</div>
                 <div class="flex items-center justify-between mt-1">
                     <span class="text-xs text-gray-400">{{ element.contractedHours }} hrs</span>
-                    <span :class="['text-[10px] px-1.5 py-0.5 rounded font-bold border', 
-                        getOccupation(element) >= 100 ? 'bg-red-50 text-red-600 border-red-100' : 
+                    <span :class="['text-[10px] px-1.5 py-0.5 rounded font-bold border',
+                        getOccupation(element) >= 100 ? 'bg-red-50 text-red-600 border-red-100' :
                         getOccupation(element) > 0 ? 'bg-green-50 text-green-600 border-green-100' : 'bg-gray-50 text-gray-400 border-gray-100']">
                         {{ getOccupation(element) }}%
                     </span>

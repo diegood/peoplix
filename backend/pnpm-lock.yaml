@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  zeptomatch: 2.0.1
+
 importers:
 
   .:
@@ -69,6 +72,9 @@ importers:
       vitest:
         specifier: ^4.0.16
         version: 4.0.17(jiti@2.6.1)(yaml@2.8.2)
+      zeptomatch:
+        specifier: 2.0.1
+        version: 2.0.1
 
 packages:
 
@@ -1987,8 +1993,8 @@ packages:
     resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
     engines: {node: '>=18'}
 
-  zeptomatch@2.0.2:
-    resolution: {integrity: sha512-H33jtSKf8Ijtb5BW6wua3G5DhnFjbFML36eFu+VdOoVY4HD9e7ggjqdM6639B+L87rjnR6Y+XeRzBXZdy52B/g==}
+  zeptomatch@2.0.1:
+    resolution: {integrity: sha512-nbnIYF2n3o3EqV36HkIhEMLIDFbG3M6RUjhkdKIn6qqIJkdkL7bgVSfTTCEXBJpk1T45tLfEYfStndJc2lUEnA==}
 
 snapshots:
 
@@ -2302,7 +2308,7 @@ snapshots:
       remeda: 2.21.3
       std-env: 3.9.0
       valibot: 1.2.0
-      zeptomatch: 2.0.2
+      zeptomatch: 2.0.1
     transitivePeerDependencies:
       - typescript
 
@@ -3810,6 +3816,6 @@ snapshots:
 
   yoctocolors@2.1.2: {}
 
-  zeptomatch@2.0.2:
+  zeptomatch@2.0.1:
     dependencies:
       grammex: 3.1.12
