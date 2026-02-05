@@ -1,9 +1,9 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
-import { 
-    GET_PROJECTS, 
-    GET_COLLABORATORS 
+import {
+    GET_PROJECTS,
+    GET_COLLABORATORS
 } from '@/modules/Allocations/graphql/allocation.queries'
 import { GET_ABSENCES } from '@/modules/Absences/graphql/absence.queries'
 import { dayjs } from '@/config'
@@ -55,10 +55,11 @@ const assignmentContext = ref({
 })
 
 const { result: projectResult, loading: projectsLoading } = useQuery(GET_PROJECTS, null, { fetchPolicy: 'cache-and-network' })
-const { result: collabResult, loading: collabsLoading } = useQuery(GET_COLLABORATORS)
+const availableOnly = ref(true)
+const { result: collabResult, loading: collabsLoading } = useQuery(GET_COLLABORATORS, () => ({ availableOnly: availableOnly.value, week: selectedWeek.value }))
 
 const { result: absencesResult } = useQuery(GET_ABSENCES, () => ({
-    startDate: dayjs().subtract(1, 'year').format('YYYY-MM-DD'), 
+    startDate: dayjs().subtract(1, 'year').format('YYYY-MM-DD'),
     endDate: dayjs().add(1, 'year').format('YYYY-MM-DD')
 }))
 const absences = computed(() => absencesResult.value?.absences || [])
@@ -100,20 +101,20 @@ const availableCollaborators = computed(() => {
 
 const globalWeekMilestones = computed(() => {
     if (!localProjects.value) return []
-    
+
     const [y, w] = selectedWeek.value.split('-W').map(Number)
     const startOfWeek = dayjs().year(y).isoWeek(w).startOf('isoWeek')
     const endOfWeek = dayjs().year(y).isoWeek(w).endOf('isoWeek')
-    
+
     const groups = []
-    
+
     localProjects.value.forEach(p => {
         if (p.milestones && p.milestones.length) {
             const milestonesInWeek = p.milestones.filter(m => {
                 const mDate = dayjs(m.date)
                 return mDate.isAfter(startOfWeek.subtract(1, 'day')) && mDate.isBefore(endOfWeek.add(1, 'day'))
             }).sort((a,b) => a.date.localeCompare(b.date))
-            
+
             if (milestonesInWeek.length > 0) {
                  groups.push({
                      projectId: p.id,
@@ -124,7 +125,7 @@ const globalWeekMilestones = computed(() => {
             }
         }
     })
-    
+
     return groups
 })
 
@@ -133,7 +134,7 @@ const getProjectById = (id) => localProjects.value.find(p => p.id === id)
 const getSkillMatch = (collab, project) => {
   const requiredSkills = project.requiredRoles?.flatMap(r => r.skills || []) || []
   if (!requiredSkills.length) return { score: 100, status: 'good' }
-  const hasSkill = requiredSkills.some(req => 
+  const hasSkill = requiredSkills.some(req =>
     collab.skills?.some(s => s.skill.name === req.name && s.level >= req.level)
   )
   return hasSkill ? { score: 100, status: 'good' } : { score: 0, status: 'bad' }
@@ -143,7 +144,7 @@ const getGlobalOccupation = (collaboratorId) => {
     if (!collaboratorId || !availableCollaborators.value) return 0
     const collab = availableCollaborators.value.find(c => c.id === collaboratorId)
     if (!collab || !collab.allocations) return 0
-    
+
     return collab.allocations.reduce((acc, alloc) => {
          const isActive = isAllocationActiveInWeek(alloc, selectedWeek.value)
          return isActive ? acc + (alloc.dedicationPercentage || 0) : acc
@@ -159,14 +160,14 @@ const openHierarchy = (project) => {
 const handleDrop = (evt, projectId) => {
   if (evt.added) {
     const collaborator = evt.added.element
-    
+
     const sourceProject = localProjects.value.find(p => p.id === projectId)
     const existingActiveAllocation = sourceProject?.allocations?.find(a => {
         const isActive = isAllocationActiveInWeek(a, selectedWeek.value)
         if (!isActive) return false
         return a.collaborator?.id === collaborator.id
     })
-    
+
     if (existingActiveAllocation) {
         notificationStore.showToast("Este colaborador ya está asignado a este proyecto en esta semana.", 'error')
         return
@@ -197,8 +198,8 @@ const handleRemoveRole = (allocation, roleId) => removeRole(allocation, roleId)
 
 <template>
   <div class="h-full flex flex-col relative bg-gray-50">
-    
-    <AllocationHeader 
+
+    <AllocationHeader
         v-model:viewMode="viewMode"
         v-model:zoomLevel="zoomLevel"
         v-model:selectedWeek="selectedWeek"
@@ -210,7 +211,7 @@ const handleRemoveRole = (allocation, roleId) => removeRole(allocation, roleId)
             <GlobalMilestonesSummary v-if="viewMode === 'weekly'" :milestones="globalWeekMilestones" />
         </template>
     </AllocationHeader>
-    
+
     <div v-if="managerOpen" class="z-[60] relative">
         <MilestoneManager @close="managerOpen = false" />
     </div>
@@ -218,8 +219,8 @@ const handleRemoveRole = (allocation, roleId) => removeRole(allocation, roleId)
     <div v-if="hierarchyModalOpen && activeProjectForHierarchy" class="z-[60] relative">
         <HierarchyManager :project="activeProjectForHierarchy" :isOpen="hierarchyModalOpen" @close="hierarchyModalOpen = false" />
     </div>
-    
-    <AssignmentModal 
+
+    <AssignmentModal
         v-if="assignmentModalOpen"
         :show="assignmentModalOpen"
         :project="getProjectById(assignmentContext.projectId)"
@@ -229,23 +230,25 @@ const handleRemoveRole = (allocation, roleId) => removeRole(allocation, roleId)
         @confirm="handleConfirmAssignment"
     />
 
-    <CollaboratorPool 
-        v-if="viewMode === 'weekly'" 
-        :collaborators="availableCollaborators" 
-        :loading="collabsLoading"
-        :selectedWeek="selectedWeek"
-        @drag-start="dragging = true"
-        @drag-end="dragging = false"
-    />
+    <div v-if="viewMode === 'weekly'" class="bg-white">
+        <CollaboratorPool
+            v-model:availableOnly="availableOnly"
+            :collaborators="availableCollaborators"
+            :loading="collabsLoading"
+            :selectedWeek="selectedWeek"
+            @drag-start="dragging = true"
+            @drag-end="dragging = false"
+        />
+    </div>
 
     <div class="flex-1 overflow-auto p-6">
       <div v-if="projectsLoading">Cargando proyectos...</div>
-      
+
       <div v-else-if="viewMode === 'weekly'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        
-        <ProjectAllocationCard 
-            v-for="project in filteredProjects" 
-            :key="project.id" 
+
+        <ProjectAllocationCard
+            v-for="project in filteredProjects"
+            :key="project.id"
             :project="project"
             :currentWeek="selectedWeek"
             :dragging="dragging"
@@ -259,12 +262,12 @@ const handleRemoveRole = (allocation, roleId) => removeRole(allocation, roleId)
             @remove-role="handleRemoveRole"
             @open-hierarchy="openHierarchy(project)"
         />
-        
+
       </div>
       <div v-else class="flex flex-col gap-6">
 
-          <GanttTimelineView 
-            v-for="project in localProjects" 
+          <GanttTimelineView
+            v-for="project in localProjects"
             :key="project.id"
             :project="project"
             :absences="absences"
@@ -272,7 +275,7 @@ const handleRemoveRole = (allocation, roleId) => removeRole(allocation, roleId)
             :chart-end="monthlyRange.end"
           />
       </div>
-      
+
 
     </div>
   </div>

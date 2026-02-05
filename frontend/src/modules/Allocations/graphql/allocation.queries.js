@@ -106,8 +106,8 @@ export const GET_PROJECTS = gql`
 `
 
 export const GET_COLLABORATORS = gql`
-  query GetCollaborators {
-    collaborators {
+  query GetCollaborators($availableOnly: Boolean, $week: String) {
+    collaborators(availableOnly: $availableOnly, week: $week) {
       id
       userName
       firstName

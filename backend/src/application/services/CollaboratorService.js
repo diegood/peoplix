@@ -6,8 +6,8 @@ export class CollaboratorService {
         this.repository = repository || new PrismaCollaboratorRepository()
     }
     
-    async getAll(organizationId, search) {
-        return this.repository.findAll(organizationId, search)
+    async getAll(organizationId, search, availableOnly, week) {
+        return this.repository.findAll(organizationId, search, availableOnly, week)
     }
     
     async getById(id) {

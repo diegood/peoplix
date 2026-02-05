@@ -1,23 +1,16 @@
 <script setup>
-import { ref, computed } from 'vue'
 import draggable from 'vuedraggable'
 import { dayjs } from '@/config'
 
 const props = defineProps({
-    collaborators: { type: Array, default: () => [] },
-    loading: Boolean,
-    selectedWeek: String
+  collaborators: { type: Array, default: () => [] },
+  loading: Boolean,
+  selectedWeek: String,
+  availableOnly: { type: Boolean, default: true }
 })
 
-const emit = defineEmits(['drag-start', 'drag-end'])
+const emit = defineEmits(['drag-start', 'drag-end', 'update:availableOnly'])
 
-const showAvailableOnly = ref(true)
-
-const filteredCollaborators = computed(() => {
-  if (!props.collaborators) return []
-  if (!showAvailableOnly.value) return props.collaborators
-  return props.collaborators.filter(c => getOccupation(c) < 100)
-})
 
 const parseWeekToDate = (weekStr) => {
   if (!weekStr) return null
@@ -54,8 +47,13 @@ function getOccupation(collab) {
         <div class="flex items-center gap-2 text-sm">
           <span>Solo disponibles</span>
           <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" v-model="showAvailableOnly" class="sr-only peer">
-            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            <input
+              type="checkbox"
+              :checked="props.availableOnly"
+              @change="(e) => emit('update:availableOnly', e.target.checked)"
+              class="sr-only peer"
+            />
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
           </label>
         </div>
 
@@ -63,7 +61,7 @@ function getOccupation(collab) {
       <div v-if="loading">Cargando...</div>
       <draggable
         v-else
-        :list="filteredCollaborators"
+        :list="collaborators"
         :group="{ name: 'people', pull: 'clone', put: false }"
         item-key="id"
         @start="emit('drag-start')"

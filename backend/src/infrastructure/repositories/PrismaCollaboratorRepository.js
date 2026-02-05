@@ -1,7 +1,7 @@
 import { prisma } from '../database/client.js'
 
 export class PrismaCollaboratorRepository {
-    async findAll(organizationId, search) {
+    async findAll(organizationId, search, availableOnly, week) {
         const where = {}
         
         if (organizationId) {
@@ -33,6 +33,25 @@ export class PrismaCollaboratorRepository {
 
         if (!organizationId) {
             queryOptions.distinct = ['userId']
+        }
+
+        if (availableOnly && week) {
+            const allocationSums = await prisma.allocation.groupBy({
+                by: ['collaboratorId'],
+                where: {
+                    startWeek: { lte: week },
+                    OR: [ { endWeek: null }, { endWeek: { gte: week } } ]
+                },
+                _sum: { dedicationPercentage: true }
+            })
+
+            const busyCollaboratorIds = allocationSums
+                .filter(a => (a._sum?.dedicationPercentage ?? 0) >= 100)
+                .map(a => a.collaboratorId)
+
+            if (busyCollaboratorIds.length > 0) {
+                queryOptions.where.id = { notIn: busyCollaboratorIds }
+            }
         }
 
         return prisma.collaborator.findMany(queryOptions)

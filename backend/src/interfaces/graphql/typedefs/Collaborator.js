@@ -71,7 +71,7 @@ type CollaboratorSkill {
 
   extend type Query {
     collaborator(id: ID!): Collaborator @auth(requires: ADMIN, sameUser: "id")
-    collaborators(search: String, organizationId: ID): [Collaborator!]! @auth(requires: USER)
+    collaborators(search: String, organizationId: ID, availableOnly: Boolean, week: String): [Collaborator!]! @auth(requires: USER)
     searchGlobalUsers(search: String!): [Collaborator!]! @auth(requires: ADMIN)
   }
 

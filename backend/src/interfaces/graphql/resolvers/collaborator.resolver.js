@@ -6,7 +6,7 @@ const ADMIN_ROLE = 1
 
 export const collaboratorResolver = {
   Query: {
-    collaborators: (_, { search, organizationId }, context) => {
+    collaborators: (_, { search, organizationId, availableOnly, week }, context) => {
         let targetOrgId = context.user.organizationId;
         
         if (context.user.isSuperAdmin) {
@@ -17,7 +17,7 @@ export const collaboratorResolver = {
             }
         }
         
-        return service.getAll(targetOrgId, search) 
+        return service.getAll(targetOrgId, search, availableOnly, week) 
     },
     collaborator: (_, { id }, context) => {
         return service.getById(id)
